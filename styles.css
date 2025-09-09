@@ -51,9 +51,11 @@ header {
 }
 
 header .logo {
+  
   max-width: 400px;
   margin-bottom: 0.8rem;
   border-radius: 50%;
+  
 }
 
 header .team-under-logo {
