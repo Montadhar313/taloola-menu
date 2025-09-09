@@ -51,21 +51,16 @@ header {
 }
 
 header .logo {
-  max-width: 160px;
-  background: white;
-  padding: 12px;
-  border-radius: 16px;
+  max-width: 180px;
   margin-bottom: 0.8rem;
-  box-shadow: var(--shadow);
+  border-radius: 50%;
 }
 
 header .team-under-logo {
-  max-width: 140px;
+  max-width: 160px;
   border-radius: 50%;
   margin: 0.5rem auto;
   display: block;
-  border: 3px solid var(--main-yellow);
-  box-shadow: var(--shadow);
 }
 
 header h2 {
@@ -283,11 +278,18 @@ section.info-section p {
   transform: translateY(-3px);
 }
 
-/* زر الطلب الآن */
-.order-now-btn {
+/* زر الطلب الآن في المنتصف */
+.order-now-container {
   position: fixed;
   bottom: 30px;
-  left: 30px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.order-now-btn {
   background: var(--main-yellow);
   color: #000;
   border: none;
@@ -297,7 +299,6 @@ section.info-section p {
   font-size: 1.2rem;
   cursor: pointer;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  z-index: 1000;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -378,7 +379,7 @@ section.info-section p {
   }
   
   header .logo {
-    max-width: 130px;
+    max-width: 150px;
   }
   
   header {
@@ -389,9 +390,11 @@ section.info-section p {
     font-size: 2rem;
   }
 
-  .order-now-btn {
+  .order-now-container {
     bottom: 20px;
-    left: 20px;
+  }
+  
+  .order-now-btn {
     padding: 14px 22px;
     font-size: 1rem;
   }
@@ -427,5 +430,13 @@ section.info-section p {
   
   nav.sections-nav button {
     flex-shrink: 0;
+  }
+  
+  header .logo {
+    max-width: 130px;
+  }
+  
+  header .team-under-logo {
+    max-width: 140px;
   }
 }
