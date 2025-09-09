@@ -105,6 +105,7 @@ nav.sections-nav button {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
+  font-family: var(--main-font); /* إضافة خط Cairo للأزرار */
 }
 
 nav.sections-nav button:focus,
@@ -173,7 +174,7 @@ div.menu-item:focus {
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 1.2rem;
-  background: var(--main-red); /* تغيير الخلفية إلى الأحمر */
+  background: var(--main-red);
   border: 2px solid var(--main-yellow);
   display: flex;
   align-items: center;
@@ -252,6 +253,7 @@ section.info-section p {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: var(--shadow);
+  font-family: var(--main-font); /* إضافة خط Cairo لزر الشكوى */
 }
 
 .support-btn:hover {
@@ -285,6 +287,7 @@ section.info-section p {
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: var(--shadow);
+  font-family: var(--main-font); /* إضافة خط Cairo لأزرار التواصل */
 }
 
 .social-btn:hover {
@@ -318,6 +321,7 @@ section.info-section p {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: var(--main-font); /* إضافة خط Cairo لزر الطلب الآن */
 }
 
 .order-now-btn:hover {
@@ -342,6 +346,7 @@ section.info-section p {
   border: 2px solid var(--main-yellow);
   align-items: center;
   justify-content: center;
+  font-family: var(--main-font); /* إضافة خط Cairo لزر العودة لأعلى */
 }
 
 #scrollToTopBtn:hover {
@@ -357,12 +362,12 @@ section.info-section p {
 
 @keyframes fadeInUp {
   from {
-    opacity: 0;
-    transform: translateY(30px);
+  opacity: 0;
+  transform: translateY(30px);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0);
   }
 }
 
