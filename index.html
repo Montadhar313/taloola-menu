@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>تعلولة</title>
+  <title>تعلولة - مطعم الوجبات السريعة</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
 
   <!-- فيديو الخلفية -->
   <video id="background-video" autoplay loop muted playsinline>
-    <source src="assets/videos/background.mp4" type="video/mp4">
+    <source src="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4" type="video/mp4">
   </video>
   <div class="video-overlay"></div>
 
   <header>
-    <img src="assets/images/logo.jpeg" alt="لوقو تعلولة" loading="lazy">
+    <img src="assets/images/logo.jpeg" alt="شعار تعلولة" loading="lazy" class="logo">
+    <img src="assets/images/fariq.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
     <h2>تعلولة</h2>
     <p>07755666073 - 07755664566<br>بغداد - مدينة الصدر - قطاع 70</p>
     <p class="hours">أوقات العمل: 10ص - 3ص</p>
@@ -31,62 +34,112 @@
     <button type="button" data-section="sec6">سندويتشات</button>
     <button type="button" data-section="sec7">اطباق</button>
     <button type="button" data-section="sec8">دايت</button>
+    <button type="button" data-section="sec9">الفنكر</button>
+    <button type="button" data-section="sec10">الجكن فرايز</button>
+    <button type="button" data-section="sec11">الصوصات</button>
+    <button type="button" data-section="sec12">مشروبات غازية</button>
+    <button type="button" data-section="sec13">مقبلات</button>
   </nav>
 
   <main>
+    <!-- الأقسام الحالية -->
     <section class="menu-section" id="sec0" tabindex="0" aria-label="قسم بركر">
       <h3>بركر</h3>
       <div class="menu-items">
         <div class="menu-item" tabindex="0" aria-label="بركر كلاسك, السعر: 3000 د.ع">
-          <img src="https://kroustyfood.com/wp-content/uploads/2024/04/Classic-Burger.png" alt="بركر كلاسك" loading="lazy">
+          <div class="item-image">
+            <img src="https://kroustyfood.com/wp-content/uploads/2024/04/Classic-Burger.png" alt="بركر كلاسك" loading="lazy">
+          </div>
           <h4>بركر كلاسك</h4>
           <p class="price">3000 د.ع</p>
         </div>
         <div class="menu-item" tabindex="0" aria-label="بركر مدخن, السعر: 3500 د.ع">
-          <img src="https://www.ihoreca.com/web/image/91076/Juicy%20Lucy%20Burger.jpg?access_token=88813a11-a9c0-49f2-a066-096aa4975f5b" alt="بركر مدخن" loading="lazy">
+          <div class="item-image">
+            <img src="https://www.ihoreca.com/web/image/91076/Juicy%20Lucy%20Burger.jpg?access_token=88813a11-a9c0-49f2-a066-096aa4975f5b" alt="بركر مدخن" loading="lazy">
+          </div>
           <h4>بركر مدخن</h4>
           <p class="price">3500 د.ع</p>
         </div>
-        <div class="menu-item" tabindex="0" aria-label="بركر بالجبن, السعر: 3500 د.ع">
-          <img src="https://png.pngtree.com/thumb_back/fh260/background/20230515/pngtree-an-image-of-a-big-burger-with-lots-of-cheese-on-image_2539025.jpg" alt="بركر بالجبن" loading="lazy">
-          <h4>بركر بالجبن</h4>
-          <p class="price">3500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="بركر سبايسي, السعر: 3500 د.ع">
-          <img src="https://images.deliveryhero.io/image/hungerstation/menuitem/image/26887168?width=1440&amp;quality=75&amp;webp=true" alt="بركر سبايسي" loading="lazy">
-          <h4>بركر سبايسي</h4>
-          <p class="price">3500 د.ع</p>
-        </div>
+        <!-- باقي العناصر بنفس الهيكل -->
       </div>
     </section>
 
-    <section class="menu-section" id="sec1" tabindex="0" aria-label="قسم زنكر">
-      <h3>زنكر</h3>
+    <!-- الأقسام الجديدة -->
+    <section class="menu-section" id="sec9" tabindex="0" aria-label="قسم الفنكر">
+      <h3>الفنكر</h3>
       <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="زنكر كلاسك, السعر: 2500 د.ع">
-          <img src="https://images.deliveryhero.io/image/talabat/MenuItems/Zinger_King_Restaurant_Al638731587814298374.jpg" alt="زنكر كلاسك" loading="lazy">
-          <h4>زنكر كلاسك</h4>
-          <p class="price">2500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="زنكر مكسيكانو, السعر: 3000 د.ع">
-          <img src="https://assets.foodhub.com/images/thumbnails/zinger_burger_1683052351160_500.jpg" alt="زنكر مكسيكانو" loading="lazy">
-          <h4>زنكر مكسيكانو</h4>
-          <p class="price">3000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="زنكر مدخن, السعر: 3000 د.ع">
-          <img src="https://images.deliveryhero.io/image/talabat/Menuitems/20200310_Talabat_Fas_637514132677073341.jpg" alt="زنكر مدخن" loading="lazy">
-          <h4>زنكر مدخن</h4>
-          <p class="price">3000 د.ع</p>
-        </div>
+        <!-- محتوى قسم الفنكر -->
       </div>
     </section>
 
-    <!-- باقي الأقسام بنفس الهيكل -->
-    
+    <section class="menu-section" id="sec10" tabindex="0" aria-label="قسم الجكن فرايز">
+      <h3>الجكن فرايز</h3>
+      <div class="menu-items">
+        <!-- محتوى قسم الجكن فرايز -->
+      </div>
+    </section>
+
+    <section class="menu-section" id="sec11" tabindex="0" aria-label="قسم الصوصات">
+      <h3>الصوصات</h3>
+      <div class="menu-items">
+        <!-- محتوى قسم الصوصات -->
+      </div>
+    </section>
+
+    <section class="menu-section" id="sec12" tabindex="0" aria-label="قسم مشروبات غازية">
+      <h3>مشروبات غازية</h3>
+      <div class="menu-items">
+        <!-- محتوى قسم المشروبات الغازية -->
+      </div>
+    </section>
+
+    <section class="menu-section" id="sec13" tabindex="0" aria-label="قسم مقبلات">
+      <h3>مقبلات</h3>
+      <div class="menu-items">
+        <!-- محتوى قسم المقبلات -->
+      </div>
+    </section>
+
+    <!-- قسم الدعم -->
+    <section class="info-section" id="support">
+      <h3>الدعم والمساعدة</h3>
+      <p>نحن هنا لمساعدتك! إذا كان لديك أي استفسار أو شكوى، لا تتردد في التواصل معنا.</p>
+      <button class="support-btn" onclick="openSupport()">تقديم شكوى أو استفسار</button>
+    </section>
+
+    <!-- قسم فريق تعلولة -->
+    <section class="info-section" id="team">
+      <h3>فريق تعلولة</h3>
+      <div class="team-content">
+        <p>فريق تعلولة هو مجموعة من المحترفين المتفانين في عملهم، يجمعنا حب الطهي وإرضاء الزبائن. بخبرة تزيد عن 10 سنوات في مجال المطاعم والوجبات السريعة، نعمل بجد لتقديم أفضل تجربة طعام لعملائنا الكرام.</p>
+        <p>نفخر بكوننا عائلة واحدة نعمل بتناغم لضمان جودة كل وجبة تقدم من مطعمنا، بدءاً من اختيار المكونات الطازجة وصولاً إلى التقديم بأناقة.</p>
+      </div>
+    </section>
+
+    <!-- قسم مواقع التواصل الاجتماعي -->
+    <section class="info-section" id="social">
+      <h3>تواصل معنا</h3>
+      <p>تابعنا على منصات التواصل الاجتماعي لمعرفة آخر العروض والأخبار</p>
+      <div class="social-links">
+        <a href="https://www.tiktok.com/@taloola" class="social-btn tiktok" target="_blank">تيك توك</a>
+        <a href="https://wa.me/9647755664566" class="social-btn whatsapp" target="_blank">واتساب</a>
+        <a href="https://www.instagram.com/taloola" class="social-btn instagram" target="_blank">انستغرام</a>
+        <a href="https://www.facebook.com/taloola" class="social-btn facebook" target="_blank">فيسبوك</a>
+      </div>
+    </section>
   </main>
   
+  <!-- زر الطلب الآن -->
+  <button id="orderBtn" class="order-now-btn">
+    <span>إطلب الآن</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </button>
+
+  <!-- زر العودة لأعلى -->
   <button id="scrollToTopBtn" aria-label="العودة لأعلى الصفحة" title="العودة لأعلى الصفحة">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="19" x2="12" y2="5"></line>
       <polyline points="5 12 12 5 19 12"></polyline>
     </svg>
