@@ -10,17 +10,35 @@
       font-family: 'Cairo', sans-serif;
       margin: 0; padding: 0;
       background-color: #ffffff;
-      color: #000000;
+      color: #ffffff; /* تغيير لون الخط الأساسي إلى الأبيض */
       min-height: 100vh;
     }
+    
+    /* فيديو الخلفية */
+    #background-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+    }
+    
+    .video-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      z-index: -1;
+    }
+    
     header {
       position: relative;
-      background-image: url('bg.jpg');
-      background-size: cover;
-      background-position: center;
       text-align: center;
       padding: 3rem 1rem 2rem;
-      box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.4);
       color: white;
     }
     header img {
@@ -35,7 +53,7 @@
       margin: 0 0 0.4rem 0;
       font-weight: 700;
       font-size: 2.2rem;
-      color: #ff0000;
+      color: #fedb17; /* تغيير إلى الأصفر */
     }
     header p {
       margin: 0.3rem 0;
@@ -51,40 +69,43 @@
       justify-content: center;
       gap: 0.8rem;
       padding: 0.8rem 1rem;
-      background: #c40001;
-      border-radius: 0 0 12px 12px;
-      margin-bottom: 1.5rem;
+      background: #c70301; /* تغيير إلى الأحمر الجديد */
+      border-radius: 20px; /* زيادة انحناء الأزرار */
+      margin: 0 1rem 1.5rem;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
     nav.sections-nav button {
-      background: #ff0000;
-      color: #ffffff;
+      background: #fedb17; /* تغيير إلى الأصفر */
+      color: #000000; /* لون النص على الأصفر أسود */
       border: none;
       padding: 0.6rem 1.4rem;
       font-size: 1rem;
-      border-radius: 50px;
+      border-radius: 50px; /* زيادة انحناء الأزرار */
       box-shadow: 0 3px 10px rgba(0,0,0,0.15);
       cursor: pointer;
+      font-weight: 600;
     }
     nav.sections-nav button:focus,
     nav.sections-nav button:hover {
-      background: #fff;
-      color: #ff0000;
-      border: 1px solid #ff0000;
+      background: #ffffff;
+      color: #c70301; /* الأحمر عند التمرير */
       outline: none;
     }
     section.menu-section {
       margin: 2rem auto 4rem;
       max-width: 1000px;
       padding: 0 1rem;
+      background-color: rgba(199, 3, 1, 0.9); /* خلفية شبه شفافة باللون الأحمر */
+      border-radius: 15px;
+      padding: 20px;
     }
     section.menu-section h3 {
-      border-bottom: 3px solid #ff0000;
+      border-bottom: 3px solid #fedb17; /* تغيير إلى الأصفر */
       padding-bottom: 0.6rem;
       font-weight: 700;
       font-size: 1.8rem;
       margin-bottom: 2rem;
-      color: #000000;
+      color: #ffffff; /* تغيير إلى الأبيض */
       text-align: center;
     }
     div.menu-items {
@@ -93,8 +114,8 @@
       gap: 1.5rem;
     }
     div.menu-item {
-      background: #ffffff;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1); /* خلفية شفافة */
+      border-radius: 15px; /* زيادة انحناء العناصر */
       padding: 1.2rem;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
       display: flex;
@@ -103,9 +124,10 @@
       text-align: center;
       transition: box-shadow 0.18s, transform 0.18s;
       cursor: pointer;
+      border: 1px solid rgba(254, 219, 23, 0.3); /* إطار أصفر خفيف */
     }
     div.menu-item:hover, div.menu-item:focus {
-      box-shadow: 0 8px 25px #ff000080;
+      box-shadow: 0 8px 25px #fedb17; /* تأثير أصفر عند التمرير */
       transform: translateY(-7px) scale(1.03);
       outline: none;
     }
@@ -116,17 +138,17 @@
       border-radius: 10px;
       margin-bottom: 1rem;
       background: #fff;
-      border: 2px solid #ffd192;
+      border: 2px solid #fedb17; /* تغيير إلى الأصفر */
     }
     div.menu-item h4 {
       font-size: 1.25rem;
       margin: 0;
-      color: #000000;
+      color: #ffffff; /* تغيير إلى الأبيض */
       font-weight: 600;
     }
     div.menu-item p.price {
       font-weight: 700;
-      color: #ff0000;
+      color: #fedb17; /* تغيير إلى الأصفر */
       font-size: 1.1rem;
       margin-top: 0.5rem;
       letter-spacing: 1px;
@@ -138,7 +160,7 @@
       bottom: 25px;
       right: 25px;
       z-index: 9999;
-      background-color: #ff0000;
+      background-color: #c70301; /* تغيير إلى الأحمر */
       color: #ffffff;
       border-radius: 50%;
       padding: 12px;
@@ -151,21 +173,25 @@
     }
     #scrollToTopBtn:hover {
       transform: translateY(-2px);
-      background: #c40001;
+      background: #fedb17; /* تغيير إلى الأصفر عند التمرير */
+      color: #000000;
     }
     /* استجابة للجوال */
     @media (max-width: 700px) {
       nav.sections-nav {
         gap: 0.3rem;
         padding: 0.5rem 0.2rem;
+        border-radius: 15px;
+        margin: 0 0.5rem 1.5rem;
       }
       nav.sections-nav button {
         font-size: 0.94rem;
         padding: 0.4rem 0.7rem;
+        border-radius: 30px;
       }
       section.menu-section {
-        padding: 0.2em;
-        margin: 0.9em 0.1em 1.3em 0.1em;
+        padding: 15px;
+        margin: 0.9em 0.5em 1.3em 0.5em;
       }
       div.menu-items {
         grid-template-columns: 1fr;
@@ -181,6 +207,12 @@
   </style>
 </head>
 <body>
+
+  <!-- فيديو الخلفية -->
+  <video id="background-video" autoplay loop muted playsinline>
+    <source src="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4" type="video/mp4">
+  </video>
+  <div class="video-overlay"></div>
 
   <header>
     <img src="logo.jpeg" alt="لوقو الموقع" loading="lazy">
