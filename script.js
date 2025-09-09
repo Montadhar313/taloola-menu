@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const scrollToTopBtn = document.getElementById('scrollToTopBtn');
   const navButtons = document.querySelectorAll('nav.sections-nav button');
   const menuSections = document.querySelectorAll('section.menu-section');
+  const orderBtn = document.getElementById('orderBtn');
   
   // زر العودة لأعلى الصفحة
   window.addEventListener('scroll', () => {
@@ -35,6 +36,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
+  // زر الطلب الآن - واتساب
+  orderBtn.addEventListener('click', function() {
+    const phoneNumber = '07755664566';
+    const message = 'مرحباً، أريد طلب وجبة من تعلولة';
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
+  });
+  
   // إضافة تأثيرات للعناصر عند التمرير
   const observerOptions = {
     threshold: 0.1,
@@ -58,4 +67,29 @@ document.addEventListener('DOMContentLoaded', function() {
   menuSections.forEach(section => {
     observer.observe(section);
   });
+  
+  // إضافة تأثيرات للعناصر عند التمرير
+  const infoSections = document.querySelectorAll('.info-section');
+  infoSections.forEach(section => {
+    observer.observe(section);
+  });
 });
+
+// فتح نموذج الدعم
+function openSupport() {
+  const phoneNumber = '07755664566';
+  const message = 'أحتاج إلى مساعدة بخصوص...';
+  const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappURL, '_blank');
+}
+
+// تهيئة البيانات للعناصر (يمكن استكمالها لاحقاً)
+function initializeMenuItems() {
+  // هنا يمكنك إضافة البيانات الديناميكية للقوائم
+  console.log("تهيئة عناصر القائمة...");
+}
+
+// تهيئة الصفحة عند التحميل
+window.onload = function() {
+  initializeMenuItems();
+};
