@@ -148,85 +148,6 @@ h3 {
     margin-bottom: 1rem;
 }
 
-.admin-section {
-    background-color: #f8f9fa;
-    border-left: 4px solid var(--primary-color);
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1rem;
-}
-
-.form-group textarea {
-    min-height: 100px;
-    resize: vertical;
-}
-
-.menu-category {
-    margin-bottom: 2rem;
-}
-
-.menu-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.menu-item {
-    border: 1px solid #eee;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.3s;
-}
-
-.menu-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.menu-item img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.menu-item-content {
-    padding: 1rem;
-}
-
-.menu-item h3 {
-    color: var(--dark-color);
-    margin-bottom: 0.5rem;
-}
-
-.menu-item p {
-    color: #666;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.price {
-    color: var(--primary-color);
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
 .ads-section {
     background: linear-gradient(135deg, #ff9a44, #ff6b6b);
     color: white;
@@ -240,108 +161,137 @@ h3 {
 
 #adsContainer, #currentAds {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
     margin-top: 1.5rem;
 }
 
 .ad-card {
-    background-color: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border-radius: 8px;
-    padding: 1rem;
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
     text-align: center;
     transition: transform 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .ad-card:hover {
-    transform: scale(1.03);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .ad-card h4 {
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.3rem;
+    color: var(--primary-color);
 }
 
 .ad-card p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.8rem;
+    color: #555;
 }
 
 .ad-price {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    color: var(--secondary-color);
 }
 
 .ad-duration {
     font-style: italic;
+    color: #777;
 }
 
 .ad-image {
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
 }
 
 .ad-image img {
     width: 100%;
-    height: 150px;
+    height: 180px;
     object-fit: cover;
-    border-radius: 5px;
+    border-radius: 8px;
 }
 
 .ad-actions {
-    margin-top: 1rem;
+    margin-top: 1.2rem;
     display: flex;
     justify-content: center;
 }
 
 .ad-actions button {
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    background-color: var(--main-red);
+    color: white;
+    font-weight: bold;
 }
 
 .no-ads {
     grid-column: 1 / -1;
     padding: 2rem;
     font-style: italic;
+    color: #666;
 }
 
 .info-section {
     text-align: center;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
 }
 
 .contact-info {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 2rem;
-    margin: 1.5rem 0;
+    gap: 2.5rem;
+    margin: 2rem 0;
 }
 
 .contact-method {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.8rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s;
+    width: 250px;
+}
+
+.contact-method:hover {
+    transform: translateY(-5px);
 }
 
 .contact-icon {
-    width: 60px;
-    height: 60px;
-    background-color: var(--primary-color);
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+}
+
+.contact-method h3 {
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.contact-method p {
+    color: #555;
 }
 
 .action-buttons {
     display: flex;
     justify-content: center;
-    gap: 1rem;
-    margin: 1.5rem 0;
+    gap: 1.2rem;
+    margin: 2rem 0;
 }
 
 /* معاينة الصورة */
@@ -355,6 +305,7 @@ h3 {
     justify-content: center;
     margin-bottom: 1rem;
     overflow: hidden;
+    background-color: #f9f9f9;
 }
 
 #imagePreview img {
@@ -364,30 +315,35 @@ h3 {
 }
 
 footer {
-    background-color: var(--dark-color);
+    background: linear-gradient(135deg, var(--dark-color), #1a2530);
     color: white;
     text-align: center;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1rem;
     margin-top: 3rem;
 }
 
 #scrollToTopBtn {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background-color: var(--primary-color);
+    bottom: 25px;
+    left: 25px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     display: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     z-index: 1000;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    transition: transform 0.3s;
+}
+
+#scrollToTopBtn:hover {
+    transform: scale(1.1);
 }
 
 /* نموذج المصادقة */
@@ -398,7 +354,7 @@ footer {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6);
     z-index: 2000;
     align-items: center;
     justify-content: center;
@@ -406,60 +362,113 @@ footer {
 
 .modal-content {
     background-color: white;
-    padding: 2rem;
-    border-radius: 10px;
+    padding: 2.2rem;
+    border-radius: 12px;
     width: 90%;
-    max-width: 400px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    max-width: 450px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.admin-panel-content {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.8rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #eee;
+}
+
+.modal-header h2, .modal-header h3 {
+    color: var(--primary-color);
+    margin: 0;
 }
 
 .close-btn {
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
     color: #999;
+    transition: color 0.3s;
+}
+
+.close-btn:hover {
+    color: var(--primary-color);
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-weight: bold;
+    color: #444;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.form-group textarea {
+    min-height: 110px;
+    resize: vertical;
 }
 
 .form-submit {
-    margin-top: 1rem;
+    margin-top: 1.2rem;
     width: 100%;
+    padding: 1rem;
 }
 
-/* لوحة التحكم */
-#adminPanel {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: white;
-    z-index: 3000;
-    overflow-y: auto;
-    padding: 2rem;
+.admin-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--primary-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
 }
 
 .admin-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.8rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 2px solid #eee;
 }
 
 /* responsive */
 @media (max-width: 768px) {
-    .menu-items {
-        grid-template-columns: 1fr;
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .admin-header {
+        justify-content: center;
     }
     
     #adsContainer, #currentAds {
@@ -468,15 +477,30 @@ footer {
     
     .contact-info {
         flex-direction: column;
+        align-items: center;
         gap: 1.5rem;
+    }
+    
+    .contact-method {
+        width: 100%;
+        max-width: 300px;
     }
     
     .action-buttons {
         flex-direction: column;
+        align-items: center;
     }
     
-    header {
-        flex-direction: column;
-        gap: 1rem;
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+    }
+    
+    .admin-panel-content {
+        max-height: 85vh;
     }
 }
