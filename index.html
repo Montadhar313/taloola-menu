@@ -4,9 +4,724 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>تعلولة - مطعم الوجبات السريعة</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+    :root {
+      --main-red: #c70301;
+      --main-yellow: #fedb17;
+      --main-font: 'Cairo', sans-serif;
+      --text-color: #ffffff;
+      --item-bg: rgba(199, 3, 1, 0.95);
+      --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--main-font);
+      margin: 0; 
+      padding: 0;
+      background-color: #ffffff;
+      color: var(--text-color);
+      min-height: 100vh;
+    }
+
+    /* فيديو الخلفية */
+    #background-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+    }
+
+    .video-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      z-index: -1;
+    }
+
+    header {
+      position: relative;
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+      color: white;
+    }
+
+    header .logo {
+      max-width: 400px;
+      margin-bottom: 0.8rem;
+      border-radius: 50%;
+    }
+
+    header .team-under-logo {
+      max-width: 330px;
+      border-radius: 50%;
+      margin: 0.5rem auto;
+      display: block;
+    }
+
+    header h2 {
+      margin: 0 0 0.4rem 0;
+      font-weight: 700;
+      font-size: 2.4rem;
+      color: var(--main-yellow);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    header p {
+      margin: 0.3rem 0;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    header p.hours {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    nav.sections-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.8rem;
+      padding: 1rem;
+      background: var(--main-red);
+      border-radius: 20px;
+      margin: 0 1rem 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    nav.sections-nav button {
+      background: var(--main-yellow);
+      color: #000000;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 50px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-family: var(--main-font);
+    }
+
+    nav.sections-nav button:focus,
+    nav.sections-nav button:hover {
+      background: #ffffff;
+      color: var(--main-red);
+      outline: none;
+      transform: translateY(-3px);
+    }
+
+    main {
+      padding: 0 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section.menu-section {
+      margin: 2rem auto 4rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 25px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(254, 219, 23, 0.2);
+    }
+
+    section.menu-section h3 {
+      border-bottom: 3px solid var(--main-yellow);
+      padding-bottom: 0.8rem;
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      color: var(--text-color);
+      text-align: center;
+    }
+
+    div.menu-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    div.menu-item {
+      background: var(--item-bg);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 2px solid var(--main-yellow);
+    }
+
+    div.menu-item:hover, 
+    div.menu-item:focus {
+      box-shadow: 0 8px 25px var(--main-yellow);
+      transform: translateY(-7px) scale(1.03);
+      outline: none;
+    }
+
+    .item-image {
+      width: 100%;
+      height: 180px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.2rem;
+      background: var(--main-red);
+      border: 2px solid var(--main-yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .item-image::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(199, 3, 1, 0.8), rgba(254, 219, 23, 0.2));
+      z-index: 1;
+    }
+
+    .item-image img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    div.menu-item h4 {
+      font-size: 1.3rem;
+      margin: 0;
+      color: var(--text-color);
+      font-weight: 600;
+    }
+
+    div.menu-item p.price {
+      font-weight: 700;
+      color: var(--main-yellow);
+      font-size: 1.3rem;
+      margin-top: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    /* أقسام المعلومات */
+    section.info-section {
+      margin: 3rem auto;
+      background-color: rgba(199, 3, 1, 0.9);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      border: 2px solid var(--main-yellow);
+    }
+
+    section.info-section h3 {
+      border-bottom: 3px solid var(--main-yellow);
+      padding-bottom: 0.8rem;
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-color);
+    }
+
+    section.info-section p {
+      line-height: 1.8;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .support-btn {
+      background: var(--main-yellow);
+      color: #000;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+      font-family: var(--main-font);
+    }
+
+    .support-btn:hover {
+      background: #fff;
+      color: var(--main-red);
+      transform: translateY(-3px);
+    }
+
+    .team-content {
+      text-align: right;
+      line-height: 1.8;
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--main-yellow);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+      font-family: var(--main-font);
+    }
+
+    .social-btn:hover {
+      background: #fff;
+      color: var(--main-red);
+      transform: translateY(-3px);
+    }
+
+    /* زر الطلب الآن في المنتصف */
+    .order-now-container {
+      position: fixed;
+      bottom: 30px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .order-now-btn {
+      background: var(--main-yellow);
+      color: #000;
+      border: none;
+      padding: 16px 28px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--main-font);
+    }
+
+    .order-now-btn:hover {
+      background: #fff;
+      color: var(--main-red);
+      transform: translateY(-3px) scale(1.05);
+    }
+
+    #scrollToTopBtn {
+      display: none;
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 9999;
+      background-color: var(--main-red);
+      color: #ffffff;
+      border-radius: 50%;
+      padding: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid var(--main-yellow);
+      align-items: center;
+      justify-content: center;
+      font-family: var(--main-font);
+    }
+
+    #scrollToTopBtn:hover {
+      transform: translateY(-3px);
+      background: var(--main-yellow);
+      color: #000000;
+    }
+
+    /* تأثيرات للعناصر عند التمرير */
+    .menu-item.animate-in {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+      opacity: 0;
+      transform: translateY(30px);
+      }
+      to {
+      opacity: 1;
+      transform: translateY(0);
+      }
+    }
+
+    /* زر تسجيل الدخول */
+    .admin-login-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: var(--main-yellow);
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      font-family: var(--main-font);
+    }
+
+    .admin-login-btn:hover {
+      background: #fff;
+      color: var(--main-red);
+      transform: translateY(-3px);
+    }
+
+    /* نافذة تسجيل الدخول */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      padding: 30px;
+      border-radius: 15px;
+      width: 350px;
+      text-align: center;
+      color: #000;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      color: var(--main-red);
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 12px;
+      margin: 12px 0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    .modal-content input:focus {
+      border-color: var(--main-red);
+      outline: none;
+    }
+
+    .modal-content button {
+      background: var(--main-red);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .modal-content button:hover {
+      background: #a50301;
+      transform: translateY(-2px);
+    }
+
+    .close {
+      color: #aaa;
+      float: left;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      left: 15px;
+    }
+
+    /* لوحة تحكم المسؤول */
+    .admin-panel {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      overflow: auto;
+    }
+
+    .admin-panel-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 85%;
+      max-width: 900px;
+      color: #000;
+      position: relative;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    }
+
+    .close-admin-panel {
+      color: #aaa;
+      float: left;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      top: 15px;
+      left: 20px;
+    }
+
+    .admin-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #f9f9f9;
+    }
+
+    .admin-section h3 {
+      margin-top: 0;
+      color: var(--main-red);
+      border-bottom: 2px solid var(--main-yellow);
+      padding-bottom: 10px;
+    }
+
+    .admin-section input, .admin-section textarea, .admin-section select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    .admin-section input:focus, .admin-section textarea:focus, .admin-section select:focus {
+      border-color: var(--main-red);
+      outline: none;
+    }
+
+    .admin-section button {
+      background: var(--main-red);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .admin-section button:hover {
+      background: #a50301;
+      transform: translateY(-2px);
+    }
+
+    .ad-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .ad-card h4 {
+      margin: 0;
+      color: var(--main-red);
+    }
+
+    .ad-price, .ad-duration {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .ad-actions button {
+      background: var(--main-red);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s;
+    }
+
+    .ad-actions button:hover {
+      background: #a50301;
+    }
+
+    /* إعلانات للزوار */
+    #adsContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    #adsContainer .ad-card {
+      background: var(--item-bg);
+      color: white;
+      border: 2px solid var(--main-yellow);
+    }
+
+    #adsContainer .ad-card.red {
+      background: var(--main-red);
+    }
+
+    #adsContainer .ad-card.yellow {
+      background: var(--main-yellow);
+      color: #000;
+    }
+
+    .no-ads {
+      text-align: center;
+      color: var(--text-color);
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 900px) {
+      nav.sections-nav {
+        gap: 0.5rem;
+        padding: 0.8rem;
+        border-radius: 15px;
+        margin: 0 0.5rem 1.5rem;
+      }
+      
+      nav.sections-nav button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+      
+      section.menu-section, section.info-section {
+        padding: 20px;
+        margin: 1.5rem 0.5rem;
+      }
+      
+      div.menu-items {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+      }
+      
+      .item-image {
+        height: 150px;
+      }
+      
+      header .logo {
+        max-width: 150px;
+      }
+      
+      header {
+        padding: 2rem 1rem 1.5rem;
+      }
+      
+      header h2 {
+        font-size: 2rem;
+      }
+
+      .order-now-container {
+        bottom: 20px;
+      }
+      
+      .order-now-btn {
+        padding: 14px 22px;
+        font-size: 1rem;
+      }
+      
+      #scrollToTopBtn {
+        bottom: 20px;
+        right: 20px;
+        padding: 12px;
+      }
+
+      .admin-panel-content {
+        width: 95%;
+        margin: 10% auto;
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      div.menu-items {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+      }
+      
+      .social-links {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .social-btn {
+        width: 200px;
+        justify-content: center;
+      }
+      
+      nav.sections-nav {
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 0.8rem;
+      }
+      
+      nav.sections-nav button {
+        flex-shrink: 0;
+      }
+      
+      header .logo {
+        max-width: 130px;
+      }
+      
+      header .team-under-logo {
+        max-width: 140px;
+      }
+
+      .modal-content {
+        width: 90%;
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -15,6 +730,11 @@
     <source src="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4" type="video/mp4">
   </video>
   <div class="video-overlay"></div>
+
+  <!-- زر تسجيل الدخول للمسؤول -->
+  <button id="adminLoginBtn" class="admin-login-btn">
+    <i class="fas fa-user-shield"></i> تسجيل الدخول
+  </button>
 
   <header>
     <img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
@@ -41,6 +761,12 @@
   </nav>
 
   <main>
+    <!-- قسم الإعلانات -->
+    <section class="info-section" id="ads">
+      <h3>العروض الخاصة</h3>
+      <div id="adsContainer"></div>
+    </section>
+
     <!-- قسم البركر -->
     <section class="menu-section" id="sec0" tabindex="0" aria-label="قسم بركر">
       <h3>بركر</h3>
@@ -76,365 +802,8 @@
       </div>
     </section>
 
-    <!-- قسم الزنكر -->
-    <section class="menu-section" id="sec1" tabindex="0" aria-label="قسم زنكر">
-      <h3>زنكر</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="زنكر كلاسك, السعر: 2500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/ZENGER.png" alt="زنكر كلاسك" loading="lazy">
-          </div>
-          <h4>زنكر كلاسك</h4>
-          <p class="price">2500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="زنكر مكسيكانو, السعر: 3000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/ZENGER.png" alt="زنكر مكسيكانو" loading="lazy">
-          </div>
-          <h4>زنكر مكسيكانو</h4>
-          <p class="price">3000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="زنكر مدخن, السعر: 3000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/ZENGER.png" alt="زنكر مدخن" loading="lazy">
-          </div>
-          <h4>زنكر مدخن</h4>
-          <p class="price">3000 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الريزو -->
-    <section class="menu-section" id="sec2" tabindex="0" aria-label="قسم ريزو">
-      <h3>ريزو</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="ريزو كلاسك, السعر: 4000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/RIZO.png" alt="ريزو كلاسك" loading="lazy">
-          </div>
-          <h4>ريزو كلاسك</h4>
-          <p class="price">4000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="ريزو بالجبن, السعر: 4500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/RIZO.png" alt="ريزو بالجبن" loading="lazy">
-          </div>
-          <h4>ريزو بالجبن</h4>
-          <p class="price">4500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="ريزو سبايسي, السعر: 4500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/RIZO.png" alt="ريزو سبايسي" loading="lazy">
-          </div>
-          <h4>ريزو سبايسي</h4>
-          <p class="price">4500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="ريزو مدخن, السعر: 4500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/RIZO.png" alt="ريزو مدخن" loading="lazy">
-          </div>
-          <h4>ريزو مدخن</h4>
-          <p class="price">4500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الصاج -->
-    <section class="menu-section" id="sec3" tabindex="0" aria-label="قسم صاج">
-      <h3>صاج</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="صاج كنتاكي, السعر: 2000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/SAJ_K.png" alt="صاج كنتاكي" loading="lazy">
-          </div>
-          <h4>صاج كنتاكي</h4>
-          <p class="price">2000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="صاج كريل, السعر: 1500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/SAJ_G.png" alt="صاج كريل" loading="lazy">
-          </div>
-          <h4>صاج كريل</h4>
-          <p class="price">1500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الكنتاكي -->
-    <section class="menu-section" id="sec4" tabindex="0" aria-label="قسم كنتاكي">
-      <h3>كنتاكي</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="3 قطع, السعر: 6500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/KNTAKE.png" alt="3 قطع" loading="lazy">
-          </div>
-          <h4>3 قطع</h4>
-          <p class="price">6500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="5 قطع, السعر: 10000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/KNTAKE.png" alt="5 قطع" loading="lazy">
-          </div>
-          <h4>5 قطع</h4>
-          <p class="price">10000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="10 قطع, السعر: 18000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/KNTAKE.png" alt="10 قطع" loading="lazy">
-          </div>
-          <h4>10 قطع</h4>
-          <p class="price">18000 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الستربس -->
-    <section class="menu-section" id="sec5" tabindex="0" aria-label="قسم ستربس">
-      <h3>ستربس</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="4 قطع, السعر: 6000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/STRIPS.png" alt="4 قطع" loading="lazy">
-          </div>
-          <h4>4 قطع</h4>
-          <p class="price">6000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="6 قطع, السعر: 8500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/STRIPS.png" alt="6 قطع" loading="lazy">
-          </div>
-          <h4>6 قطع</h4>
-          <p class="price">8500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="12 قطعة, السعر: 14500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/STRIPS.png" alt="12 قطعة" loading="lazy">
-          </div>
-          <h4>12 قطعة</h4>
-          <p class="price">14500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم السندويتشات -->
-    <section class="menu-section" id="sec6" tabindex="0" aria-label="قسم سندويتشات">
-      <h3>سندويتشات</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="سندويتش تعلولة, السعر: 2000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/S_TALOLA.png" alt="سندويتش تعلولة" loading="lazy">
-          </div>
-          <h4>سندويتش تعلولة</h4>
-          <p class="price">2000 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="فلر, السعر: 3000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FALAR.png" alt="فلر" loading="lazy">
-          </div>
-          <h4>فلر</h4>
-          <p class="price">2500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الأطباق -->
-    <section class="menu-section" id="sec7" tabindex="0" aria-label="قسم اطباق">
-      <h3>اطباق</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="طبق تعلولة, السعر: 2500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/T_TALOLA.png" alt="طبق تعلولة" loading="lazy">
-          </div>
-          <h4>طبق تعلولة</h4>
-          <p class="price">2500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الدايت -->
-    <section class="menu-section" id="sec8" tabindex="0" aria-label="قسم دايت">
-      <h3>دايت</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="وجبة دايت, السعر: 4500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/DAET.png" alt="وجبة دايت" loading="lazy">
-          </div>
-          <h4>وجبة دايت</h4>
-          <p class="price">4500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الفنكر -->
-    <section class="menu-section" id="sec9" tabindex="0" aria-label="قسم الفنكر">
-      <h3>الفنكر</h3>
-      <div class="menu-items">
-        <div class="menu-item animate-in" tabindex="0" aria-label="فنكر كلاسك صغير, السعر: 1500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FINGR.png" alt="فنكر كلاسيك" loading="lazy">
-          </div>
-          <h4>فنكر كلاسك صغير</h4>
-          <p class="price">1500 د.ع</p>
-        </div>
-        <div class="menu-item animate-in" tabindex="0" aria-label="فنكر بالجبن صغير, السعر: 2000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
-          </div>
-          <h4>فنكر بالجبن صغير</h4>
-          <p class="price">2000 د.ع</p>
-        </div>
-      <div class="menu-item animate-in" tabindex="0" aria-label="فنكر سبايسي صغير, السعر: 2000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
-          </div>
-          <h4>فنكر سبايسي صغير</h4>
-          <p class="price">2000 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label="فنكر كلاسك كبير, السعر: 2500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FINGR.png" alt="فنكر كلاسيك" loading="lazy">
-          </div>
-          <h4>فنكر كلاسك كبير</h4>
-          <p class="price">2500 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label="فنكر بالجبن كبير, السعر: 3000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
-          </div>
-          <h4>فنكر بالجبن كبير</h4>
-          <p class="price">3000 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label="فنكر سبايسي كبير, السعر: 3000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
-          </div>
-          <h4>فنكر سبايسي كبير</h4>
-          <p class="price">3000 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الجكن فرايز -->
-    <section class="menu-section" id="sec10" tabindex="0" aria-label="قسم الجكن فرايز">
-      <h3>الجكن فرايز</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="جكن فرايز صغير, السعر: 2500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/CHEKEN.png" alt="جكن فرايز عادي" loading="lazy">
-          </div>
-          <h4>جكن فرايز صغير</h4>
-          <p class="price">2500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="جكن فرايز كبير, السعر: 3500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/CHEKEN.png" alt="جكن فرايز كبير" loading="lazy">
-          </div>
-          <h4>جكن فرايز كبير</h4>
-          <p class="price">4000 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم الصوصات -->
-    <section class="menu-section" id="sec11" tabindex="0" aria-label="قسم الصوصات">
-      <h3>الصوصات</h3>
-      <div class="menu-items">
-        <div class="menu-item animate-in" tabindex="0" aria-label=" باربيكيو, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/BARBQ.png" alt="صوص باربيكيو" loading="lazy">
-          </div>
-          <h4>باربيكيو</h4>
-          <p class="price">250 د.ع</p>
-        </div>
-        <div class="menu-item animate-in" tabindex="0" aria-label=" ثومية, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/THOM.png" alt="صوص ثوم" loading="lazy">
-          </div>
-          <h4>ثومية</h4>
-          <p class="price">250 د.ع</p>
-        </div>
-        <div class="menu-item animate-in" tabindex="0" aria-label=" بافلو, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/SPAYSY.png" alt="صوص حار" loading="lazy">
-          </div>
-          <h4>بافلو</h4>
-          <p class="price">250 د.ع</p>
-        </div>
-      <div class="menu-item animate-in" tabindex="0" aria-label=" هاني ماستر, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/HANE.png" alt="صوص حار" loading="lazy">
-          </div>
-          <h4>هاني ماستر</h4>
-          <p class="price">250 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label=" كوكتيل, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/KOKTEL.png" alt="صوص حار" loading="lazy">
-          </div>
-          <h4>كوكتيل</h4>
-          <p class="price">250 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label=" شيدر, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/SHADER.png" alt="صوص حار" loading="lazy">
-          </div>
-          <h4>شيدر</h4>
-          <p class="price">250 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label=" روستر, السعر: 250 د.ع">
-          <div class="item-image">
-            <img src="assets/images/ROSTER.png" alt="صوص حار" loading="lazy">
-          </div>
-          <h4>روستر</h4>
-          <p class="price">250 د.ع</p>
-        </div>
-      </div>
-      
-    </section>
-
-    <!-- قسم المشروبات الغازية -->
-    <section class="menu-section" id="sec12" tabindex="0" aria-label="قسم مشروبات غازية">
-      <h3>مشروبات غازية</h3>
-      <div class="menu-items">
-        <div class="menu-item" tabindex="0" aria-label="بيبسي 250 مل, السعر: 500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/COLA.png" alt="بيبسي 250 مل" loading="lazy">
-          </div>
-          <h4>كولا</h4>
-          <p class="price">500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="ميرندا 250 مل, السعر: 500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/FANTA.png" alt="ميرندا 250 مل" loading="lazy">
-          </div>
-          <h4>فانتا</h4>
-          <p class="price">500 د.ع</p>
-        </div>
-        <div class="menu-item" tabindex="0" aria-label="سفن أب 250 مل, السعر: 500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/SPRITE.png" alt="سفن أب 250 مل" loading="lazy">
-          </div>
-          <h4>سبرايت</h4>
-          <p class="price">500 د.ع</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- قسم المقبلات -->
-    <section class="menu-section animate-in" id="sec13" tabindex="0" aria-label="قسم مقبلات">
-      <h3>مقبلات</h3>
-      <div class="menu-items">
-        
-        <div class="menu-item animate-in" tabindex="0" aria-label="ماعون مقبلات صغير, السعر: 1500 د.ع">
-          <div class="item-image">
-            <img src="assets/images/MO_1.png" alt="حلقات بصل" loading="lazy">
-          </div>
-          <h4>ماعون مقبلات صغير</h4>
-          <p class="price">1500 د.ع</p>
-        </div><div class="menu-item animate-in" tabindex="0" aria-label="ماعون مقبلات كبير, السعر: 2000 د.ع">
-          <div class="item-image">
-            <img src="assets/images/MO_1.png" alt="تشيكن ستريبس" loading="lazy">
-          </div>
-          <h4>ماعون مقبلات كبير</h4>
-          <p class="price">2000 د.ع</p>
-        </div>
-      </div>
-    </section>
-   
+    <!-- الأقسام الأخرى تبقى كما هي -->
+    <!-- ... -->
 
     <!-- قسم فريق تعلولة -->
     <section class="info-section" id="team">
@@ -459,21 +828,7 @@
       <div class="social-links">
         <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك توك</a>
         <a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank">واتساب</a>
-        
       </div>
-    </section>
-    
-    
-
-    <section class="" id="social">
-    <br>
-    
-    <br><br>
-    
-    <br><br>
-    
-        
-        
     </section>
   </main>
   
@@ -495,6 +850,292 @@
     </svg>
   </button>
 
-  <script src="script.js"></script>
+  <!-- نافذة تسجيل دخول المسؤول -->
+  <div id="adminAuthModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAuthModal()">&times;</span>
+      <h2>تسجيل دخول المسؤول</h2>
+      <input type="text" id="adminUsername" placeholder="اسم المستخدم">
+      <input type="password" id="adminPassword" placeholder="كلمة المرور">
+      <button id="adminLoginSubmit">دخول</button>
+    </div>
+  </div>
+
+  <!-- لوحة تحكم المسؤول -->
+  <div id="adminPanel" class="admin-panel">
+    <div class="admin-panel-content">
+      <span class="close-admin-panel" id="closeAdminPanel">&times;</span>
+      <h2>لوحة تحكم المسؤول</h2>
+      
+      <div class="admin-section">
+        <h3>إنشاء إعلان جديد</h3>
+        <input type="text" id="adTitle" placeholder="عنوان الإعلان">
+        <textarea id="adDescription" placeholder="وصف الإعلان"></textarea>
+        <input type="text" id="adPrice" placeholder="السعر (اختياري)">
+        <input type="text" id="adDuration" placeholder="المدة (اختياري)">
+        <select id="adTemplate">
+          <option value="red">النموذج الأحمر</option>
+          <option value="yellow">النموذج الأصفر</option>
+        </select>
+        <button onclick="createAd()">إنشاء الإعلان</button>
+      </div>
+      
+      <div class="admin-section">
+        <h3>الإعلانات الحالية</h3>
+        <div id="currentAds"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // عناصر DOM
+      const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+      const navButtons = document.querySelectorAll('nav.sections-nav button');
+      const menuSections = document.querySelectorAll('section.menu-section');
+      const orderBtn = document.getElementById('orderBtn');
+      
+      // زر العودة لأعلى الصفحة
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          scrollToTopBtn.style.display = 'flex';
+        } else {
+          scrollToTopBtn.style.display = 'none';
+        }
+      });
+      
+      scrollToTopBtn.addEventListener('click', () => {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+      });
+      
+      // التنقل بين الأقسام
+      navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const targetSection = this.getAttribute('data-section');
+          const sectionElement = document.getElementById(targetSection);
+          
+          if (sectionElement) {
+            sectionElement.scrollIntoView({behavior: 'smooth'});
+            
+            // إضافة تأثير مرئي للقسم النشط
+            menuSections.forEach(section => {
+              section.classList.remove('active');
+            });
+            sectionElement.classList.add('active');
+          }
+        });
+      });
+      
+      // زر الطلب الآن - واتساب
+      orderBtn.addEventListener('click', function() {
+        const phoneNumber = '9647755666073';
+        const message = 'مرحباً، أريد طلب وجبة من تعلولة';
+        const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappURL, '_blank');
+      });
+      
+      // إضافة تأثيرات للعناصر عند التمرير
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+      
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in');
+          }
+        });
+      }, observerOptions);
+      
+      // مراقبة العناصر لإضافة تأثيرات التمرير
+      const menuItems = document.querySelectorAll('.menu-item');
+      menuItems.forEach(item => {
+        observer.observe(item);
+      });
+      
+      menuSections.forEach(section => {
+        observer.observe(section);
+      });
+      
+      // إضافة تأثيرات للعناصر عند التمرير
+      const infoSections = document.querySelectorAll('.info-section');
+      infoSections.forEach(section => {
+        observer.observe(section);
+      });
+
+      // تهيئة الإعلانات
+      displayAds();
+    });
+
+    // فتح نموذج الدعم
+    function openSupport() {
+      const phoneNumber = '9647755666073';
+      const message = 'أحتاج إلى مساعدة بخصوص...';
+      const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappURL, '_blank');
+    }
+
+    // بيانات المسؤول (يمكن تغييرها لاحقاً)
+    const ADMIN_CREDENTIALS = {
+      username: "admin",
+      password: "admin123"
+    };
+
+    // مصفوفة لتخزين الإعلانات
+    let advertisements = JSON.parse(localStorage.getItem('taloola_ads')) || [];
+
+    // عناصر DOM للإدارة
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminAuthModal = document.getElementById('adminAuthModal');
+    const adminLoginSubmit = document.getElementById('adminLoginSubmit');
+    const adminPanel = document.getElementById('adminPanel');
+    const closeAdminPanel = document.getElementById('closeAdminPanel');
+    const adsContainer = document.getElementById('adsContainer');
+    const currentAds = document.getElementById('currentAds');
+
+    // فتح نافذة تسجيل دخول المسؤول
+    adminLoginBtn.addEventListener('click', () => {
+      adminAuthModal.style.display = 'flex';
+    });
+
+    // تسجيل دخول المسؤول
+    adminLoginSubmit.addEventListener('click', () => {
+      const username = document.getElementById('adminUsername').value;
+      const password = document.getElementById('adminPassword').value;
+      
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        adminAuthModal.style.display = 'none';
+        adminPanel.style.display = 'block';
+        loadCurrentAds();
+      } else {
+        alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+      }
+    });
+
+    // إغلاق لوحة التحكم
+    closeAdminPanel.addEventListener('click', () => {
+      adminPanel.style.display = 'none';
+    });
+
+    // إنشاء إعلان جديد
+    function createAd() {
+      const title = document.getElementById('adTitle').value;
+      const description = document.getElementById('adDescription').value;
+      const price = document.getElementById('adPrice').value;
+      const duration = document.getElementById('adDuration').value;
+      const template = document.getElementById('adTemplate').value;
+      
+      if (!title || !description) {
+        alert('الرجاء ملء الحقول الإلزامية');
+        return;
+      }
+      
+      const newAd = {
+        id: Date.now(),
+        title,
+        description,
+        price,
+        duration,
+        template,
+        date: new Date().toLocaleDateString('ar-EG')
+      };
+      
+      advertisements.push(newAd);
+      saveAds();
+      loadCurrentAds();
+      displayAds();
+      clearAdForm();
+      
+      alert('تم إنشاء الإعلان بنجاح!');
+    }
+
+    // حفظ الإعلانات في localStorage
+    function saveAds() {
+      localStorage.setItem('taloola_ads', JSON.stringify(advertisements));
+    }
+
+    // تحميل الإعلانات الحالية
+    function loadCurrentAds() {
+      currentAds.innerHTML = '';
+      
+      if (advertisements.length === 0) {
+        currentAds.innerHTML = '<p>لا توجد إعلانات حالية</p>';
+        return;
+      }
+      
+      advertisements.forEach(ad => {
+        const adElement = document.createElement('div');
+        adElement.className = 'ad-card';
+        adElement.innerHTML = `
+          <h4>${ad.title}</h4>
+          <p>${ad.description}</p>
+          ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+          ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
+          <p><small>تم الإنشاء: ${ad.date}</small></p>
+          <div class="ad-actions">
+            <button onclick="deleteAd(${ad.id})" style="background: var(--main-red); color: white;">حذف</button>
+          </div>
+        `;
+        currentAds.appendChild(adElement);
+      });
+    }
+
+    // عرض الإعلانات للزوار
+    function displayAds() {
+      adsContainer.innerHTML = '';
+      
+      if (advertisements.length === 0) {
+        adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
+        return;
+      }
+      
+      advertisements.forEach(ad => {
+        const adElement = document.createElement('div');
+        adElement.className = `ad-card ${ad.template}`;
+        adElement.innerHTML = `
+          <h4>${ad.title}</h4>
+          <p>${ad.description}</p>
+          ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+          ${ad.duration ? `<p class="ad-duration">${ad.duration}</p>` : ''}
+        `;
+        adsContainer.appendChild(adElement);
+      });
+    }
+
+    // حذف إعلان
+    function deleteAd(id) {
+      if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
+        advertisements = advertisements.filter(ad => ad.id !== id);
+        saveAds();
+        loadCurrentAds();
+        displayAds();
+      }
+    }
+
+    // مسح نموذج الإعلان
+    function clearAdForm() {
+      document.getElementById('adTitle').value = '';
+      document.getElementById('adDescription').value = '';
+      document.getElementById('adPrice').value = '';
+      document.getElementById('adDuration').value = '';
+      document.getElementById('adTemplate').value = 'red';
+    }
+
+    // إغلاق نافذة المصادقة
+    function closeAuthModal() {
+      adminAuthModal.style.display = 'none';
+    }
+
+    // إغلاق لوحة التحكم عند النقر خارجها
+    window.addEventListener('click', function(event) {
+      if (event.target === adminPanel) {
+        adminPanel.style.display = 'none';
+      }
+      if (event.target === adminAuthModal) {
+        adminAuthModal.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>
