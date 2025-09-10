@@ -23,11 +23,29 @@
   </video>
   <div class="video-overlay"></div>
 
-  <!-- زر تسجيل الدخول للمسؤول -->
-  <button id="adminLoginBtn" class="admin-login-btn">
-    <i class="fas fa-user-shield"></i> تسجيل الدخول
-  </button>
+  <!-- زر تسجيل الدخول -->
+<button id="adminLoginBtn" class="admin-login-btn">
+  <i class="fas fa-user-shield"></i> تسجيل الدخول
+</button>
 
+<!-- نافذة تسجيل الدخول -->
+<div id="adminAuthModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeAuthModal()">&times;</span>
+    <h2>تسجيل دخول المسؤول</h2>
+    <input type="text" id="adminUsername" placeholder="اسم المستخدم">
+    <input type="password" id="adminPassword" placeholder="كلمة المرور">
+    <button id="adminLoginSubmit">دخول</button>
+  </div>
+</div>
+
+<!-- لوحة تحكم المسؤول -->
+<div id="adminPanel" class="admin-panel">
+  <div class="admin-panel-content">
+    <span class="close-admin-panel" id="closeAdminPanel">&times;</span>
+    <!-- محتوى لوحة التحكم -->
+  </div>
+</div>
   <header>
     <img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
     <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
