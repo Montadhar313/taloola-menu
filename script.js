@@ -224,4 +224,42 @@ function initializeMenuItems() {
 // تهيئة الصفحة عند التحميل
 window.onload = function() {
   initializeMenuItems();
+
+
+
+// اختبار رفع صورة مباشرة
+async function testUpload() {
+  try {
+    // إنشاء ملف تجريبي
+    const response = await fetch('https://via.placeholder.com/150');
+    const blob = await response.blob();
+    const file = new File([blob], 'test.png', { type: 'image/png' });
+    
+    // رفع الملف
+    const fileName = `test/${Date.now()}_test.png`;
+    const { data, error } = await supabase.storage
+      .from('images')
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('Upload error:', error);
+      return;
+    }
+    
+    console.log('Upload successful! File info:', data);
+    
+    // الحصول على الرابط العام
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(fileName);
+    
+    console.log('Public URL:', urlData.publicUrl);
+  } catch (err) {
+    console.error('Unexpected error:', err);
+  }
+}
+
+// تشغيل الاختبار
+testUpload();
+
 };
