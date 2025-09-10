@@ -18,6 +18,7 @@ const analytics = firebase.analytics();
 // تهيئة Supabase
 const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
+//const SUPABASE_ANON_KEY = 'sb_secret_SjuV5OL-5K3Y6VaIeLkmuw_7iDCcSqa';
 
 // إنشاء عميل Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
