@@ -6,14 +6,16 @@
   <title>تعلولة - مطعم الوجبات السريعة</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- إضافة Firebase -->
+  <!-- إضافة Firebase للقاعدة فقط -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
   
+  <!-- إضافة Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 
     :root {
       --main-red: #c70301;
@@ -785,6 +787,9 @@
         padding: 20px;
       }
     }
+
+    /* أنماط CSS تبقى كما هي بدون تغيير */
+    /* ... جميع أنماط CSS السابقة ... */
   </style>
 </head>
 <body>
@@ -806,7 +811,8 @@
     <p>07755666073 - 07755664566<br>بـغداد - مدينة الــصدر - قطـاع 70</p>
     <p class="hours">أوقــــات الــــعمـل   :  10ص - 3ص</p>
   </header>
-  
+
+    <!-- أزرار الأقسام تبقى كما هي -->
   <nav class="sections-nav" role="navigation" aria-label="روابط الأقسام">
     <button type="button" data-section="sec0">بركر</button>
     <button type="button" data-section="sec1">زنكر</button>
@@ -831,6 +837,9 @@
       <div id="adsContainer"></div>
     </section>
 
+    <!-- جميع أقسام القائمة تبقى كما هي -->
+    <!-- ... جميع أقسام القائمة ... -->
+    
     <!-- قسم البركر -->
     <section class="menu-section" id="sec0" tabindex="0" aria-label="قسم بركر">
       <h3>بركر</h3>
@@ -1224,6 +1233,8 @@
         </div>
       </div>
     </section>
+    
+
     <!-- قسم فريق تعلولة -->
     <section class="info-section" id="team">
       <h3>فريق تعلولة</h3>
@@ -1245,7 +1256,7 @@
       <h3>تواصل معنا</h3>
       <p>تابعنا على منصات التواصل الاجتماعي لمعرفة آخر العروض والأخبار</p>
       <div class="social-links">
-        <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك تок</a>
+        <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك توك</a>
         <a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank">واتساب</a>
       </div>
     </section>
@@ -1318,7 +1329,7 @@
   </div>
 
   <script>
-    // تهيئة Firebase - استبدل هذه القيم بالقيم الحقيقية من مشروعك
+    // تهيئة Firebase - للقاعدة فقط (بدون Storage)
     const firebaseConfig = {
       apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
       authDomain: "talola-food.firebaseapp.com",
@@ -1330,11 +1341,15 @@
       measurementId: "G-L4SLHVVFVR"
     };
 
-    // Initialize Firebase
+    // Initialize Firebase (بدون Storage)
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    const storage = firebase.storage();
     const analytics = firebase.analytics();
+
+    // تهيئة Supabase
+    const SUPABASE_URL = 'https://your-project.supabase.co'; // استبدل برابط مشروعك
+    const SUPABASE_ANON_KEY = 'your-anon-key'; // استبدل بمفتاحك العام
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // بيانات المسؤول
     const ADMIN_CREDENTIALS = {
@@ -1409,13 +1424,26 @@
       
       let imageUrl = '';
       
-      // رفع الصورة إذا تم اختيارها
+      // رفع الصورة إلى Supabase Storage إذا تم اختيارها
       if (imageFile) {
         try {
-          const storageRef = storage.ref();
-          const imageRef = storageRef.child('ads/' + Date.now() + '_' + imageFile.name);
-          const snapshot = await imageRef.put(imageFile);
-          imageUrl = await snapshot.ref.getDownloadURL();
+          const fileName = `ads/${Date.now()}_${imageFile.name}`;
+          
+          // رفع الملف إلى Supabase Storage
+          const { data, error } = await supabase.storage
+            .from('images') // اسم ال bucket في Supabase
+            .upload(fileName, imageFile);
+          
+          if (error) {
+            throw error;
+          }
+          
+          // الحصول على رابط الصورة
+          const { data: urlData } = supabase.storage
+            .from('images')
+            .getPublicUrl(fileName);
+          
+          imageUrl = urlData.publicUrl;
         } catch (error) {
           console.error('Error uploading image:', error);
           alert('حدث خطأ أثناء رفع الصورة');
@@ -1434,7 +1462,7 @@
         timestamp: Date.now()
       };
       
-      // إضافة الإعلان إلى Firebase
+      // إضافة الإعلان إلى Firebase (لتبقى قاعدة البيانات كما هي)
       try {
         const newAdRef = database.ref('ads/').push();
         await newAdRef.set(newAd);
@@ -1531,10 +1559,25 @@
           // حذف الإعلان من قاعدة البيانات
           await database.ref('ads/' + key).remove();
           
-          // حذف الصورة من التخزين إذا كانت موجودة
+          // حذف الصورة من Supabase Storage إذا كانت موجودة
           if (imageUrl) {
-            const imageRef = storage.refFromURL(imageUrl);
-            await imageRef.delete();
+            try {
+              // استخراج اسم الملف من الرابط
+              const urlParts = imageUrl.split('/');
+              const fileName = urlParts[urlParts.length - 1];
+              const fullPath = `ads/${fileName}`;
+              
+              // حذف الملف من Supabase Storage
+              const { error } = await supabase.storage
+                .from('images')
+                .remove([fullPath]);
+              
+              if (error) {
+                console.error('Error deleting image:', error);
+              }
+            } catch (error) {
+              console.error('Error deleting image from storage:', error);
+            }
           }
           
           alert('تم حذف الإعلان بنجاح');
