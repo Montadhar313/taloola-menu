@@ -1,6 +1,299 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعلولة - Taaloula | لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div>
+            <div class="logo">تعلولة - Taaloula</div>
+            <div class="tagline">مطعمك المفضل لألذ الوجبات السريعة</div>
+        </div>
+        <div class="admin-header">
+            <button id="viewAdsBtn" class="btn btn-secondary">
+                <i class="fas fa-ad"></i>
+                عرض الإعلانات
+            </button>
+            <button id="adminLoginBtn" class="btn btn-primary">
+                <i class="fas fa-lock"></i>
+                دخول المسؤول
+            </button>
+        </div>
+    </header>
+    
+    <nav class="sections-nav">
+        <button data-section="menu">قائمة الطعام</button>
+        <button data-section="ads">العروض الخاصة</button>
+        <button data-section="info">معلومات الاتصال</button>
+    </nav>
+    
+    <main>
+        <section id="menu" class="menu-section">
+            <h2>قائمة الطعام</h2>
+            
+            <div class="menu-category">
+                <h3>الوجبات الرئيسية</h3>
+                <div class="menu-items">
+                    <div class="menu-item">
+                        <img src="https://via.placeholder.com/300x200.png?text=برغر+لحم" alt="برغر لحم">
+                        <div class="menu-item-content">
+                            <h3>برغر لحم</h3>
+                            <p>برغر لحم بقري طازج مع الخس والطماطم والصلصة الخاصة</p>
+                            <div class="price">5.000 د.ع</div>
+                        </div>
+                    </div>
+                    
+                    <div class="menu-item">
+                        <img src="https://via.placeholder.com/300x200.png?text=برغر+دجاج" alt="برغر دجاج">
+                        <div class="menu-item-content">
+                            <h3>برغر دجاج</h3>
+                            <p>برغر دجاج مقرمش مع المايونيز والخس</p>
+                            <div class="price">4.500 د.ع</div>
+                        </div>
+                    </div>
+                    
+                    <div class="menu-item">
+                        <img src="https://via.placeholder.com/300x200.png?text=شاورما" alt="شاورما">
+                        <div class="menu-item-content">
+                            <h3>شاورما</h3>
+                            <p>شاورما لحم أو دجاج مع الخضار والصلصة</p>
+                            <div class="price">4.000 د.ع</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="menu-category">
+                <h3>المشروبات</h3>
+                <div class="menu-items">
+                    <div class="menu-item">
+                        <img src="https://via.placeholder.com/300x200.png?text=مشروبات+غازية" alt="مشروبات غازية">
+                        <div class="menu-item-content">
+                            <h3>مشروبات غازية</h3>
+                            <p>كوكلا، سفن أب، ميرندا، بيبسي</p>
+                            <div class="price">1.000 د.ع</div>
+                        </div>
+                    </div>
+                    
+                    <div class="menu-item">
+                        <img src="https://via.placeholder.com/300x200.png?text=عصائر+طازجة" alt="عصائر طازجة">
+                        <div class="menu-item-content">
+                            <h3>عصائر طازجة</h3>
+                            <p>برتقال، فراولة، مانجو</p>
+                            <div class="price">2.000 د.ع</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="ads" class="menu-section ads-section">
+            <h2>العروض الخاصة</h2>
+            <div id="adsContainer">
+                <p class="no-ads">يتم تحميل العروض...</p>
+            </div>
+        </section>
+        
+        <section id="info" class="menu-section info-section">
+            <h2>معلومات الاتصال</h2>
+            
+            <div class="contact-info">
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h3>اتصل بنا</h3>
+                    <p>+964 775 566 6073</p>
+                </div>
+                
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h3>عنواننا</h3>
+                    <p>شارع الرئيس، أربيل، العراق</p>
+                </div>
+                
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>ساعات العمل</h3>
+                    <p>كل يوم من 9:00 صباحاً إلى 11:00 مساءً</p>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="orderBtn" class="btn btn-primary">
+                    <i class="fas fa-shopping-cart"></i>
+                    اطلب الآن
+                </button>
+                
+                <button onclick="openSupport()" class="btn btn-secondary">
+                    <i class="fas fa-headset"></i>
+                    الدعم الفني
+                </button>
+            </div>
+        </section>
+        
+        <!-- قسم إدارة الإعلانات (للأدمن فقط) -->
+        <section id="adminAdsSection" class="admin-section" style="display: none;">
+            <h2>إدارة الإعلانات</h2>
+            
+            <div class="form-group">
+                <label for="adTitle">عنوان الإعلان *</label>
+                <input type="text" id="adTitle" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="adDescription">وصف الإعلان *</label>
+                <textarea id="adDescription" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="adPrice">السعر (اختياري)</label>
+                <input type="text" id="adPrice" placeholder="مثال: 5.000 د.ع">
+            </div>
+            
+            <div class="form-group">
+                <label for="adDuration">المدة (اختياري)</label>
+                <input type="text" id="adDuration" placeholder="مثال: لمدة محدودة">
+            </div>
+            
+            <div class="form-group">
+                <label for="adTemplate">النموذج</label>
+                <select id="adTemplate">
+                    <option value="red">أحمر (افتراضي)</option>
+                    <option value="blue">أزرق</option>
+                    <option value="green">أخضر</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="adImage">صورة الإعلان (اختياري)</label>
+                <input type="file" id="adImage" accept="image/*" onchange="previewImage(this)">
+                <div id="imagePreview">
+                    <span>معاينة الصورة</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="createAd()">
+                <i class="fas fa-plus"></i>
+                إنشاء الإعلان
+            </button>
+            
+            <div style="margin-top: 2rem;">
+                <h3>الإعلانات الحالية</h3>
+                <div id="currentAds">
+                    <p>يتم تحميل الإعلانات...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>© 2023 مطعم تعلولة - جميع الحقوق محفوظة</p>
+    </footer>
+    
+    <button id="scrollToTopBtn" title="العودة إلى الأعلى">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    
+    <!-- نموذج المصادقة -->
+    <div id="adminAuthModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>المصادقة الإدارية</h3>
+                <button class="close-btn" onclick="closeAuthModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="adminUsername">اسم المستخدم</label>
+                <input type="text" id="adminUsername" required>
+            </div>
+            <div class="form-group">
+                <label for="adminPassword">كلمة المرور</label>
+                <input type="password" id="adminPassword" required>
+            </div>
+            <button id="adminLoginSubmit" class="btn btn-primary form-submit">تسجيل الدخول</button>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="adminPanel">
+        <div class="admin-panel-header">
+            <h2>لوحة تحكم المسؤول</h2>
+            <button id="closeAdminPanel" class="btn btn-danger">
+                <i class="fas fa-times"></i>
+                إغلاق
+            </button>
+        </div>
+        
+        <div class="admin-section">
+            <h3>إدارة الإعلانات</h3>
+            
+            <div class="form-group">
+                <label for="adTitlePanel">عنوان الإعلان *</label>
+                <input type="text" id="adTitlePanel" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="adDescriptionPanel">وصف الإعلان *</label>
+                <textarea id="adDescriptionPanel" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="adPricePanel">السعر (اختياري)</label>
+                <input type="text" id="adPricePanel" placeholder="مثال: 5.000 د.ع">
+            </div>
+            
+            <div class="form-group">
+                <label for="adDurationPanel">المدة (اختياري)</label>
+                <input type="text" id="adDurationPanel" placeholder="مثال: لمدة محدودة">
+            </div>
+            
+            <div class="form-group">
+                <label for="adTemplatePanel">النموذج</label>
+                <select id="adTemplatePanel">
+                    <option value="red">أحمر (افتراضي)</option>
+                    <option value="blue">أزرق</option>
+                    <option value="green">أخضر</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="adImagePanel">صورة الإعلان (اختياري)</label>
+                <input type="file" id="adImagePanel" accept="image/*" onchange="previewImage(this)">
+                <div id="imagePreviewPanel">
+                    <span>معاينة الصورة</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="createAd()">
+                <i class="fas fa-plus"></i>
+                إنشاء الإعلان
+            </button>
+            
+            <div style="margin-top: 2rem;">
+                <h3>الإعلانات الحالية</h3>
+                <div id="currentAdsPanel">
+                    <p>يتم تحميل الإعلانات...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- تضمين Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>تعلولة - مطعم الوجبات السريعة</title>
