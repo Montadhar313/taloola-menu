@@ -1,3 +1,93 @@
+// تهيئة Firebase - للقاعدة فقط (بدون Storage)
+const firebaseConfig = {
+  apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
+  authDomain: "talola-food.firebaseapp.com",
+  databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
+  projectId: "talola-food",
+  storageBucket: "talola-food.firebasestorage.app",
+  messagingSenderId: "440585170470",
+  appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7",
+  measurementId: "G-L4SLHVVFVR"
+};
+
+// Initialize Firebase (بدون Storage)
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+const analytics = firebase.analytics();
+
+// تهيئة Supabase
+const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
+
+// إنشاء عميل Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// تعريف الدوال العامة التي سيتم استخدامها في admin.js
+window.previewImage = function(input) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+  
+  const file = input.files[0];
+  
+  if (file) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      preview.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
+    }
+    
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = '<span>معاينة الصورة</span>';
+  }
+}
+
+window.closeAuthModal = function() {
+  const adminAuthModal = document.getElementById('adminAuthModal');
+  if (adminAuthModal) {
+    adminAuthModal.style.display = 'none';
+  }
+}
+
+// دالة لعرض الإعلانات للزوار (سيتم استدعاؤها من admin.js)
+window.displayAds = function() {
+  const adsContainer = document.getElementById('adsContainer');
+  if (!adsContainer) return;
+  
+  adsContainer.innerHTML = '';
+  
+  database.ref('ads/').orderByChild('timestamp').once('value')
+    .then((snapshot) => {
+      const ads = snapshot.val();
+      if (!ads) {
+        adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
+        return;
+      }
+      
+      Object.keys(ads).forEach((key) => {
+        const ad = ads[key];
+        const adElement = document.createElement('div');
+        adElement.className = `ad-card ${ad.template}`;
+        adElement.innerHTML = `
+          ${ad.imageUrl ? `
+            <div class="ad-image">
+              <img src="${ad.imageUrl}" alt="${ad.title}">
+            </div>
+          ` : ''}
+          <h4>${ad.title}</h4>
+          <p>${ad.description}</p>
+          ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+          ${ad.duration ? `<p class="ad-duration">${ad.duration}</p>` : ''}
+        `;
+        adsContainer.appendChild(adElement);
+      });
+    })
+    .catch((error) => {
+      console.error('Error loading ads:', error);
+      adsContainer.innerHTML = '<p class="no-ads">حدث خطأ أثناء تحميل الإعلانات</p>';
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   // عناصر DOM
   const scrollToTopBtn = document.getElementById('scrollToTopBtn');
@@ -7,16 +97,20 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // زر العودة لأعلى الصفحة
   window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-      scrollToTopBtn.style.display = 'flex';
-    } else {
-      scrollToTopBtn.style.display = 'none';
+    if (scrollToTopBtn) {
+      if (window.pageYOffset > 300) {
+        scrollToTopBtn.style.display = 'flex';
+      } else {
+        scrollToTopBtn.style.display = 'none';
+      }
     }
   });
   
-  scrollToTopBtn.addEventListener('click', () => {
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  });
+  if (scrollToTopBtn) {
+    scrollToTopBtn.addEventListener('click', () => {
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+  }
   
   // التنقل بين الأقسام
   navButtons.forEach(button => {
@@ -37,12 +131,14 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // زر الطلب الآن - واتساب
-  orderBtn.addEventListener('click', function() {
-    const phoneNumber = '9647755666073';
-    const message = 'مرحباً، أريد طلب وجبة من تعلولة';
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappURL, '_blank');
-  });
+  if (orderBtn) {
+    orderBtn.addEventListener('click', function() {
+      const phoneNumber = '9647755666073';
+      const message = 'مرحباً، أريد طلب وجبة من تعلولة';
+      const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappURL, '_blank');
+    });
+  }
   
   // إضافة تأثيرات للعناصر عند التمرير
   const observerOptions = {
@@ -73,10 +169,15 @@ document.addEventListener('DOMContentLoaded', function() {
   infoSections.forEach(section => {
     observer.observe(section);
   });
+  
+  // عرض الإعلانات عند تحميل الصفحة
+  if (typeof window.displayAds === 'function') {
+    window.displayAds();
+  }
 });
 
 // فتح نموذج الدعم
-function openSupport() {
+window.openSupport = function() {
   const phoneNumber = '9647755666073';
   const message = 'أحتاج إلى مساعدة بخصوص...';
   const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
