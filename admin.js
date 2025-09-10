@@ -4,9 +4,6 @@ const ADMIN_CREDENTIALS = {
   password: "admin123"
 };
 
-// مصفوفة لتخزين الإعلانات
-let advertisements = JSON.parse(localStorage.getItem('taloola_ads')) || [];
-
 // عناصر DOM
 const adminLoginBtn = document.getElementById('adminLoginBtn');
 const adminAuthModal = document.getElementById('adminAuthModal');
@@ -18,126 +15,204 @@ const adsContainer = document.getElementById('adsContainer');
 const currentAds = document.getElementById('currentAds');
 
 // فتح نافذة تسجيل دخول المسؤول
-adminLoginBtn.addEventListener('click', () => {
-  adminAuthModal.style.display = 'flex';
-});
+if (adminLoginBtn) {
+  adminLoginBtn.addEventListener('click', () => {
+    if (adminAuthModal) {
+      adminAuthModal.style.display = 'flex';
+    }
+  });
+}
 
 // تسجيل دخول المسؤول
-adminLoginSubmit.addEventListener('click', () => {
-  const username = document.getElementById('adminUsername').value;
-  const password = document.getElementById('adminPassword').value;
-  
-  if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-    adminAuthModal.style.display = 'none';
-    adminPanel.style.display = 'block';
-    loadCurrentAds();
-  } else {
-    alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-  }
-});
+if (adminLoginSubmit) {
+  adminLoginSubmit.addEventListener('click', () => {
+    const username = document.getElementById('adminUsername').value;
+    const password = document.getElementById('adminPassword').value;
+    
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+      if (adminAuthModal) {
+        adminAuthModal.style.display = 'none';
+      }
+      if (adminPanel) {
+        adminPanel.style.display = 'block';
+      }
+      loadCurrentAds();
+    } else {
+      alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+    }
+  });
+}
 
 // إغلاق لوحة التحكم
-closeAdminPanel.addEventListener('click', () => {
-  adminPanel.style.display = 'none';
-});
+if (closeAdminPanel) {
+  closeAdminPanel.addEventListener('click', () => {
+    if (adminPanel) {
+      adminPanel.style.display = 'none';
+    }
+  });
+}
 
 // عرض الإعلانات للزوار
-viewAdsBtn.addEventListener('click', () => {
-  document.getElementById('ads').scrollIntoView({ behavior: 'smooth' });
-});
+if (viewAdsBtn) {
+  viewAdsBtn.addEventListener('click', () => {
+    document.getElementById('ads').scrollIntoView({ behavior: 'smooth' });
+  });
+}
 
 // إنشاء إعلان جديد
-function createAd() {
+async function createAd() {
   const title = document.getElementById('adTitle').value;
   const description = document.getElementById('adDescription').value;
   const price = document.getElementById('adPrice').value;
   const duration = document.getElementById('adDuration').value;
   const template = document.getElementById('adTemplate').value;
+  const imageFile = document.getElementById('adImage').files[0];
   
   if (!title || !description) {
     alert('الرجاء ملء الحقول الإلزامية');
     return;
   }
   
+  let imageUrl = '';
+  
+  // رفع الصورة إلى Supabase Storage إذا تم اختيارها
+  if (imageFile) {
+    try {
+      const fileName = `ads/${Date.now()}_${imageFile.name}`;
+      
+      // رفع الملف إلى Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(fileName, imageFile);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // الحصول على رابط الصورة
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      imageUrl = urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('حدث خطأ أثناء رفع الصورة');
+      return;
+    }
+  }
+  
   const newAd = {
-    id: Date.now(),
     title,
     description,
     price,
     duration,
     template,
-    date: new Date().toLocaleDateString('ar-EG')
+    imageUrl,
+    date: new Date().toLocaleDateString('ar-EG'),
+    timestamp: Date.now()
   };
   
-  advertisements.push(newAd);
-  saveAds();
-  loadCurrentAds();
-  displayAds();
-  clearAdForm();
-  
-  alert('تم إنشاء الإعلان بنجاح!');
-}
-
-// حفظ الإعلانات في localStorage
-function saveAds() {
-  localStorage.setItem('taloola_ads', JSON.stringify(advertisements));
+  // إضافة الإعلان إلى Firebase
+  try {
+    const newAdRef = database.ref('ads/').push();
+    await newAdRef.set(newAd);
+    
+    alert('تم إنشاء الإعلان بنجاح!');
+    clearAdForm();
+    loadCurrentAds();
+    
+    // تحديث عرض الإعلانات للزوار
+    if (typeof window.displayAds === 'function') {
+      window.displayAds();
+    }
+  } catch (error) {
+    console.error('Error saving ad:', error);
+    alert('حدث خطأ أثناء حفظ الإعلان');
+  }
 }
 
 // تحميل الإعلانات الحالية
 function loadCurrentAds() {
+  if (!currentAds) return;
+  
   currentAds.innerHTML = '';
   
-  if (advertisements.length === 0) {
-    currentAds.innerHTML = '<p>لا توجد إعلانات حالية</p>';
-    return;
-  }
-  
-  advertisements.forEach(ad => {
-    const adElement = document.createElement('div');
-    adElement.className = 'ad-card';
-    adElement.innerHTML = `
-      <h4>${ad.title}</h4>
-      <p>${ad.description}</p>
-      ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
-      ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
-      <p><small>تم الإنشاء: ${ad.date}</small></p>
-      <div class="ad-actions">
-        <button onclick="deleteAd(${ad.id})" style="background: var(--main-red); color: white;">حذف</button>
-      </div>
-    `;
-    currentAds.appendChild(adElement);
-  });
-}
-
-// عرض الإعلانات للزوار
-function displayAds() {
-  adsContainer.innerHTML = '';
-  
-  if (advertisements.length === 0) {
-    adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
-    return;
-  }
-  
-  advertisements.forEach(ad => {
-    const adElement = document.createElement('div');
-    adElement.className = `ad-card ${ad.template}`;
-    adElement.innerHTML = `
-      <h4>${ad.title}</h4>
-      <p>${ad.description}</p>
-      ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
-      ${ad.duration ? `<p class="ad-duration">${ad.duration}</p>` : ''}
-    `;
-    adsContainer.appendChild(adElement);
-  });
+  database.ref('ads/').orderByChild('timestamp').once('value')
+    .then((snapshot) => {
+      const ads = snapshot.val();
+      if (!ads) {
+        currentAds.innerHTML = '<p>لا توجد إعلانات حالية</p>';
+        return;
+      }
+      
+      Object.keys(ads).forEach((key) => {
+        const ad = ads[key];
+        const adElement = document.createElement('div');
+        adElement.className = 'ad-card';
+        adElement.innerHTML = `
+          ${ad.imageUrl ? `
+            <div class="ad-image">
+              <img src="${ad.imageUrl}" alt="${ad.title}">
+            </div>
+          ` : ''}
+          <h4>${ad.title}</h4>
+          <p>${ad.description}</p>
+          ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+          ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
+          <p><small>تم الإنشاء: ${ad.date}</small></p>
+          <div class="ad-actions">
+            <button onclick="deleteAd('${key}', '${ad.imageUrl}')" style="background: var(--main-red); color: white;">حذف</button>
+          </div>
+        `;
+        currentAds.appendChild(adElement);
+      });
+    })
+    .catch((error) => {
+      console.error('Error loading ads:', error);
+      currentAds.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
+    });
 }
 
 // حذف إعلان
-function deleteAd(id) {
+async function deleteAd(key, imageUrl) {
   if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
-    advertisements = advertisements.filter(ad => ad.id !== id);
-    saveAds();
-    loadCurrentAds();
-    displayAds();
+    try {
+      // حذف الإعلان من قاعدة البيانات
+      await database.ref('ads/' + key).remove();
+      
+      // حذف الصورة من Supabase Storage إذا كانت موجودة
+      if (imageUrl) {
+        try {
+          // استخراج اسم الملف من الرابط
+          const urlParts = imageUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const fullPath = `ads/${fileName}`;
+          
+          // حذف الملف من Supabase Storage
+          const { error } = await supabase.storage
+            .from('images')
+            .remove([fullPath]);
+          
+          if (error) {
+            console.error('Error deleting image:', error);
+          }
+        } catch (error) {
+          console.error('Error deleting image from storage:', error);
+        }
+      }
+      
+      alert('تم حذف الإعلان بنجاح');
+      loadCurrentAds();
+      
+      // تحديث عرض الإعلانات للزوار
+      if (typeof window.displayAds === 'function') {
+        window.displayAds();
+      }
+    } catch (error) {
+      console.error('Error deleting ad:', error);
+      alert('حدث خطأ أثناء حذف الإعلان');
+    }
   }
 }
 
@@ -148,21 +223,35 @@ function clearAdForm() {
   document.getElementById('adPrice').value = '';
   document.getElementById('adDuration').value = '';
   document.getElementById('adTemplate').value = 'red';
+  document.getElementById('adImage').value = '';
+  const preview = document.getElementById('imagePreview');
+  if (preview) {
+    preview.innerHTML = '<span>معاينة الصورة</span>';
+  }
 }
 
 // إغلاق نافذة المصادقة
 function closeAuthModal() {
-  adminAuthModal.style.display = 'none';
+  const adminAuthModal = document.getElementById('adminAuthModal');
+  if (adminAuthModal) {
+    adminAuthModal.style.display = 'none';
+  }
 }
 
 // تهيئة الصفحة
 document.addEventListener('DOMContentLoaded', function() {
-  displayAds();
+  // تحميل الإعلانات الحالية عند فتح لوحة التحكم
+  if (typeof loadCurrentAds === 'function') {
+    loadCurrentAds();
+  }
   
   // إغلاق لوحة التحكم عند النقر خارجها
   window.addEventListener('click', function(event) {
     if (event.target === adminPanel) {
       adminPanel.style.display = 'none';
+    }
+    if (event.target === adminAuthModal) {
+      adminAuthModal.style.display = 'none';
     }
   });
 });
