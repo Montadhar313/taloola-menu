@@ -15,6 +15,36 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const analytics = firebase.analytics();
 
+// اختبار اتصال Supabase
+async function testSupabaseConnection() {
+  try {
+    console.log('Testing Supabase connection...');
+    
+    // محاولة الحصول على معلومات الـ bucket
+    const { data, error } = await supabase.storage.getBucket('images');
+    
+    if (error) {
+      console.error('Connection error:', error);
+      return false;
+    }
+    
+    console.log('Connection successful! Bucket info:', data);
+    return true;
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    return false;
+  }
+}
+
+// تشغيل الاختبار عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  // اختبار اتصال Supabase
+  testSupabaseConnection().then(success => {
+    if (!success) {
+      console.warn('Supabase connection test failed. Check your settings.');
+    }
+  });
+  
 // تهيئة Supabase
 const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
