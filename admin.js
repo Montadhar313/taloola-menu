@@ -1,4 +1,4 @@
-// بيانات المسؤول (يمكن تغييرها لاحقاً)
+// بيانات المسؤول
 const ADMIN_CREDENTIALS = {
     username: "admin",
     password: "admin123"
@@ -7,17 +7,10 @@ const ADMIN_CREDENTIALS = {
 // تحميل الإعلانات الحالية
 async function loadCurrentAds() {
     const currentAds = document.getElementById('currentAds');
-    const currentAdsPanel = document.getElementById('currentAdsPanel');
     
-    if (!currentAds && !currentAdsPanel) return;
+    if (!currentAds) return;
     
-    const containers = [];
-    if (currentAds) containers.push(currentAds);
-    if (currentAdsPanel) containers.push(currentAdsPanel);
-    
-    containers.forEach(container => {
-        container.innerHTML = '<p>جاري تحميل الإعلانات...</p>';
-    });
+    currentAds.innerHTML = '<p>جاري تحميل الإعلانات...</p>';
     
     try {
         // جلب الإعلانات من جدول Supabase
@@ -28,62 +21,51 @@ async function loadCurrentAds() {
         
         if (error) {
             console.error('Error loading ads:', error);
-            containers.forEach(container => {
-                container.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
-            });
+            currentAds.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
             return;
         }
         
         if (!ads || ads.length === 0) {
-            containers.forEach(container => {
-                container.innerHTML = '<p>لا توجد إعلانات حالية</p>';
-            });
+            currentAds.innerHTML = '<p>لا توجد إعلانات حالية</p>';
             return;
         }
         
-        containers.forEach(container => {
-            container.innerHTML = '';
-            
-            ads.forEach((ad) => {
-                const adElement = document.createElement('div');
-                adElement.className = 'ad-card';
-                adElement.innerHTML = `
-                    ${ad.image_url ? `
-                        <div class="ad-image">
-                            <img src="${ad.image_url}" alt="${ad.title}">
-                        </div>
-                    ` : ''}
-                    <h4>${ad.title}</h4>
-                    <p>${ad.description}</p>
-                    ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
-                    ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
-                    <p><small>تم الإنشاء: ${new Date(ad.created_at).toLocaleDateString('ar-EG')}</small></p>
-                    <div class="ad-actions">
-                        <button onclick="deleteAd('${ad.id}', '${ad.image_url}')" style="background: var(--main-red); color: white;">حذف</button>
+        currentAds.innerHTML = '';
+        
+        ads.forEach((ad) => {
+            const adElement = document.createElement('div');
+            adElement.className = 'ad-card';
+            adElement.innerHTML = `
+                ${ad.image_url ? `
+                    <div class="ad-image">
+                        <img src="${ad.image_url}" alt="${ad.title}">
                     </div>
-                `;
-                container.appendChild(adElement);
-            });
+                ` : ''}
+                <h4>${ad.title}</h4>
+                <p>${ad.description}</p>
+                ${ad.price ? `<p class="ad-price">السعر: ${ad.price}</p>` : ''}
+                ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
+                <p><small>تم الإنشاء: ${new Date(ad.created_at).toLocaleDateString('ar-EG')}</small></p>
+                <div class="ad-actions">
+                    <button onclick="deleteAd('${ad.id}', '${ad.image_url}')">حذف</button>
+                </div>
+            `;
+            currentAds.appendChild(adElement);
         });
     } catch (error) {
         console.error('Error loading ads:', error);
-        containers.forEach(container => {
-            container.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
-        });
+        currentAds.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
     }
 }
 
 // إنشاء إعلان جديد
 async function createAd() {
-    // تحديد مصدر البيانات (من اللوحة الرئيسية أو لوحة التحكم)
-    const isPanel = document.getElementById('adminPanel').style.display === 'block';
-    
-    const title = document.getElementById(isPanel ? 'adTitlePanel' : 'adTitle').value;
-    const description = document.getElementById(isPanel ? 'adDescriptionPanel' : 'adDescription').value;
-    const price = document.getElementById(isPanel ? 'adPricePanel' : 'adPrice').value;
-    const duration = document.getElementById(isPanel ? 'adDurationPanel' : 'adDuration').value;
-    const template = document.getElementById(isPanel ? 'adTemplatePanel' : 'adTemplate').value;
-    const imageFile = document.getElementById(isPanel ? 'adImagePanel' : 'adImage').files[0];
+    const title = document.getElementById('adTitle').value;
+    const description = document.getElementById('adDescription').value;
+    const price = document.getElementById('adPrice').value;
+    const duration = document.getElementById('adDuration').value;
+    const template = document.getElementById('adTemplate').value;
+    const imageFile = document.getElementById('adImage').files[0];
     
     if (!title || !description) {
         alert('الرجاء ملء الحقول الإلزامية (العنوان والوصف)');
@@ -96,10 +78,7 @@ async function createAd() {
     if (imageFile) {
         try {
             // إظهار مؤشر التحميل
-            const createButton = isPanel ? 
-                document.querySelector('#adminPanel .admin-section button') : 
-                document.querySelector('#adminAdsSection button');
-                
+            const createButton = document.querySelector('#adminPanel .admin-section button');
             const originalText = createButton.textContent;
             createButton.textContent = 'جاري رفع الصورة...';
             createButton.disabled = true;
@@ -139,10 +118,7 @@ async function createAd() {
             console.error('Error uploading image:', error);
             
             // إعادة حالة الزر إلى الطبيعي
-            const createButton = isPanel ? 
-                document.querySelector('#adminPanel .admin-section button') : 
-                document.querySelector('#adminAdsSection button');
-                
+            const createButton = document.querySelector('#adminPanel .admin-section button');
             createButton.textContent = 'إنشاء الإعلان';
             createButton.disabled = false;
             
@@ -246,17 +222,6 @@ function clearAdForm() {
     document.getElementById('adTemplate').value = 'red';
     document.getElementById('adImage').value = '';
     document.getElementById('imagePreview').innerHTML = '<span>معاينة الصورة</span>';
-    
-    // مسح النموذج في لوحة التحكم أيضاً إذا كان مفتوحاً
-    if (document.getElementById('adminPanel').style.display === 'block') {
-        document.getElementById('adTitlePanel').value = '';
-        document.getElementById('adDescriptionPanel').value = '';
-        document.getElementById('adPricePanel').value = '';
-        document.getElementById('adDurationPanel').value = '';
-        document.getElementById('adTemplatePanel').value = 'red';
-        document.getElementById('adImagePanel').value = '';
-        document.getElementById('imagePreviewPanel').innerHTML = '<span>معاينة الصورة</span>';
-    }
 }
 
 // تهيئة الصفحة عند التحميل
@@ -266,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
     const adminPanel = document.getElementById('adminPanel');
     const closeAdminPanel = document.getElementById('closeAdminPanel');
-    const viewAdsBtn = document.getElementById('viewAdsBtn');
     const adminAuthModal = document.getElementById('adminAuthModal');
     
     // فتح نافذة تسجيل دخول المسؤول
@@ -289,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     adminAuthModal.style.display = 'none';
                 }
                 if (adminPanel) {
-                    adminPanel.style.display = 'block';
+                    adminPanel.style.display = 'flex';
                 }
                 loadCurrentAds();
             } else {
@@ -307,13 +271,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // عرض الإعلانات للزوار
-    if (viewAdsBtn) {
-        viewAdsBtn.addEventListener('click', () => {
-            document.getElementById('ads').scrollIntoView({ behavior: 'smooth' });
-        });
-    }
-    
     // إغلاق النوافذ عند النقر خارجها
     window.addEventListener('click', function(event) {
         if (event.target === adminPanel) {
@@ -323,9 +280,4 @@ document.addEventListener('DOMContentLoaded', function() {
             adminAuthModal.style.display = 'none';
         }
     });
-    
-    // تحميل الإعلانات الحالية عند فتح لوحة التحكم
-    if (typeof loadCurrentAds === 'function') {
-        loadCurrentAds();
-    }
 });
