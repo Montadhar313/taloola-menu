@@ -15,6 +15,13 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const analytics = firebase.analytics();
 
+// تهيئة Supabase
+const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc�MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
+
+// إنشاء عميل Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // اختبار اتصال Supabase
 async function testSupabaseConnection() {
   try {
@@ -35,23 +42,6 @@ async function testSupabaseConnection() {
     return false;
   }
 }
-
-// تشغيل الاختبار عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
-  // اختبار اتصال Supabase
-  testSupabaseConnection().then(success => {
-    if (!success) {
-      console.warn('Supabase connection test failed. Check your settings.');
-    }
-  });
-  
-// تهيئة Supabase
-const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
-//const SUPABASE_ANON_KEY = 'sb_secret_SjuV5OL-5K3Y6VaIeLkmuw_7iDCcSqa';
-
-// إنشاء عميل Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // تعريف الدوال العامة التي سيتم استخدامها في admin.js
 window.previewImage = function(input) {
@@ -119,7 +109,61 @@ window.displayAds = function() {
     });
 }
 
+// فتح نموذج الدعم
+window.openSupport = function() {
+  const phoneNumber = '9647755666073';
+  const message = 'أحتاج إلى مساعدة بخصوص...';
+  const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappURL, '_blank');
+}
+
+// تهيئة البيانات للعناصر (يمكن استكمالها لاحقاً)
+function initializeMenuItems() {
+  // هنا يمكنك إضافة البيانات الديناميكية للقوائم
+  console.log("تهيئة عناصر القائمة...");
+}
+
+// اختبار رفع صورة مباشرة
+async function testUpload() {
+  try {
+    // إنشاء ملف تجريبي
+    const response = await fetch('https://via.placeholder.com/150');
+    const blob = await response.blob();
+    const file = new File([blob], 'test.png', { type: 'image/png' });
+    
+    // رفع الملف
+    const fileName = `test/${Date.now()}_test.png`;
+    const { data, error } = await supabase.storage
+      .from('images')
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('Upload error:', error);
+      return;
+    }
+    
+    console.log('Upload successful! File info:', data);
+    
+    // الحصول على الرابط العام
+    const { data: urlData } = supabase.storage
+      .from('images')
+      .getPublicUrl(fileName);
+    
+    console.log('Public URL:', urlData.publicUrl);
+  } catch (err) {
+    console.error('Unexpected error:', err);
+  }
+}
+
+// تهيئة الصفحة عند التحميل
 document.addEventListener('DOMContentLoaded', function() {
+  // اختبار اتصال Supabase
+  testSupabaseConnection().then(success => {
+    if (!success) {
+      console.warn('Supabase connection test failed. Check your settings.');
+    }
+  });
+  
   // عناصر DOM
   const scrollToTopBtn = document.getElementById('scrollToTopBtn');
   const navButtons = document.querySelectorAll('nav.sections-nav button');
@@ -205,61 +249,10 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof window.displayAds === 'function') {
     window.displayAds();
   }
-});
-
-// فتح نموذج الدعم
-window.openSupport = function() {
-  const phoneNumber = '9647755666073';
-  const message = 'أحتاج إلى مساعدة بخصوص...';
-  const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-  window.open(whatsappURL, '_blank');
-}
-
-// تهيئة البيانات للعناصر (يمكن استكمالها لاحقاً)
-function initializeMenuItems() {
-  // هنا يمكنك إضافة البيانات الديناميكية للقوائم
-  console.log("تهيئة عناصر القائمة...");
-}
-
-// تهيئة الصفحة عند التحميل
-window.onload = function() {
+  
+  // تشغيل اختبار الرفع
+  testUpload();
+  
+  // تهيئة عناصر القائمة
   initializeMenuItems();
-
-
-
-// اختبار رفع صورة مباشرة
-async function testUpload() {
-  try {
-    // إنشاء ملف تجريبي
-    const response = await fetch('https://via.placeholder.com/150');
-    const blob = await response.blob();
-    const file = new File([blob], 'test.png', { type: 'image/png' });
-    
-    // رفع الملف
-    const fileName = `test/${Date.now()}_test.png`;
-    const { data, error } = await supabase.storage
-      .from('images')
-      .upload(fileName, file);
-    
-    if (error) {
-      console.error('Upload error:', error);
-      return;
-    }
-    
-    console.log('Upload successful! File info:', data);
-    
-    // الحصول على الرابط العام
-    const { data: urlData } = supabase.storage
-      .from('images')
-      .getPublicUrl(fileName);
-    
-    console.log('Public URL:', urlData.publicUrl);
-  } catch (err) {
-    console.error('Unexpected error:', err);
-  }
-}
-
-// تشغيل الاختبار
-testUpload();
-
-};
+});
