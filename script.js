@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // فتح نموذج الدعم
 function openSupport() {
-  const phoneNumber = '9647755666073 ';
+  const phoneNumber = '9647755666073';
   const message = 'أحتاج إلى مساعدة بخصوص...';
   const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
   window.open(whatsappURL, '_blank');
