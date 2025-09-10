@@ -78,16 +78,30 @@ async function createAd() {
   // رفع الصورة إلى Supabase Storage إذا تم اختيارها
   if (imageFile) {
     try {
-      const fileName = `ads/${Date.now()}_${imageFile.name}`;
+      // إظهار مؤشر التحميل
+      const createButton = document.querySelector('.admin-section button');
+      const originalText = createButton.textContent;
+      createButton.textContent = 'جاري رفع الصورة...';
+      createButton.disabled = true;
+      
+      const fileName = `ads/${Date.now()}_${imageFile.name.replace(/\s+/g, '_')}`;
+      
+      console.log('بدء رفع الصورة:', fileName);
       
       // رفع الملف إلى Supabase Storage
       const { data, error } = await supabase.storage
         .from('images')
-        .upload(fileName, imageFile);
+        .upload(fileName, imageFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
       
       if (error) {
+        console.error('Supabase upload error:', error);
         throw error;
       }
+      
+      console.log('تم رفع الصورة بنجاح:', data);
       
       // الحصول على رابط الصورة
       const { data: urlData } = supabase.storage
@@ -95,12 +109,54 @@ async function createAd() {
         .getPublicUrl(fileName);
       
       imageUrl = urlData.publicUrl;
+      console.log('رابط الصورة:', imageUrl);
+      
+      // إعادة حالة الزر إلى الطبيعي
+      createButton.textContent = originalText;
+      createButton.disabled = false;
+      
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('حدث خطأ أثناء رفع الصورة');
+      
+      // إعادة حالة الزر إلى الطبيعي
+      const createButton = document.querySelector('.admin-section button');
+      createButton.textContent = 'إنشاء الإعلان';
+      createButton.disabled = false;
+      
+      alert(`حدث خطأ أثناء رفع الصورة: ${error.message}`);
       return;
     }
   }
+  
+  const newAd = {
+    title,
+    description,
+    price,
+    duration,
+    template,
+    imageUrl,
+    date: new Date().toLocaleDateString('ar-EG'),
+    timestamp: Date.now()
+  };
+  
+  // إضافة الإعلان إلى Firebase
+  try {
+    const newAdRef = database.ref('ads/').push();
+    await newAdRef.set(newAd);
+    
+    alert('تم إنشاء الإعلان بنجاح!');
+    clearAdForm();
+    loadCurrentAds();
+    
+    // تحديث عرض الإعلانات للزوار
+    if (typeof window.displayAds === 'function') {
+      window.displayAds();
+    }
+  } catch (error) {
+    console.error('Error saving ad:', error);
+    alert('حدث خطأ أثناء حفظ الإعلان');
+  }
+}
   
   const newAd = {
     title,
