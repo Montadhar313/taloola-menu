@@ -17,7 +17,7 @@ const analytics = firebase.analytics();
 
 // تهيئة Supabase
 const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc�MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
 
 // إنشاء عميل Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -126,9 +126,21 @@ function initializeMenuItems() {
 // اختبار رفع صورة مباشرة
 async function testUpload() {
   try {
-    // إنشاء ملف تجريبي
-    const response = await fetch('https://via.placeholder.com/150');
-    const blob = await response.blob();
+    // إنشاء ملف تجريبي بدون الاعتماد على شبكة خارجية
+    const canvas = document.createElement('canvas');
+    canvas.width = 150;
+    canvas.height = 150;
+    const ctx = canvas.getContext('2d');
+    
+    // رسم شكل بسيط على canvas
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(0, 0, 150, 150);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px Arial';
+    ctx.fillText('Test Image', 10, 75);
+    
+    // تحويل canvas إلى blob
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     const file = new File([blob], 'test.png', { type: 'image/png' });
     
     // رفع الملف
