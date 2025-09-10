@@ -1,19 +1,3 @@
-// تهيئة Firebase - للقاعدة فقط (بدون Storage)
-const firebaseConfig = {
-  apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
-  authDomain: "talola-food.firebaseapp.com",
-  databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
-  projectId: "talola-food",
-  storageBucket: "talola-food.firebasestorage.app",
-  messagingSenderId: "440585170470",
-  appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7",
-  measurementId: "G-L4SLHVVFVR"
-};
-
-// Initialize Firebase (بدون Storage)
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-const analytics = firebase.analytics();
 
 // تهيئة Supabase
 const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
