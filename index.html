@@ -6,13 +6,13 @@
   <title>تعلولة - مطعم الوجبات السريعة</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- إضافة Firebase باستخدام Script Tags -->
+  <!-- إضافة Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
   
   <style>
-    /* أنماط الصفحة (نفسها كما في الكود السابق) */
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 
     :root {
@@ -565,6 +565,49 @@
       transform: translateY(-2px);
     }
 
+    .file-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 15px 0;
+    }
+
+    .file-upload-label {
+      display: inline-block;
+      padding: 12px 20px;
+      background: var(--main-yellow);
+      color: #000;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .file-upload-label:hover {
+      background: #fff;
+      color: var(--main-red);
+    }
+
+    .file-upload-preview {
+      width: 150px;
+      height: 150px;
+      border: 2px dashed #ddd;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .file-upload-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
+    }
+
     .ad-card {
       background: #fff;
       border: 1px solid #ddd;
@@ -582,6 +625,20 @@
     .ad-price, .ad-duration {
       font-weight: bold;
       color: #555;
+    }
+
+    .ad-image {
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .ad-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .ad-actions button {
@@ -808,10 +865,365 @@
         </div>
       </div>
     </section>
+    
+    <!-- قسم الزنكر -->
+    <section class="menu-section" id="sec1" tabindex="0" aria-label="قسم زنكر">
+      <h3>زنكر</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="زنكر كلاسك, السعر: 2500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/ZENGER.png" alt="زنكر كلاسك" loading="lazy">
+          </div>
+          <h4>زنكر كلاسك</h4>
+          <p class="price">2500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="زنكر مكسيكانو, السعر: 3000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/ZENGER.png" alt="زنكر مكسيكانو" loading="lazy">
+          </div>
+          <h4>زنكر مكسيكانو</h4>
+          <p class="price">3000 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="زنكر مدخن, السعر: 3000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/ZENGER.png" alt="زنكر مدخن" loading="lazy">
+          </div>
+          <h4>زنكر مدخن</h4>
+          <p class="price">3000 د.ع</p>
+        </div>
+      </div>
+    </section>
 
-    <!-- باقي الأقسام هنا -->
-    <!-- ... -->
+    <!-- قسم الريزو -->
+    <section class="menu-section" id="sec2" tabindex="0" aria-label="قسم ريزو">
+      <h3>ريزو</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="ريزو كلاسك, السعر: 4000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/RIZO.png" alt="ريزو كلاسك" loading="lazy">
+          </div>
+          <h4>ريزو كلاسك</h4>
+          <p class="price">4000 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="ريزو بالجبن, السعر: 4500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/RIZO.png" alt="ريزو بالجبن" loading="lazy">
+          </div>
+          <h4>ريزو بالجبن</h4>
+          <p class="price">4500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="ريزو سبايسي, السعر: 4500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/RIZO.png" alt="ريزو سبايسي" loading="lazy">
+          </div>
+          <h4>ريزو سبايسي</h4>
+          <p class="price">4500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="ريزو مدخن, السعر: 4500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/RIZO.png" alt="ريزو مدخن" loading="lazy">
+          </div>
+          <h4>ريزو مدخن</h4>
+          <p class="price">4500 د.ع</p>
+        </div>
+      </div>
+    </section>
 
+    <!-- قسم الصاج -->
+    <section class="menu-section" id="sec3" tabindex="0" aria-label="قسم صاج">
+      <h3>صاج</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="صاج كنتاكي, السعر: 2000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/SAJ_K.png" alt="صاج كنتاكي" loading="lazy">
+          </div>
+          <h4>صاج كنتاكي</h4>
+          <p class="price">2000 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="صاج كريل, السعر: 1500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/SAJ_G.png" alt="صاج كريل" loading="lazy">
+          </div>
+          <h4>صاج كريل</h4>
+          <p class="price">1500 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الكنتاكي -->
+    <section class="menu-section" id="sec4" tabindex="0" aria-label="قسم كنتاكي">
+      <h3>كنتاكي</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="3 قطع, السعر: 6500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/KNTAKE.png" alt="3 قطع" loading="lazy">
+          </div>
+          <h4>3 قطع</h4>
+          <p class="price">6500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="5 قطع, السعر: 10000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/KNTAKE.png" alt="5 قطع" loading="lazy">
+          </div>
+          <h4>5 قطع</h4>
+          <p class="price">10000 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="10 قطع, السعر: 18000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/KNTAKE.png" alt="10 قطع" loading="lazy">
+          </div>
+          <h4>10 قطع</h4>
+          <p class="price">18000 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الستربس -->
+    <section class="menu-section" id="sec5" tabindex="0" aria-label="قسم ستربس">
+      <h3>ستربس</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="4 قطع, السعر: 6000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/STRIPS.png" alt="4 قطع" loading="lazy">
+          </div>
+          <h4>4 قطع</h4>
+          <p class="price">6000 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="6 قطع, السعر: 8500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/STRIPS.png" alt="6 قطع" loading="lazy">
+          </div>
+          <h4>6 قطع</h4>
+          <p class="price">8500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="12 قطعة, السعر: 14500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/STRIPS.png" alt="12 قطعة" loading="lazy">
+          </div>
+          <h4>12 قطعة</h4>
+          <p class="price">14500 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم السندويتشات -->
+    <section class="menu-section" id="sec6" tabindex="0" aria-label="قسم سندويتشات">
+      <h3>سندويتشات</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="سندويتش تعلولة, السعر: 2000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/S_TALOLA.png" alt="سندويتش تعلولة" loading="lazy">
+          </div>
+          <h4>سندويتش تعلولة</h4>
+          <p class="price">2000 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="فلر, السعر: 3000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FALAR.png" alt="فلر" loading="lazy">
+          </div>
+          <h4>فلر</h4>
+          <p class="price">2500 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الأطباق -->
+    <section class="menu-section" id="sec7" tabindex="0" aria-label="قسم اطباق">
+      <h3>اطباق</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="طبق تعلولة, السعر: 2500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/T_TALOLA.png" alt="طبق تعلولة" loading="lazy">
+          </div>
+          <h4>طبق تعلولة</h4>
+          <p class="price">2500 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الدايت -->
+    <section class="menu-section" id="sec8" tabindex="0" aria-label="قسم دايت">
+      <h3>دايت</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="وجبة دايت, السعر: 4500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/DAET.png" alt="وجبة دايت" loading="lazy">
+          </div>
+          <h4>وجبة دايت</h4>
+          <p class="price">4500 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الفنكر -->
+    <section class="menu-section" id="sec9" tabindex="0" aria-label="قسم الفنكر">
+      <h3>الفنكر</h3>
+      <div class="menu-items">
+        <div class="menu-item animate-in" tabindex="0" aria-label="فنكر كلاسك صغير, السعر: 1500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FINGR.png" alt="فنكر كلاسيك" loading="lazy">
+          </div>
+          <h4>فنكر كلاسك صغير</h4>
+          <p class="price">1500 د.ع</p>
+        </div>
+        <div class="menu-item animate-in" tabindex="0" aria-label="فنكر بالجبن صغير, السعر: 2000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
+          </div>
+          <h4>فنكر بالجبن صغير</h4>
+          <p class="price">2000 د.ع</p>
+        </div>
+      <div class="menu-item animate-in" tabindex="0" aria-label="فنكر سبايسي صغير, السعر: 2000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
+          </div>
+          <h4>فنكر سبايسي صغير</h4>
+          <p class="price">2000 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label="فنكر كلاسك كبير, السعر: 2500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FINGR.png" alt="فنكر كلاسيك" loading="lazy">
+          </div>
+          <h4>فنكر كلاسك كبير</h4>
+          <p class="price">2500 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label="فنكر بالجبن كبير, السعر: 3000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
+          </div>
+          <h4>فنكر بالجبن كبير</h4>
+          <p class="price">3000 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label="فنكر سبايسي كبير, السعر: 3000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FINGR.png" alt="فنكر حار" loading="lazy">
+          </div>
+          <h4>فنكر سبايسي كبير</h4>
+          <p class="price">3000 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الجكن فرايز -->
+    <section class="menu-section" id="sec10" tabindex="0" aria-label="قسم الجكن فرايز">
+      <h3>الجكن فرايز</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="جكن فرايز صغير, السعر: 2500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/CHEKEN.png" alt="جكن فرايز عادي" loading="lazy">
+          </div>
+          <h4>جكن فرايز صغير</h4>
+          <p class="price">2500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="جكن فرايز كبير, السعر: 3500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/CHEKEN.png" alt="جكن فرايز كبير" loading="lazy">
+          </div>
+          <h4>جكن فرايز كبير</h4>
+          <p class="price">4000 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم الصوصات -->
+    <section class="menu-section" id="sec11" tabindex="0" aria-label="قسم الصوصات">
+      <h3>الصوصات</h3>
+      <div class="menu-items">
+        <div class="menu-item animate-in" tabindex="0" aria-label=" باربيكيو, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/BARBQ.png" alt="صوص باربيكيو" loading="lazy">
+          </div>
+          <h4>باربيكيو</h4>
+          <p class="price">250 د.ع</p>
+        </div>
+        <div class="menu-item animate-in" tabindex="0" aria-label=" ثومية, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/THOM.png" alt="صوص ثوم" loading="lazy">
+          </div>
+          <h4>ثومية</h4>
+          <p class="price">250 د.ع</p>
+        </div>
+        <div class="menu-item animate-in" tabindex="0" aria-label=" بافلو, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/SPAYSY.png" alt="صوص حار" loading="lazy">
+          </div>
+          <h4>بافلو</h4>
+          <p class="price">250 د.ع</p>
+        </div>
+      <div class="menu-item animate-in" tabindex="0" aria-label=" هاني ماستر, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/HANE.png" alt="صوص حار" loading="lazy">
+          </div>
+          <h4>هاني ماستر</h4>
+          <p class="price">250 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label=" كوكتيل, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/KOKTEL.png" alt="صوص حار" loading="lazy">
+          </div>
+          <h4>كوكتيل</h4>
+          <p class="price">250 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label=" شيدر, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/SHADER.png" alt="صوص حار" loading="lazy">
+          </div>
+          <h4>شيدر</h4>
+          <p class="price">250 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label=" روستر, السعر: 250 د.ع">
+          <div class="item-image">
+            <img src="assets/images/ROSTER.png" alt="صوص حار" loading="lazy">
+          </div>
+          <h4>روستر</h4>
+          <p class="price">250 د.ع</p>
+        </div>
+      </div>
+      
+    </section>
+
+    <!-- قسم المشروبات الغازية -->
+    <section class="menu-section" id="sec12" tabindex="0" aria-label="قسم مشروبات غازية">
+      <h3>مشروبات غازية</h3>
+      <div class="menu-items">
+        <div class="menu-item" tabindex="0" aria-label="بيبسي 250 مل, السعر: 500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/COLA.png" alt="بيبسي 250 مل" loading="lazy">
+          </div>
+          <h4>كولا</h4>
+          <p class="price">500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="ميرندا 250 مل, السعر: 500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/FANTA.png" alt="ميرندا 250 مل" loading="lazy">
+          </div>
+          <h4>فانتا</h4>
+          <p class="price">500 د.ع</p>
+        </div>
+        <div class="menu-item" tabindex="0" aria-label="سفن أب 250 مل, السعر: 500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/SPRITE.png" alt="سفن أب 250 مل" loading="lazy">
+          </div>
+          <h4>سبرايت</h4>
+          <p class="price">500 د.ع</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- قسم المقبلات -->
+    <section class="menu-section animate-in" id="sec13" tabindex="0" aria-label="قسم مقبلات">
+      <h3>مقبلات</h3>
+      <div class="menu-items">
+        
+        <div class="menu-item animate-in" tabindex="0" aria-label="ماعون مقبلات صغير, السعر: 1500 د.ع">
+          <div class="item-image">
+            <img src="assets/images/MO_1.png" alt="حلقات بصل" loading="lazy">
+          </div>
+          <h4>ماعون مقبلات صغير</h4>
+          <p class="price">1500 د.ع</p>
+        </div><div class="menu-item animate-in" tabindex="0" aria-label="ماعون مقبلات كبير, السعر: 2000 د.ع">
+          <div class="item-image">
+            <img src="assets/images/MO_1.png" alt="تشيكن ستريبس" loading="lazy">
+          </div>
+          <h4>ماعون مقبلات كبير</h4>
+          <p class="price">2000 د.ع</p>
+        </div>
+      </div>
+    </section>
     <!-- قسم فريق تعلولة -->
     <section class="info-section" id="team">
       <h3>فريق تعلولة</h3>
@@ -824,7 +1236,7 @@
     <!-- قسم الدعم -->
     <section class="info-section" id="support">
       <h3>الدعم والمساعدة</h3>
-      <p>نحن هنا لمساعدتك! إذا كان لديك أي استفسار или شكوى، لا تتردد في التواصل معنا.</p>
+      <p>نحن هنا لمساعدتك! إذا كان لديك أي استفسار أو شكوى، لا تتردد في التواصل معنا.</p>
       <button class="support-btn" onclick="openSupport()">تقديم شكوى أو استفسار</button>
     </section>
     
@@ -833,7 +1245,7 @@
       <h3>تواصل معنا</h3>
       <p>تابعنا على منصات التواصل الاجتماعي لمعرفة آخر العروض والأخبار</p>
       <div class="social-links">
-        <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك توك</a>
+        <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك تок</a>
         <a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank">واتساب</a>
       </div>
     </section>
@@ -884,6 +1296,17 @@
           <option value="red">النموذج الأحمر</option>
           <option value="yellow">النموذج الأصفر</option>
         </select>
+        
+        <div class="file-upload">
+          <label for="adImage" class="file-upload-label">
+            <i class="fas fa-upload"></i> اختر صورة للإعلان
+          </label>
+          <input type="file" id="adImage" accept="image/*" style="display: none;" onchange="previewImage(this)">
+          <div class="file-upload-preview" id="imagePreview">
+            <span>معاينة الصورة</span>
+          </div>
+        </div>
+        
         <button onclick="createAd()">إنشاء الإعلان</button>
       </div>
       
@@ -894,13 +1317,12 @@
     </div>
   </div>
 
- 
   <script>
-    // تهيئة Firebase باستخدام البيانات التي حصلت عليها
+    // تهيئة Firebase - استبدل هذه القيم بالقيم الحقيقية من مشروعك
     const firebaseConfig = {
       apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
       authDomain: "talola-food.firebaseapp.com",
-      databaseURL: "https://talola-food-default-rtdb.firebaseio.com", // تأكد من هذا الرابط
+      databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
       projectId: "talola-food",
       storageBucket: "talola-food.firebasestorage.app",
       messagingSenderId: "440585170470",
@@ -911,111 +1333,16 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    const storage = firebase.storage();
     const analytics = firebase.analytics();
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
-    document.addEventListener('DOMContentLoaded', function() {
-      // عناصر DOM
-      const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-      const navButtons = document.querySelectorAll('nav.sections-nav button');
-      const menuSections = document.querySelectorAll('section.menu-section');
-      const orderBtn = document.getElementById('orderBtn');
-      
-      // زر العودة لأعلى الصفحة
-      window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 300) {
-          scrollToTopBtn.style.display = 'flex';
-        } else {
-          scrollToTopBtn.style.display = 'none';
-        }
-      });
-      
-      scrollToTopBtn.addEventListener('click', () => {
-        window.scrollTo({top: 0, behavior: 'smooth'});
-      });
-      
-      // التنقل بين الأقسام
-      navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const targetSection = this.getAttribute('data-section');
-          const sectionElement = document.getElementById(targetSection);
-          
-          if (sectionElement) {
-            sectionElement.scrollIntoView({behavior: 'smooth'});
-            
-            // إضافة تأثير مرئي للقسم النشط
-            menuSections.forEach(section => {
-              section.classList.remove('active');
-            });
-            sectionElement.classList.add('active');
-          }
-        });
-      });
-      
-      // زر الطلب الآن - واتساب
-      orderBtn.addEventListener('click', function() {
-        const phoneNumber = '9647755666073';
-        const message = 'مرحباً، أريد طلب وجبة من تعلولة';
-        const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappURL, '_blank');
-      });
-      
-      // إضافة تأثيرات للعناصر عند التمرير
-      const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-      };
-      
-      const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('animate-in');
-          }
-        });
-      }, observerOptions);
-      
-      // مراقبة العناصر لإضافة تأثيرات التمرير
-      const menuItems = document.querySelectorAll('.menu-item');
-      menuItems.forEach(item => {
-        observer.observe(item);
-      });
-      
-      menuSections.forEach(section => {
-        observer.observe(section);
-      });
-      
-      // إضافة تأثيرات للعناصر عند التمرير
-      const infoSections = document.querySelectorAll('.info-section');
-      infoSections.forEach(section => {
-        observer.observe(section);
-      });
-
-      // تهيئة الإعلانات
-      displayAds();
-    });
-
-    // فتح نموذج الدعم
-    function openSupport() {
-      const phoneNumber = '9647755666073';
-      const message = 'أحتاج إلى مساعدة بخصوص...';
-      const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappURL, '_blank');
-    }
-
-    // بيانات المسؤول (يمكن تغييرها لاحقاً)
+    // بيانات المسؤول
     const ADMIN_CREDENTIALS = {
       username: "admin",
       password: "admin123"
     };
 
-    // عناصر DOM للإدارة
+    // عناصر DOM
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const adminAuthModal = document.getElementById('adminAuthModal');
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
@@ -1048,17 +1375,52 @@
       adminPanel.style.display = 'none';
     });
 
+    // معاينة الصورة قبل الرفع
+    function previewImage(input) {
+      const preview = document.getElementById('imagePreview');
+      const file = input.files[0];
+      
+      if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          preview.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
+        }
+        
+        reader.readAsDataURL(file);
+      } else {
+        preview.innerHTML = '<span>معاينة الصورة</span>';
+      }
+    }
+
     // إنشاء إعلان جديد
-    function createAd() {
+    async function createAd() {
       const title = document.getElementById('adTitle').value;
       const description = document.getElementById('adDescription').value;
       const price = document.getElementById('adPrice').value;
       const duration = document.getElementById('adDuration').value;
       const template = document.getElementById('adTemplate').value;
+      const imageFile = document.getElementById('adImage').files[0];
       
       if (!title || !description) {
         alert('الرجاء ملء الحقول الإلزامية');
         return;
+      }
+      
+      let imageUrl = '';
+      
+      // رفع الصورة إذا تم اختيارها
+      if (imageFile) {
+        try {
+          const storageRef = storage.ref();
+          const imageRef = storageRef.child('ads/' + Date.now() + '_' + imageFile.name);
+          const snapshot = await imageRef.put(imageFile);
+          imageUrl = await snapshot.ref.getDownloadURL();
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          alert('حدث خطأ أثناء رفع الصورة');
+          return;
+        }
       }
       
       const newAd = {
@@ -1067,27 +1429,30 @@
         price,
         duration,
         template,
-        date: new Date().toLocaleDateString('ar-EG')
+        imageUrl,
+        date: new Date().toLocaleDateString('ar-EG'),
+        timestamp: Date.now()
       };
       
       // إضافة الإعلان إلى Firebase
-      const newAdRef = database.ref('ads/').push();
-      newAdRef.set(newAd)
-        .then(() => {
-          alert('تم إنشاء الإعلان بنجاح!');
-          clearAdForm();
-          loadCurrentAds(); // إعادة تحميل الإعلانات
-        })
-        .catch((error) => {
-          alert('حدث خطأ أثناء حفظ الإعلان: ' + error.message);
-        });
+      try {
+        const newAdRef = database.ref('ads/').push();
+        await newAdRef.set(newAd);
+        
+        alert('تم إنشاء الإعلان بنجاح!');
+        clearAdForm();
+        loadCurrentAds();
+      } catch (error) {
+        console.error('Error saving ad:', error);
+        alert('حدث خطأ أثناء حفظ الإعلان');
+      }
     }
 
     // تحميل الإعلانات الحالية
     function loadCurrentAds() {
       currentAds.innerHTML = '';
       
-      database.ref('ads/').once('value')
+      database.ref('ads/').orderByChild('timestamp').once('value')
         .then((snapshot) => {
           const ads = snapshot.val();
           if (!ads) {
@@ -1100,13 +1465,18 @@
             const adElement = document.createElement('div');
             adElement.className = 'ad-card';
             adElement.innerHTML = `
+              ${ad.imageUrl ? `
+                <div class="ad-image">
+                  <img src="${ad.imageUrl}" alt="${ad.title}">
+                </div>
+              ` : ''}
               <h4>${ad.title}</h4>
               <p>${ad.description}</p>
               ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
               ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
               <p><small>تم الإنشاء: ${ad.date}</small></p>
               <div class="ad-actions">
-                <button onclick="deleteAd('${key}')" style="background: var(--main-red); color: white;">حذف</button>
+                <button onclick="deleteAd('${key}', '${ad.imageUrl}')" style="background: var(--main-red); color: white;">حذف</button>
               </div>
             `;
             currentAds.appendChild(adElement);
@@ -1122,7 +1492,7 @@
     function displayAds() {
       adsContainer.innerHTML = '';
       
-      database.ref('ads/').once('value')
+      database.ref('ads/').orderByChild('timestamp').once('value')
         .then((snapshot) => {
           const ads = snapshot.val();
           if (!ads) {
@@ -1135,6 +1505,11 @@
             const adElement = document.createElement('div');
             adElement.className = `ad-card ${ad.template}`;
             adElement.innerHTML = `
+              ${ad.imageUrl ? `
+                <div class="ad-image">
+                  <img src="${ad.imageUrl}" alt="${ad.title}">
+                </div>
+              ` : ''}
               <h4>${ad.title}</h4>
               <p>${ad.description}</p>
               ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
@@ -1150,16 +1525,24 @@
     }
 
     // حذف إعلان
-    function deleteAd(key) {
+    async function deleteAd(key, imageUrl) {
       if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
-        database.ref('ads/' + key).remove()
-          .then(() => {
-            alert('تم حذف الإعلان بنجاح');
-            loadCurrentAds(); // إعادة تحميل الإعلانات
-          })
-          .catch((error) => {
-            alert('حدث خطأ أثناء حذف الإعلان: ' + error.message);
-          });
+        try {
+          // حذف الإعلان من قاعدة البيانات
+          await database.ref('ads/' + key).remove();
+          
+          // حذف الصورة من التخزين إذا كانت موجودة
+          if (imageUrl) {
+            const imageRef = storage.refFromURL(imageUrl);
+            await imageRef.delete();
+          }
+          
+          alert('تم حذف الإعلان بنجاح');
+          loadCurrentAds();
+        } catch (error) {
+          console.error('Error deleting ad:', error);
+          alert('حدث خطأ أثناء حذف الإعلان');
+        }
       }
     }
 
@@ -1170,6 +1553,8 @@
       document.getElementById('adPrice').value = '';
       document.getElementById('adDuration').value = '';
       document.getElementById('adTemplate').value = 'red';
+      document.getElementById('adImage').value = '';
+      document.getElementById('imagePreview').innerHTML = '<span>معاينة الصورة</span>';
     }
 
     // إغلاق نافذة المصادقة
@@ -1186,7 +1571,19 @@
         adminAuthModal.style.display = 'none';
       }
     });
-    
-</script>
+
+    // تهيئة الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      displayAds();
+    });
+
+    // فتح نموذج الدعم
+    function openSupport() {
+      const phoneNumber = '9647755666073';
+      const message = 'أحتاج إلى مساعدة بخصوص...';
+      const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappURL, '_blank');
+    }
+  </script>
 </body>
 </html>
