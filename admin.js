@@ -201,6 +201,17 @@ async function createAd() {
     alert('حدث خطأ أثناء حفظ الإعلان');
   }
 }
+// إغلاق نافذة المصادقة
+function closeAuthModal() {
+  const adminAuthModal = document.getElementById('adminAuthModal');
+  if (adminAuthModal) {
+    adminAuthModal.style.display = 'none';
+    console.log('تم إغلاق نافذة تسجيل الدخول');
+  }
+}
+
+// جعل الدالة متاحة globally
+window.closeAuthModal = closeAuthModal;
 
 // تحميل الإعلانات الحالية
 function loadCurrentAds() {
