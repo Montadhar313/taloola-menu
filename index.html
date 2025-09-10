@@ -15,7 +15,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+    /* أنماط CSS تبقى كما هي بدون تغيير */
+    /* ... جميع أنماط CSS السابقة ... */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 
     :root {
       --main-red: #c70301;
@@ -787,9 +789,6 @@
         padding: 20px;
       }
     }
-
-    /* أنماط CSS تبقى كما هي بدون تغيير */
-    /* ... جميع أنماط CSS السابقة ... */
   </style>
 </head>
 <body>
@@ -812,7 +811,7 @@
     <p class="hours">أوقــــات الــــعمـل   :  10ص - 3ص</p>
   </header>
 
-    <!-- أزرار الأقسام تبقى كما هي -->
+  <!-- أزرار الأقسام تبقى كما هي -->
   <nav class="sections-nav" role="navigation" aria-label="روابط الأقسام">
     <button type="button" data-section="sec0">بركر</button>
     <button type="button" data-section="sec1">زنكر</button>
@@ -1233,8 +1232,6 @@
         </div>
       </div>
     </section>
-    
-
     <!-- قسم فريق تعلولة -->
     <section class="info-section" id="team">
       <h3>فريق تعلولة</h3>
@@ -1256,12 +1253,13 @@
       <h3>تواصل معنا</h3>
       <p>تابعنا على منصات التواصل الاجتماعي لمعرفة آخر العروض والأخبار</p>
       <div class="social-links">
-        <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك توك</a>
+        <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank">تيك تок</a>
         <a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank">واتساب</a>
       </div>
     </section>
+
   </main>
-  
+
   <!-- زر الطلب الآن في المنتصف -->
   <div class="order-now-container">
     <button id="orderBtn" class="order-now-btn">
@@ -1347,9 +1345,11 @@
     const analytics = firebase.analytics();
 
     // تهيئة Supabase
-    const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co'; // استبدل برابط مشروعك
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA'; // استبدل بمفتاحك العام
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
+    
+    // إنشاء عميل Supabase بشكل صحيح
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // بيانات المسؤول
     const ADMIN_CREDENTIALS = {
@@ -1367,32 +1367,48 @@
     const currentAds = document.getElementById('currentAds');
 
     // فتح نافذة تسجيل دخول المسؤول
-    adminLoginBtn.addEventListener('click', () => {
-      adminAuthModal.style.display = 'flex';
-    });
+    if (adminLoginBtn) {
+      adminLoginBtn.addEventListener('click', () => {
+        if (adminAuthModal) {
+          adminAuthModal.style.display = 'flex';
+        }
+      });
+    }
 
     // تسجيل دخول المسؤول
-    adminLoginSubmit.addEventListener('click', () => {
-      const username = document.getElementById('adminUsername').value;
-      const password = document.getElementById('adminPassword').value;
-      
-      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-        adminAuthModal.style.display = 'none';
-        adminPanel.style.display = 'block';
-        loadCurrentAds();
-      } else {
-        alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-      }
-    });
+    if (adminLoginSubmit) {
+      adminLoginSubmit.addEventListener('click', () => {
+        const username = document.getElementById('adminUsername').value;
+        const password = document.getElementById('adminPassword').value;
+        
+        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+          if (adminAuthModal) {
+            adminAuthModal.style.display = 'none';
+          }
+          if (adminPanel) {
+            adminPanel.style.display = 'block';
+          }
+          loadCurrentAds();
+        } else {
+          alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+        }
+      });
+    }
 
     // إغلاق لوحة التحكم
-    closeAdminPanel.addEventListener('click', () => {
-      adminPanel.style.display = 'none';
-    });
+    if (closeAdminPanel) {
+      closeAdminPanel.addEventListener('click', () => {
+        if (adminPanel) {
+          adminPanel.style.display = 'none';
+        }
+      });
+    }
 
     // معاينة الصورة قبل الرفع
     function previewImage(input) {
       const preview = document.getElementById('imagePreview');
+      if (!preview) return;
+      
       const file = input.files[0];
       
       if (file) {
@@ -1431,7 +1447,7 @@
           
           // رفع الملف إلى Supabase Storage
           const { data, error } = await supabase.storage
-            .from('images') // اسم ال bucket في Supabase
+            .from('images')
             .upload(fileName, imageFile);
           
           if (error) {
@@ -1478,6 +1494,8 @@
 
     // تحميل الإعلانات الحالية
     function loadCurrentAds() {
+      if (!currentAds) return;
+      
       currentAds.innerHTML = '';
       
       database.ref('ads/').orderByChild('timestamp').once('value')
@@ -1518,6 +1536,8 @@
 
     // عرض الإعلانات للزوار
     function displayAds() {
+      if (!adsContainer) return;
+      
       adsContainer.innerHTML = '';
       
       database.ref('ads/').orderByChild('timestamp').once('value')
@@ -1546,7 +1566,7 @@
             adsContainer.appendChild(adElement);
           });
         })
-        .catch((error) => {
+        .catch((error) {
           console.error('Error loading ads:', error);
           adsContainer.innerHTML = '<p class="no-ads">حدث خطأ أثناء تحميل الإعلانات</p>';
         });
@@ -1597,12 +1617,17 @@
       document.getElementById('adDuration').value = '';
       document.getElementById('adTemplate').value = 'red';
       document.getElementById('adImage').value = '';
-      document.getElementById('imagePreview').innerHTML = '<span>معاينة الصورة</span>';
+      const preview = document.getElementById('imagePreview');
+      if (preview) {
+        preview.innerHTML = '<span>معاينة الصورة</span>';
+      }
     }
 
     // إغلاق نافذة المصادقة
     function closeAuthModal() {
-      adminAuthModal.style.display = 'none';
+      if (adminAuthModal) {
+        adminAuthModal.style.display = 'none';
+      }
     }
 
     // إغلاق لوحة التحكم عند النقر خارجها
