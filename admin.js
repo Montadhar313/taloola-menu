@@ -8,15 +8,15 @@ const ADMIN_CREDENTIALS = {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('تم تحميل الصفحة');
   
-// عناصر DOM
-const adminLoginBtn = document.getElementById('adminLoginBtn');
-const adminAuthModal = document.getElementById('adminAuthModal');
-const adminLoginSubmit = document.getElementById('adminLoginSubmit');
-const adminPanel = document.getElementById('adminPanel');
-const closeAdminPanel = document.getElementById('closeAdminPanel');
-const viewAdsBtn = document.getElementById('viewAdsBtn');
-const adsContainer = document.getElementById('adsContainer');
-const currentAds = document.getElementById('currentAds');
+  // عناصر DOM
+  const adminLoginBtn = document.getElementById('adminLoginBtn');
+  const adminAuthModal = document.getElementById('adminAuthModal');
+  const adminLoginSubmit = document.getElementById('adminLoginSubmit');
+  const adminPanel = document.getElementById('adminPanel');
+  const closeAdminPanel = document.getElementById('closeAdminPanel');
+  const viewAdsBtn = document.getElementById('viewAdsBtn');
+  const adsContainer = document.getElementById('adsContainer');
+  const currentAds = document.getElementById('currentAds');
 
   console.log('adminLoginBtn:', adminLoginBtn);
   console.log('adminAuthModal:', adminAuthModal);
@@ -27,52 +27,52 @@ const currentAds = document.getElementById('currentAds');
   console.log('adsContainer:', adsContainer);
   console.log('currentAds:', currentAds);
   
-  
-// فتح نافذة تسجيل دخول المسؤول
-if (adminLoginBtn) {
-  adminLoginBtn.addEventListener('click', () => {
-    if (adminAuthModal) {
-      adminAuthModal.style.display = 'flex';
-    }
-  });
-}
-
-// تسجيل دخول المسؤول
-if (adminLoginSubmit) {
-  adminLoginSubmit.addEventListener('click', () => {
-    const username = document.getElementById('adminUsername').value;
-    const password = document.getElementById('adminPassword').value;
-    
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+  // فتح نافذة تسجيل دخول المسؤول
+  if (adminLoginBtn) {
+    adminLoginBtn.addEventListener('click', () => {
       if (adminAuthModal) {
-        adminAuthModal.style.display = 'none';
+        adminAuthModal.style.display = 'flex';
       }
+    });
+  }
+
+  // تسجيل دخول المسؤول
+  if (adminLoginSubmit) {
+    adminLoginSubmit.addEventListener('click', () => {
+      const username = document.getElementById('adminUsername').value;
+      const password = document.getElementById('adminPassword').value;
+      
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        if (adminAuthModal) {
+          adminAuthModal.style.display = 'none';
+        }
+        if (adminPanel) {
+          adminPanel.style.display = 'block';
+        }
+        loadCurrentAds();
+      } else {
+        alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+      }
+    });
+  }
+
+  // إغلاق لوحة التحكم
+  if (closeAdminPanel) {
+    closeAdminPanel.addEventListener('click', () => {
       if (adminPanel) {
-        adminPanel.style.display = 'block';
+        adminPanel.style.display = 'none';
       }
-      loadCurrentAds();
-    } else {
-      alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-    }
-  });
-}
+    });
+  }
 
-// إغلاق لوحة التحكم
-if (closeAdminPanel) {
-  closeAdminPanel.addEventListener('click', () => {
-    if (adminPanel) {
-      adminPanel.style.display = 'none';
-    }
-  });
-}
+  // عرض الإعلانات للزوار
+  if (viewAdsBtn) {
+    viewAdsBtn.addEventListener('click', () => {
+      document.getElementById('ads').scrollIntoView({ behavior: 'smooth' });
+    });
+  }
 
-// عرض الإعلانات للزوار
-if (viewAdsBtn) {
-  viewAdsBtn.addEventListener('click', () => {
-    document.getElementById('ads').scrollIntoView({ behavior: 'smooth' });
-  });
-}
-
+  
 // إنشاء إعلان جديد
 async function createAd() {
   const title = document.getElementById('adTitle').value;
@@ -335,4 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
       adminAuthModal.style.display = 'none';
     }
   });
+  // باقي الدوال...
 });
+
