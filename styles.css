@@ -105,7 +105,7 @@ nav.sections-nav button {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
-  font-family: var(--main-font); /* إضافة خط Cairo للأزرار */
+  font-family: var(--main-font);
 }
 
 nav.sections-nav button:focus,
@@ -253,7 +253,7 @@ section.info-section p {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: var(--shadow);
-  font-family: var(--main-font); /* إضافة خط Cairo لزر الشكوى */
+  font-family: var(--main-font);
 }
 
 .support-btn:hover {
@@ -287,7 +287,7 @@ section.info-section p {
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: var(--shadow);
-  font-family: var(--main-font); /* إضافة خط Cairo لأزرار التواصل */
+  font-family: var(--main-font);
 }
 
 .social-btn:hover {
@@ -321,7 +321,7 @@ section.info-section p {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--main-font); /* إضافة خط Cairo لزر الطلب الآن */
+  font-family: var(--main-font);
 }
 
 .order-now-btn:hover {
@@ -346,7 +346,7 @@ section.info-section p {
   border: 2px solid var(--main-yellow);
   align-items: center;
   justify-content: center;
-  font-family: var(--main-font); /* إضافة خط Cairo لزر العودة لأعلى */
+  font-family: var(--main-font);
 }
 
 #scrollToTopBtn:hover {
@@ -369,6 +369,305 @@ section.info-section p {
   opacity: 1;
   transform: translateY(0);
   }
+}
+
+/* زر تسجيل الدخول */
+.admin-login-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: var(--main-yellow);
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  font-family: var(--main-font);
+}
+
+.admin-login-btn:hover {
+  background: #fff;
+  color: var(--main-red);
+  transform: translateY(-3px);
+}
+
+/* نافذة تسجيل الدخول */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: #fefefe;
+  padding: 30px;
+  border-radius: 15px;
+  width: 350px;
+  text-align: center;
+  color: #000;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  color: var(--main-red);
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px;
+  margin: 12px 0;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.modal-content input:focus {
+  border-color: var(--main-red);
+  outline: none;
+}
+
+.modal-content button {
+  background: var(--main-red);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+}
+
+.modal-content button:hover {
+  background: #a50301;
+  transform: translateY(-2px);
+}
+
+.close {
+  color: #aaa;
+  float: left;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  left: 15px;
+}
+
+/* لوحة تحكم المسؤول */
+.admin-panel {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+  overflow: auto;
+}
+
+.admin-panel-content {
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 30px;
+  border-radius: 15px;
+  width: 85%;
+  max-width: 900px;
+  color: #000;
+  position: relative;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+}
+
+.close-admin-panel {
+  color: #aaa;
+  float: left;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  position: absolute;
+  top: 15px;
+  left: 20px;
+}
+
+.admin-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: #f9f9f9;
+}
+
+.admin-section h3 {
+  margin-top: 0;
+  color: var(--main-red);
+  border-bottom: 2px solid var(--main-yellow);
+  padding-bottom: 10px;
+}
+
+.admin-section input, .admin-section textarea, .admin-section select {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.admin-section input:focus, .admin-section textarea:focus, .admin-section select:focus {
+  border-color: var(--main-red);
+  outline: none;
+}
+
+.admin-section button {
+  background: var(--main-red);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.admin-section button:hover {
+  background: #a50301;
+  transform: translateY(-2px);
+}
+
+.file-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.file-upload-label {
+  display: inline-block;
+  padding: 12px 20px;
+  background: var(--main-yellow);
+  color: #000;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.file-upload-label:hover {
+  background: #fff;
+  color: var(--main-red);
+}
+
+.file-upload-preview {
+  width: 150px;
+  height: 150px;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.file-upload-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.ad-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px 0;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.ad-card h4 {
+  margin: 0;
+  color: var(--main-red);
+}
+
+.ad-price, .ad-duration {
+  font-weight: bold;
+  color: #555;
+}
+
+.ad-image {
+  width: 100%;
+  height: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.ad-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ad-actions button {
+  background: var(--main-red);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s;
+}
+
+.ad-actions button:hover {
+  background: #a50301;
+}
+
+/* إعلانات للزوار */
+#adsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+#adsContainer .ad-card {
+  background: var(--item-bg);
+  color: white;
+  border: 2px solid var(--main-yellow);
+}
+
+#adsContainer .ad-card.red {
+  background: var(--main-red);
+}
+
+#adsContainer .ad-card.yellow {
+  background: var(--main-yellow);
+  color: #000;
+}
+
+.no-ads {
+  text-align: center;
+  color: var(--text-color);
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 900px) {
@@ -424,6 +723,12 @@ section.info-section p {
     right: 20px;
     padding: 12px;
   }
+
+  .admin-panel-content {
+    width: 95%;
+    margin: 10% auto;
+    padding: 20px;
+  }
 }
 
 @media (max-width: 600px) {
@@ -458,5 +763,10 @@ section.info-section p {
   
   header .team-under-logo {
     max-width: 140px;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 20px;
   }
 }
