@@ -28,12 +28,7 @@ async function testSupabaseConnection() {
 
 // تعريف الدوال العامة التي سيتم استخدامها في admin.js
 window.previewImage = function(input) {
-    let previewId = 'imagePreview';
-    if (input.id === 'adImagePanel') {
-        previewId = 'imagePreviewPanel';
-    }
-    
-    const preview = document.getElementById(previewId);
+    const preview = document.getElementById('imagePreview');
     if (!preview) return;
     
     const file = input.files[0];
@@ -96,7 +91,7 @@ window.displayAds = async function() {
                 ` : ''}
                 <h4>${ad.title}</h4>
                 <p>${ad.description}</p>
-                ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+                ${ad.price ? `<p class="ad-price">السعر: ${ad.price}</p>` : ''}
                 ${ad.duration ? `<p class="ad-duration">${ad.duration}</p>` : ''}
             `;
             adsContainer.appendChild(adElement);
@@ -190,18 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, observerOptions);
     
     // مراقبة العناصر لإضافة تأثيرات التمرير
-    const menuItems = document.querySelectorAll('.menu-item');
-    menuItems.forEach(item => {
-        observer.observe(item);
-    });
-    
     menuSections.forEach(section => {
-        observer.observe(section);
-    });
-    
-    // إضافة تأثيرات للعناصر عند التمرير
-    const infoSections = document.querySelectorAll('.info-section');
-    infoSections.forEach(section => {
         observer.observe(section);
     });
     
