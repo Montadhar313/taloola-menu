@@ -4,6 +4,10 @@ const ADMIN_CREDENTIALS = {
   password: "admin123"
 };
 
+// التحقق من وجود عناصر DOM
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('تم تحميل الصفحة');
+  
 // عناصر DOM
 const adminLoginBtn = document.getElementById('adminLoginBtn');
 const adminAuthModal = document.getElementById('adminAuthModal');
@@ -14,6 +18,16 @@ const viewAdsBtn = document.getElementById('viewAdsBtn');
 const adsContainer = document.getElementById('adsContainer');
 const currentAds = document.getElementById('currentAds');
 
+  console.log('adminLoginBtn:', adminLoginBtn);
+  console.log('adminAuthModal:', adminAuthModal);
+  console.log('adminLoginSubmit:', adminLoginSubmit);
+  console.log('adminPanel:', adminPanel);
+  console.log('closeAdminPanel:', closeAdminPanel);
+  console.log('viewAdsBtn:', viewAdsBtn);
+  console.log('adsContainer:', adsContainer);
+  console.log('currentAds:', currentAds);
+  
+  
 // فتح نافذة تسجيل دخول المسؤول
 if (adminLoginBtn) {
   adminLoginBtn.addEventListener('click', () => {
