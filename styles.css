@@ -2204,3 +2204,357 @@ section.info-section p {
 ::-webkit-scrollbar-thumb:hover {
     background: #a50301;
 }
+/* ============================================ */
+/* 📝 قسم العنوان التفصيلي (جديد) */
+/* ============================================ */
+
+.location-description-section {
+    background: linear-gradient(135deg, #fff8e1, #fff3c4);
+    border: 2px solid var(--main-yellow);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.location-description-section .location-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    color: var(--main-red);
+    flex-wrap: wrap;
+}
+
+.location-description-section .location-header i {
+    font-size: 1.5rem;
+}
+
+.location-description-section .location-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--main-red);
+    flex: 1;
+    min-width: 180px;
+}
+
+.required-badge {
+    background: var(--main-red);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* زر استخدام العنوان المحفوظ */
+.use-saved-address-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-start;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.2);
+    font-family: var(--main-font);
+    touch-action: manipulation;
+    position: relative;
+    overflow: hidden;
+}
+
+.use-saved-address-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.use-saved-address-btn:hover::before {
+    left: 100%;
+}
+
+.use-saved-address-btn:hover,
+.use-saved-address-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.use-saved-address-btn i {
+    font-size: 1.2rem;
+}
+
+.use-saved-address-btn span {
+    flex: 1;
+    text-align: right;
+}
+
+.use-saved-address-btn small {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-top: 3px;
+    font-weight: 500;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* حقل كتابة العنوان */
+.location-textarea-wrapper {
+    background: white;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.location-textarea-wrapper:focus-within {
+    border-color: var(--main-red);
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.1);
+}
+
+.location-textarea {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    resize: vertical;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-family: var(--main-font);
+    min-height: 120px;
+    color: #333;
+    background: transparent;
+    outline: none;
+    direction: rtl;
+}
+
+.location-textarea::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.textarea-footer {
+    background: #f9f9f9;
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #eee;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.char-counter {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+
+.char-counter i {
+    color: var(--main-yellow);
+}
+
+.helper-text {
+    font-size: 0.8rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.helper-text i {
+    color: #2196F3;
+}
+
+/* خيارات العنوان */
+.location-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #333;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    user-select: none;
+}
+
+.checkbox-wrapper:hover {
+    background: #f8f9fa;
+    transform: translateX(-3px);
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--main-red);
+    flex-shrink: 0;
+}
+
+.checkbox-wrapper .checkmark {
+    display: none;
+}
+
+.map-picker-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    color: #1976d2;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+}
+
+.map-picker-link:hover {
+    background: linear-gradient(135deg, #bbdefb, #90caf9);
+    transform: translateX(-3px);
+    box-shadow: 0 3px 10px rgba(25, 118, 210, 0.2);
+}
+
+.map-picker-link i {
+    font-size: 1.2rem;
+}
+
+/* معلومات GPS المدمجة */
+.gps-info-compact {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #555;
+    border: 1px dashed #ddd;
+}
+
+.gps-info-compact i {
+    color: var(--main-yellow);
+    font-size: 1.2rem;
+}
+
+.gps-info-compact.success {
+    background: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.gps-info-compact.success i {
+    color: #28a745;
+}
+
+.gps-info-compact.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.gps-info-compact.error i {
+    color: #dc3545;
+}
+
+/* عنوان القسم */
+.review-section-title {
+    color: var(--main-red);
+    font-size: 1.3rem;
+    margin: 20px 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--main-yellow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ============================================ */
+/* 📱 استجابة الهاتف للعنوان التفصيلي */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    .location-description-section {
+        padding: 15px;
+    }
+    
+    .location-description-section .location-header h4 {
+        font-size: 1.05rem;
+    }
+    
+    .location-textarea {
+        font-size: 0.95rem;
+        min-height: 100px;
+        padding: 12px;
+    }
+    
+    .use-saved-address-btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        flex-wrap: wrap;
+    }
+    
+    .use-saved-address-btn small {
+        width: 100%;
+        max-width: none;
+        margin-top: 5px;
+    }
+    
+    .textarea-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .checkbox-wrapper {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+    
+    .map-picker-link {
+        font-size: 0.85rem;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 400px) {
+    .location-textarea {
+        min-height: 90px;
+        font-size: 0.9rem;
+    }
+    
+    .required-badge {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+    }
+}
