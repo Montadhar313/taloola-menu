@@ -1,99 +1,5 @@
 // ============================================
-// 🎯 نظام النافذة العائمة القابلة للسحب (جديد)
-// ============================================
-const LOCATION_BAR_POSITION_KEY = 'taloola_location_bar_position';
-const DEFAULT_POSITION = { top: '70px', right: '20px', left: 'auto', bottom: 'auto' };
-
-// ============================================
-// 🔄 متغيرات شريط التنقل القابل للإخفاء (جديد)
-// ============================================
-const NAV_COLLAPSED_KEY = 'taloola_nav_collapsed';
-let isNavCollapsed = localStorage.getItem(NAV_COLLAPSED_KEY) === 'true';
-
-function saveBarPosition(position) {
-    try { localStorage.setItem(LOCATION_BAR_POSITION_KEY, JSON.stringify(position)); } catch (error) {}
-}
-function getBarPosition() {
-    try {
-        const saved = localStorage.getItem(LOCATION_BAR_POSITION_KEY);
-        return saved ? JSON.parse(saved) : DEFAULT_POSITION;
-    } catch (error) { return DEFAULT_POSITION; }
-}
-function applyBarPosition(position) {
-    const bar = document.getElementById('locationBar');
-    if (!bar) return;
-    bar.style.top = position.top; bar.style.right = position.right;
-    bar.style.left = position.left; bar.style.bottom = position.bottom;
-}
-function resetBarPosition() {
-    applyBarPosition(DEFAULT_POSITION); saveBarPosition(DEFAULT_POSITION);
-    showNotification('✅ تم إعادة النافذة للموقع الأصلي');
-}
-
-function initDraggableBar() {
-    const bar = document.getElementById('locationBar');
-    if (!bar) return;
-    applyBarPosition(getBarPosition());
-    let isDragging = false, startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
-
-    bar.addEventListener('mousedown', function(e) {
-        if (e.target.closest('button') || e.target.tagName === 'BUTTON') return;
-        isDragging = true; bar.classList.add('dragging');
-        const rect = bar.getBoundingClientRect();
-        startX = e.clientX; startY = e.clientY;
-        initialLeft = rect.left; initialTop = rect.top;
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
-        let newLeft = initialLeft + (e.clientX - startX);
-        let newTop = initialTop + (e.clientY - startY);
-        const barRect = bar.getBoundingClientRect();
-        newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - barRect.width - 10));
-        newTop = Math.max(10, Math.min(newTop, window.innerHeight - barRect.height - 10));
-        bar.style.left = newLeft + 'px'; bar.style.top = newTop + 'px';
-        bar.style.right = 'auto'; bar.style.bottom = 'auto';
-    });
-    document.addEventListener('mouseup', function() {
-        if (!isDragging) return;
-        isDragging = false; bar.classList.remove('dragging');
-        const rect = bar.getBoundingClientRect();
-        saveBarPosition({ top: rect.top + 'px', left: rect.left + 'px', right: 'auto', bottom: 'auto' });
-    });
-
-    bar.addEventListener('touchstart', function(e) {
-        if (e.target.closest('button') || e.target.tagName === 'BUTTON') return;
-        isDragging = true; bar.classList.add('dragging');
-        const touch = e.touches[0]; const rect = bar.getBoundingClientRect();
-        startX = touch.clientX; startY = touch.clientY;
-        initialLeft = rect.left; initialTop = rect.top;
-        e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('touchmove', function(e) {
-        if (!isDragging) return;
-        const touch = e.touches[0];
-        let newLeft = initialLeft + (touch.clientX - startX);
-        let newTop = initialTop + (touch.clientY - startY);
-        const barRect = bar.getBoundingClientRect();
-        newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - barRect.width - 10));
-        newTop = Math.max(10, Math.min(newTop, window.innerHeight - barRect.height - 10));
-        bar.style.left = newLeft + 'px'; bar.style.top = newTop + 'px';
-        bar.style.right = 'auto'; bar.style.bottom = 'auto';
-        e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('touchend', function() {
-        if (!isDragging) return;
-        isDragging = false; bar.classList.remove('dragging');
-        const rect = bar.getBoundingClientRect();
-        saveBarPosition({ top: rect.top + 'px', left: rect.left + 'px', right: 'auto', bottom: 'auto' });
-    });
-
-    const resetBtn = document.getElementById('resetPositionBtn');
-    if (resetBtn) resetBtn.addEventListener('click', function(e) { e.preventDefault(); resetBarPosition(); });
-}
-
-// ============================================
-// 📍 نظام تحديد الموقع الجغرافي
+// 📍 نظام تحديد الموقع الجغرافي (محسّن)
 // ============================================
 let userLocation = null;
 let locationPermissionGranted = false;
@@ -113,38 +19,6 @@ function saveLocationToStorage(location) {
     } catch (error) { return null; }
 }
 
-function saveNavState(collapsed) {
-    try { localStorage.setItem(NAV_COLLAPSED_KEY, collapsed.toString()); isNavCollapsed = collapsed; } catch (error) {}
-}
-function applyNavState() {
-    const nav = document.getElementById('sectionsNav');
-    const toggleBtn = document.getElementById('toggleNavBtn');
-    const toggleIcon = document.getElementById('toggleNavIcon');
-    const toggleText = document.getElementById('toggleNavText');
-    const restoreBtn = document.getElementById('restoreNavBtn');
-    if (!nav || !toggleBtn) return;
-    if (isNavCollapsed) {
-        nav.classList.add('collapsed'); toggleBtn.style.display = 'none'; restoreBtn.style.display = 'flex';
-        if (toggleIcon) toggleIcon.className = 'fas fa-chevron-down';
-        if (toggleText) toggleText.textContent = 'إظهار القائمة';
-    } else {
-        nav.classList.remove('collapsed'); toggleBtn.style.display = 'flex'; restoreBtn.style.display = 'none';
-        if (toggleIcon) toggleIcon.className = 'fas fa-chevron-up';
-        if (toggleText) toggleText.textContent = 'تصغير القائمة';
-    }
-}
-function toggleNavigation() {
-    isNavCollapsed = !isNavCollapsed; saveNavState(isNavCollapsed); applyNavState();
-    showNotification(isNavCollapsed ? '✓ تم تصغير قائمة الأصناف' : '✓ تم إظهار قائمة الأصناف');
-}
-function initToggleNavigation() {
-    const toggleBtn = document.getElementById('toggleNavBtn');
-    const restoreBtn = document.getElementById('restoreNavBtn');
-    applyNavState();
-    if (toggleBtn) toggleBtn.addEventListener('click', function(e) { e.preventDefault(); toggleNavigation(); });
-    if (restoreBtn) restoreBtn.addEventListener('click', function(e) { e.preventDefault(); toggleNavigation(); });
-}
-
 function getLocationFromStorage() {
     try {
         const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
@@ -157,32 +31,183 @@ function getLocationFromStorage() {
     } catch (error) { return null; }
 }
 
+// ============================================
+// 📍 تحسين دقة تحديد الموقع (خاصة لـ iOS)
+// ============================================
 function requestLocationPermission() {
     return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) reject(new Error('المتصفح لا يدعم تحديد الموقع'));
-        navigator.geolocation.getCurrentPosition(
-            (position) => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy }),
-            (error) => {
-                let msg = 'خطأ في تحديد الموقع';
-                if (error.code === error.PERMISSION_DENIED) msg = 'تم رفض إذن تحديد الموقع';
-                else if (error.code === error.POSITION_UNAVAILABLE) msg = 'معلومات الموقع غير متوفرة';
-                else if (error.code === error.TIMEOUT) msg = 'انتهت مهلة طلب الموقع';
-                reject(new Error(msg));
+        if (!navigator.geolocation) {
+            reject(new Error('المتصفح لا يدعم تحديد الموقع الجغرافي'));
+            return;
+        }
+        
+        // تحسينات خاصة لـ iOS
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 20000, // زيادة المهلة لـ iOS
+            maximumAge: 0
+        };
+        
+        // محاولة استخدام watchPosition أولاً (أدق في iOS)
+        let watchId = null;
+        let timeoutId = setTimeout(() => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            reject(new Error('انتهت مهلة طلب الموقع'));
+        }, options.timeout);
+        
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                clearTimeout(timeoutId);
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                }
+                
+                const location = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+                resolve(location);
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            (error) => {
+                clearTimeout(timeoutId);
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                }
+                
+                let errorMessage = 'خطأ في تحديد الموقع';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'تم رفض إذن تحديد الموقع';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'معلومات الموقع غير متوفرة';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'انتهت مهلة طلب الموقع';
+                        break;
+                }
+                reject(new Error(errorMessage));
+            },
+            options
         );
     });
 }
 
-function updateLocationBar(status, message) {
-    const locationBar = document.getElementById('locationBar');
-    const locationStatus = document.getElementById('locationStatus');
-    const locationText = document.getElementById('locationText');
-    if (!locationBar || !locationStatus || !locationText) return;
-    locationStatus.classList.remove('success', 'error', 'loading');
-    if (status === 'loading') { locationStatus.classList.add('loading'); locationText.textContent = message || 'جاري تحديد موقعك...'; }
-    else if (status === 'success') { locationStatus.classList.add('success'); locationText.textContent = message || 'تم تحديد موقعك ✓'; }
-    else if (status === 'error') { locationStatus.classList.add('error'); locationText.textContent = message || 'فشل تحديد الموقع'; }
+// ============================================
+// 📍 نظام أيقونة الموقع في الأسفل (جديد)
+// ============================================
+function initLocationIcon() {
+    const locationIconBtn = document.getElementById('locationIconBtn');
+    if (!locationIconBtn) return;
+    
+    updateLocationIconStatus();
+    
+    locationIconBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        openLocationModal();
+    });
+}
+
+function updateLocationIconStatus() {
+    const locationIconBtn = document.getElementById('locationIconBtn');
+    if (!locationIconBtn) return;
+    
+    const storedLocation = getLocationFromStorage();
+    if (storedLocation || userLocation) {
+        locationIconBtn.classList.add('located');
+        locationIconBtn.title = '✓ تم تحديد موقعك';
+    } else {
+        locationIconBtn.classList.remove('located');
+        locationIconBtn.title = 'تحديد الموقع';
+    }
+}
+
+function openLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        updateLocationModalStatus();
+    }
+}
+
+function closeLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function updateLocationModalStatus() {
+    const statusDiv = document.getElementById('locationModalStatus');
+    const textSpan = document.getElementById('locationModalText');
+    const infoDiv = document.getElementById('locationModalInfo');
+    const coordsP = document.getElementById('locationCoords');
+    
+    if (!statusDiv || !textSpan) return;
+    
+    const location = userLocation || getLocationFromStorage();
+    
+    if (location) {
+        statusDiv.className = 'location-modal-status success';
+        textSpan.textContent = '✓ تم تحديد موقعك بنجاح';
+        if (infoDiv) {
+            infoDiv.style.display = 'block';
+            if (coordsP) {
+                coordsP.textContent = `الإحداثيات: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+            }
+        }
+    } else {
+        statusDiv.className = 'location-modal-status';
+        textSpan.textContent = 'اضغط على الزر لتحديد موقعك';
+        if (infoDiv) infoDiv.style.display = 'none';
+    }
+}
+
+async function requestLocationAndUpdate() {
+    const statusDiv = document.getElementById('locationModalStatus');
+    const textSpan = document.getElementById('locationModalText');
+    
+    if (statusDiv && textSpan) {
+        statusDiv.className = 'location-modal-status loading';
+        textSpan.textContent = 'جاري تحديد موقعك...';
+    }
+    
+    try {
+        const location = await requestLocationPermission();
+        const savedLocation = saveLocationToStorage(location);
+        userLocation = savedLocation;
+        locationPermissionGranted = true;
+        localStorage.setItem(LOCATION_PERMISSION_KEY, 'granted');
+        
+        if (statusDiv && textSpan) {
+            statusDiv.className = 'location-modal-status success';
+            textSpan.textContent = '✓ تم تحديد موقعك بنجاح';
+        }
+        
+        updateLocationModalStatus();
+        updateLocationIconStatus();
+        updateLocationInCart();
+        
+        showNotification('✅ تم تحديد موقعك بنجاح');
+        return savedLocation;
+    } catch (error) {
+        console.error('خطأ في تحديد الموقع:', error);
+        
+        if (statusDiv && textSpan) {
+            statusDiv.className = 'location-modal-status error';
+            textSpan.textContent = '⚠ ' + error.message;
+        }
+        
+        if (error.message.includes('رفض')) {
+            localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
+        }
+        
+        showNotification('⚠ ' + error.message);
+        return null;
+    }
 }
 
 function updateLocationInCart() {
@@ -197,36 +222,21 @@ function updateLocationInCart() {
     }
 }
 
-async function requestLocationAndUpdate() {
-    try {
-        updateLocationBar('loading', 'جاري تحديد موقعك...');
-        const location = await requestLocationPermission();
-        userLocation = saveLocationToStorage(location);
-        locationPermissionGranted = true;
-        localStorage.setItem(LOCATION_PERMISSION_KEY, 'granted');
-        updateLocationBar('success', 'تم تحديد موقعك ✓');
-        updateLocationInCart();
-        showNotification('✅ تم تحديد موقعك بنجاح');
-    } catch (error) {
-        updateLocationBar('error', 'فشل تحديد الموقع');
-        if (error.message.includes('رفض')) localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
-        showNotification('⚠ ' + error.message);
-    }
-}
-
 async function initializeLocationSystem() {
     const savedPermission = localStorage.getItem(LOCATION_PERMISSION_KEY);
     const storedLocation = getLocationFromStorage();
     if (storedLocation) {
         userLocation = storedLocation; locationPermissionGranted = true;
-        updateLocationBar('success', 'تم تحديد موقعك ✓'); updateLocationInCart();
+        updateLocationIconStatus();
+        updateLocationInCart();
         return;
     }
     if (savedPermission !== 'denied') {
         const modal = document.getElementById('locationPermissionModal');
         if (modal) modal.style.display = 'flex';
     } else {
-        updateLocationBar('error', 'الموقع غير متاح'); updateLocationInCart();
+        updateLocationIconStatus();
+        updateLocationInCart();
     }
 }
 
@@ -429,7 +439,6 @@ function showNotification(message) {
     }, 3000);
 }
 
-// 🆕 دالة تعديل الكمية داخل المنتج (تدعم الصفر)
 function changeItemQuantity(button, change) {
     const menuCard = button.closest('.menu-item');
     const qtyInput = menuCard.querySelector('.qty-input');
@@ -494,8 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const allowLocationBtn = document.getElementById('allowLocationBtn');
     const denyLocationBtn = document.getElementById('denyLocationBtn');
-    const refreshLocationBtn = document.getElementById('refreshLocationBtn');
-    const updateLocationFromCartBtn = document.getElementById('updateLocationFromCartBtn');
+    const getLocationBtn = document.getElementById('getLocationBtn');
 
     if (allowLocationBtn) allowLocationBtn.addEventListener('click', async function(e) {
         e.preventDefault();
@@ -506,12 +514,14 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         document.getElementById('locationPermissionModal').style.display = 'none';
         localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
-        updateLocationBar('error', 'تم رفض الموقع');
+        updateLocationIconStatus();
         updateLocationInCart();
         showNotification('⚠ تم رفض تحديد الموقع');
     });
-    if (refreshLocationBtn) refreshLocationBtn.addEventListener('click', async function(e) { e.preventDefault(); await requestLocationAndUpdate(); });
-    if (updateLocationFromCartBtn) updateLocationFromCartBtn.addEventListener('click', async function(e) { e.preventDefault(); await requestLocationAndUpdate(); });
+    if (getLocationBtn) getLocationBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        await requestLocationAndUpdate();
+    });
 
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) scrollToTopBtn.style.display = window.pageYOffset > 300 ? 'flex' : 'none';
@@ -560,7 +570,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const itemPrice = item.getAttribute('data-price');
                 const quantity = parseInt(qtyInput.value) || 0;
                 
-                // 🆕 منع الإضافة إذا كانت الكمية 0
                 if (quantity === 0) {
                     showNotification('⚠ الرجاء زيادة الكمية أولاً');
                     return;
@@ -574,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         this.classList.remove('added');
                         this.innerHTML = originalHTML;
-                        qtyInput.value = 0; // 🆕 إعادة العداد إلى 0 بعد الإضافة
+                        qtyInput.value = 0;
                     }, 1500);
                 }
             });
@@ -592,13 +601,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', function(event) {
         if (event.target === document.getElementById('cartModal')) closeCartModal();
         if (event.target === document.getElementById('orderReviewModal')) closeOrderReview();
+        if (event.target === document.getElementById('locationModal')) closeLocationModal();
         if (event.target === document.getElementById('adminPanel')) document.getElementById('adminPanel').style.display = 'none';
         if (event.target === document.getElementById('adminAuthModal')) closeAuthModal();
     });
 
     updateCartUI();
-    initDraggableBar();
-    initToggleNavigation();
+    initLocationIcon();
     initializeLocationSystem();
 
     firebaseStorageScript.onload = function() {
@@ -740,4 +749,4 @@ window.clearCart = clearCart; window.openCartModal = openCartModal; window.close
 window.showOrderReview = showOrderReview; window.closeOrderReview = closeOrderReview; window.confirmAndSendOrder = confirmAndSendOrder;
 window.openSupport = openSupport; window.closeAuthModal = closeAuthModal; window.previewImage = previewImage;
 window.createAd = createAd; window.deleteAd = deleteAd; window.loadCurrentAds = loadCurrentAds; window.displayAds = displayAds;
-window.requestLocationAndUpdate = requestLocationAndUpdate; window.toggleNavigation = toggleNavigation;
+window.requestLocationAndUpdate = requestLocationAndUpdate; window.closeLocationModal = closeLocationModal;
