@@ -1,25 +1,332 @@
-// ========================
-// سلة المشتريات - Core Logic
-// ========================
+// ============================================
+// 📍 نظام تحديد الموقع الجغرافي (جديد)
+// ============================================
 
-// مصفوفة السلة - تخزين العناصر
+// متغيرات الموقع
+let userLocation = null;
+let locationPermissionGranted = false;
+
+// مفاتيح التخزين المحلي
+const LOCATION_STORAGE_KEY = 'taloola_user_location';
+const LOCATION_PERMISSION_KEY = 'taloola_location_permission';
+
+// ============================================
+// دوال الموقع الجغرافي
+// ============================================
+
+/**
+ * حفظ الموقع في التخزين المحلي
+ */
+function saveLocationToStorage(location) {
+    try {
+        const locationData = {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            timestamp: Date.now(),
+            googleMapsUrl: generateGoogleMapsUrl(location.latitude, location.longitude)
+        };
+        localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
+        console.log('✅ تم حفظ الموقع في التخزين المحلي');
+        return locationData;
+    } catch (error) {
+        console.error('خطأ في حفظ الموقع:', error);
+        return null;
+    }
+}
+
+/**
+ * جلب الموقع من التخزين المحلي
+ */
+function getLocationFromStorage() {
+    try {
+        const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
+        if (storedLocation) {
+            const locationData = JSON.parse(storedLocation);
+            // التحقق من أن الموقع ليس قديماً جداً (أكثر من 7 أيام)
+            const oneWeek = 7 * 24 * 60 * 60 * 1000;
+            if (Date.now() - locationData.timestamp < oneWeek) {
+                console.log('✅ تم جلب الموقع من التخزين المحلي');
+                return locationData;
+            } else {
+                // حذف الموقع القديم
+                localStorage.removeItem(LOCATION_STORAGE_KEY);
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('خطأ في جلب الموقع:', error);
+        return null;
+    }
+}
+
+/**
+ * حذف الموقع من التخزين المحلي
+ */
+function clearLocationFromStorage() {
+    try {
+        localStorage.removeItem(LOCATION_STORAGE_KEY);
+        console.log('✅ تم حذف الموقع من التخزين المحلي');
+    } catch (error) {
+        console.error('خطأ في حذف الموقع:', error);
+    }
+}
+
+/**
+ * توليد رابط Google Maps من الإحداثيات
+ */
+function generateGoogleMapsUrl(lat, lng) {
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
+/**
+ * طلب إذن الموقع من المستخدم
+ */
+function requestLocationPermission() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('المتصفح لا يدعم تحديد الموقع الجغرافي'));
+            return;
+        }
+        
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        };
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const location = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+                resolve(location);
+            },
+            (error) => {
+                let errorMessage = 'خطأ في تحديد الموقع';
+                
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'تم رفض إذن تحديد الموقع';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'معلومات الموقع غير متوفرة';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'انتهت مهلة طلب الموقع';
+                        break;
+                }
+                
+                reject(new Error(errorMessage));
+            },
+            options
+        );
+    });
+}
+
+/**
+ * تحديث واجهة الموقع في الشريط العلوي
+ */
+function updateLocationBar(status, message) {
+    const locationBar = document.getElementById('locationBar');
+    const locationStatus = document.getElementById('locationStatus');
+    const locationText = document.getElementById('locationText');
+    
+    if (!locationBar || !locationStatus || !locationText) return;
+    
+    // إزالة جميع الحالات السابقة
+    locationStatus.classList.remove('success', 'error', 'loading');
+    
+    switch(status) {
+        case 'loading':
+            locationStatus.classList.add('loading');
+            locationText.textContent = message || 'جاري تحديد موقعك...';
+            locationBar.style.display = 'flex';
+            break;
+            
+        case 'success':
+            locationStatus.classList.add('success');
+            locationText.textContent = message || 'تم تحديد موقعك ✓';
+            locationBar.style.display = 'flex';
+            break;
+            
+        case 'error':
+            locationStatus.classList.add('error');
+            locationText.textContent = message || 'فشل تحديد الموقع';
+            locationBar.style.display = 'flex';
+            break;
+            
+        case 'hidden':
+            locationBar.style.display = 'none';
+            break;
+    }
+}
+
+/**
+ * تحديث حالة الموقع في نافذة السلة
+ */
+function updateLocationInCart() {
+    const locationStatusBadge = document.getElementById('locationStatusBadge');
+    const locationStatusText = document.getElementById('locationStatusText');
+    
+    if (!locationStatusBadge || !locationStatusText) return;
+    
+    // إزالة الحالات السابقة
+    locationStatusBadge.classList.remove('success', 'error', 'warning');
+    
+    if (userLocation) {
+        locationStatusBadge.classList.add('success');
+        locationStatusText.textContent = '✓ الموقع محدد - سيتم إرساله مع الطلب';
+    } else {
+        const storedLocation = getLocationFromStorage();
+        if (storedLocation) {
+            userLocation = storedLocation;
+            locationStatusBadge.classList.add('success');
+            locationStatusText.textContent = '✓ الموقع محفوظ من زيارة سابقة';
+        } else {
+            locationStatusBadge.classList.add('warning');
+            locationStatusText.textContent = '⚠ الموقع غير محدد - قد يؤثر على التوصيل';
+        }
+    }
+}
+
+/**
+ * عرض معلومات الموقع في نافذة المراجعة
+ */
+function displayLocationInReview() {
+    const reviewLocationDetails = document.getElementById('reviewLocationDetails');
+    if (!reviewLocationDetails) return;
+    
+    const location = userLocation || getLocationFromStorage();
+    
+    if (location) {
+        const mapUrl = location.googleMapsUrl || generateGoogleMapsUrl(location.latitude, location.longitude);
+        
+        reviewLocationDetails.innerHTML = `
+            <p><i class="fas fa-check-circle" style="color: #28a745;"></i> <strong>تم تحديد موقعك بنجاح</strong></p>
+            <p><i class="fas fa-map-pin"></i> الإحداثيات: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
+            <p><i class="fas fa-clock"></i> آخر تحديث: ${new Date(location.timestamp).toLocaleString('ar-EG')}</p>
+            <a href="${mapUrl}" target="_blank" class="location-map-link">
+                <i class="fas fa-external-link-alt"></i> عرض الموقع على الخريطة
+            </a>
+        `;
+    } else {
+        reviewLocationDetails.innerHTML = `
+            <p style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> <strong>الموقع غير محدد</strong></p>
+            <p>قد يواجه سائق التوصيل صعوبة في الوصول إليك</p>
+            <button onclick="requestLocationAndUpdate()" class="location-map-link">
+                <i class="fas fa-map-marker-alt"></i> تحديد الموقع الآن
+            </button>
+        `;
+    }
+}
+
+/**
+ * طلب الموقع وتحديث الواجهة
+ */
+async function requestLocationAndUpdate() {
+    try {
+        updateLocationBar('loading', 'جاري تحديد موقعك...');
+        
+        const location = await requestLocationPermission();
+        const savedLocation = saveLocationToStorage(location);
+        userLocation = savedLocation;
+        locationPermissionGranted = true;
+        
+        // حفظ حالة الإذن
+        localStorage.setItem(LOCATION_PERMISSION_KEY, 'granted');
+        
+        updateLocationBar('success', 'تم تحديد موقعك ✓');
+        updateLocationInCart();
+        displayLocationInReview();
+        
+        showNotification('✅ تم تحديد موقعك بنجاح');
+        
+        return savedLocation;
+    } catch (error) {
+        console.error('خطأ في تحديد الموقع:', error);
+        updateLocationBar('error', 'فشل تحديد الموقع');
+        
+        // في حالة الرفض، حفظ الحالة
+        if (error.message.includes('رفض')) {
+            localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
+        }
+        
+        showNotification('⚠ ' + error.message);
+        return null;
+    }
+}
+
+/**
+ * تهيئة نظام الموقع المستخدم عند تحميل الصفحة
+ */
+async function initializeLocationSystem() {
+    console.log('🔍 بدء تهيئة نظام الموقع...');
+    
+    // التحقق من حالة الإذن المحفوظة
+    const savedPermission = localStorage.getItem(LOCATION_PERMISSION_KEY);
+    
+    // 1. محاولة جلب الموقع من التخزين المحلي أولاً (الأسرع)
+    const storedLocation = getLocationFromStorage();
+    
+    if (storedLocation) {
+        userLocation = storedLocation;
+        locationPermissionGranted = true;
+        updateLocationBar('success', 'تم تحديد موقعك ✓');
+        updateLocationInCart();
+        console.log('✅ تم استخدام الموقع المحفوظ');
+        return;
+    }
+    
+    // 2. إذا لم يكن هناك موقع محفوظ، عرض نافذة الإذن
+    if (savedPermission !== 'denied') {
+        showLocationPermissionModal();
+    } else {
+        // إذا كان المستخدم قد رفض سابقاً، عرض شريط تحذيري
+        updateLocationBar('error', 'الموقع غير متاح');
+        updateLocationInCart();
+    }
+}
+
+/**
+ * عرض نافذة طلب إذن الموقع
+ */
+function showLocationPermissionModal() {
+    const modal = document.getElementById('locationPermissionModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+/**
+ * إخفاء نافذة طلب إذن الموقع
+ */
+function hideLocationPermissionModal() {
+    const modal = document.getElementById('locationPermissionModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// ============================================
+// 🛒 دوال السلة (مُحدّثة لتشمل الموقع)
+// ============================================
+
+// مصفوفة السلة
 let shoppingCart = JSON.parse(localStorage.getItem('taloola_cart')) || [];
 
-// حفظ السلة في التخزين المحلي
 function saveCart() {
     localStorage.setItem('taloola_cart', JSON.stringify(shoppingCart));
     updateCartUI();
 }
 
-// تحديث واجهة السلة
 function updateCartUI() {
     const cartCount = document.getElementById('cartCount');
     const totalItems = shoppingCart.reduce((sum, item) => sum + item.quantity, 0);
     
     if (cartCount) {
         cartCount.textContent = totalItems;
-        
-        // تأثير نبض عند تغيير الكمية
         if (totalItems > 0) {
             cartCount.style.animation = 'none';
             setTimeout(() => {
@@ -29,16 +336,12 @@ function updateCartUI() {
     }
 }
 
-// إضافة عنصر إلى السلة مع الكمية المحددة
 function addToCart(name, price, quantity = 1) {
-    // التحقق من وجود العنصر مسبقاً في السلة
     const existingItem = shoppingCart.find(item => item.name === name);
     
     if (existingItem) {
-        // زيادة الكمية إذا كان العنصر موجوداً
         existingItem.quantity += quantity;
     } else {
-        // إضافة عنصر جديد
         shoppingCart.push({
             name: name,
             price: parseInt(price),
@@ -50,18 +353,15 @@ function addToCart(name, price, quantity = 1) {
     showNotification(`✓ تم إضافة ${quantity} × ${name} إلى السلة`);
 }
 
-// إزالة عنصر من السلة
 function removeFromCart(index) {
     shoppingCart.splice(index, 1);
     saveCart();
     displayCartItems();
 }
 
-// تغيير كمية العنصر
 function changeQuantity(index, change) {
     shoppingCart[index].quantity += change;
     
-    // إزالة العنصر إذا كانت الكمية صفر أو أقل
     if (shoppingCart[index].quantity <= 0) {
         shoppingCart.splice(index, 1);
     }
@@ -70,7 +370,6 @@ function changeQuantity(index, change) {
     displayCartItems();
 }
 
-// تفريغ السلة
 function clearCart() {
     if (shoppingCart.length === 0) {
         alert('السلة فارغة بالفعل!');
@@ -85,12 +384,14 @@ function clearCart() {
     }
 }
 
-// عرض عناصر السلة
 function displayCartItems() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalElement = document.getElementById('cartTotal');
     
     if (!cartItemsContainer) return;
+    
+    // تحديث حالة الموقع في السلة
+    updateLocationInCart();
     
     if (shoppingCart.length === 0) {
         cartItemsContainer.innerHTML = `
@@ -116,7 +417,7 @@ function displayCartItems() {
         itemElement.innerHTML = `
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">${item.price} د.ع × ${item.quantity} = ${itemTotal.toLocaleString('ar-EG')} د.ع</div>
+                <div class="cart-item-price">${item.price.toLocaleString('ar-EG')} د.ع × ${item.quantity} = ${itemTotal.toLocaleString('ar-EG')} د.ع</div>
                 <div class="cart-item-quantity">
                     <button class="qty-btn" onclick="changeQuantity(${index}, -1)">
                         <i class="fas fa-minus"></i>
@@ -140,7 +441,6 @@ function displayCartItems() {
     }
 }
 
-// فتح نافذة السلة
 function openCartModal() {
     const cartModal = document.getElementById('cartModal');
     if (cartModal) {
@@ -149,7 +449,6 @@ function openCartModal() {
     }
 }
 
-// إغلاق نافذة السلة
 function closeCartModal() {
     const cartModal = document.getElementById('cartModal');
     if (cartModal) {
@@ -158,17 +457,15 @@ function closeCartModal() {
 }
 
 // ============================================
-// 🔥 نافذة مراجعة الطلب قبل الإرسال (جديدة)
+// 📋 نافذة مراجعة الطلب (مُحدّثة)
 // ============================================
 
-// عرض نافذة مراجعة الطلب
 function showOrderReview() {
     if (shoppingCart.length === 0) {
         alert('السلة فارغة! الرجاء إضافة منتجات أولاً.');
         return;
     }
     
-    // إغلاق نافذة السلة وفتح نافذة المراجعة
     closeCartModal();
     
     const reviewModal = document.getElementById('orderReviewModal');
@@ -178,7 +475,6 @@ function showOrderReview() {
     }
 }
 
-// عرض تفاصيل الطلب في نافذة المراجعة
 function displayOrderReview() {
     const reviewItemsContainer = document.getElementById('orderReviewItems');
     const reviewItemCount = document.getElementById('reviewItemCount');
@@ -186,6 +482,9 @@ function displayOrderReview() {
     const reviewTotalAmount = document.getElementById('reviewTotalAmount');
     
     if (!reviewItemsContainer) return;
+    
+    // عرض معلومات الموقع أولاً
+    displayLocationInReview();
     
     reviewItemsContainer.innerHTML = '';
     let totalQuantity = 0;
@@ -223,7 +522,6 @@ function displayOrderReview() {
     }
 }
 
-// إغلاق نافذة المراجعة
 function closeOrderReview() {
     const reviewModal = document.getElementById('orderReviewModal');
     if (reviewModal) {
@@ -231,16 +529,37 @@ function closeOrderReview() {
     }
 }
 
-// تأكيد الطلب وإرساله عبر واتساب
+// ============================================
+// 📱 إرسال الطلب عبر واتساب (مُحدّثة لتشمل الموقع)
+// ============================================
+
 function confirmAndSendOrder() {
     if (shoppingCart.length === 0) {
         alert('السلة فارغة!');
         return;
     }
     
+    // التحقق من وجود الموقع
+    const location = userLocation || getLocationFromStorage();
+    
+    if (!location) {
+        const confirmWithoutLocation = confirm(
+            '⚠ لم يتم تحديد موقعك بعد!\n\n' +
+            'هل تريد إرسال الطلب بدون موقع؟\n' +
+            '(قد يواجه سائق التوصيل صعوبة في الوصول إليك)'
+        );
+        
+        if (!confirmWithoutLocation) {
+            // إغلاق نافذة المراجعة وطلب الموقع
+            closeOrderReview();
+            requestLocationAndUpdate();
+            return;
+        }
+    }
+    
     const phoneNumber = '9647755666073';
     
-    // بناء رسالة الطلب بالتنسيق المطلوب
+    // بناء رسالة الطلب مع الموقع
     let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
     message += 'الطلب :\n';
     
@@ -259,39 +578,46 @@ function confirmAndSendOrder() {
     message += `\nالاجمالي : ${totalAmount}`;
     message += `\nالمجموع النهائي ${totalAmount}`;
     
+    // إضافة الموقع إذا كان متاحاً
+    if (location) {
+        const mapUrl = location.googleMapsUrl || generateGoogleMapsUrl(location.latitude, location.longitude);
+        message += `\n\n📍 موقع التوصيل:`;
+        message += `\n${mapUrl}`;
+        message += `\n\nالإحداثيات: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+    } else {
+        message += `\n\n⚠ ملاحظة: الموقع غير محدد - يرجى التواصل مع الزبون`;
+    }
+    
     // فتح واتساب مع الرسالة
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappURL, '_blank');
     
-    // إغلاق نافذة المراجعة
     closeOrderReview();
+    showNotification('✅ تم إرسال طلبك مع الموقع عبر واتساب!');
     
-    // إظهار إشعار النجاح
-    showNotification('✓ تم إرسال طلبك عبر واتساب بنجاح!');
-    
-    // تفريغ السلة بعد الإرسال الناجح
+    // تفريغ السلة بعد الإرسال
     setTimeout(() => {
         shoppingCart = [];
         saveCart();
     }, 500);
 }
 
-// إظهار إشعار
+// ============================================
+// 🔔 دوال عامة
+// ============================================
+
 function showNotification(message) {
-    // إزالة الإشعار السابق إذا وجد
     const existingNotification = document.querySelector('.cart-notification');
     if (existingNotification) {
         existingNotification.remove();
     }
     
-    // إنشاء إشعار جديد
     const notification = document.createElement('div');
     notification.className = 'cart-notification';
     notification.textContent = message;
     notification.style.display = 'block';
     document.body.appendChild(notification);
     
-    // إخفاء الإشعار بعد 3 ثواني
     setTimeout(() => {
         notification.style.animation = 'slideInDown 0.5s ease reverse';
         setTimeout(() => {
@@ -300,11 +626,6 @@ function showNotification(message) {
     }, 3000);
 }
 
-// ============================================
-// 🔥 التحكم بالكمية داخل عناصر المنيو (جديد)
-// ============================================
-
-// تغيير الكمية داخل المنتج
 function changeItemQuantity(button, change) {
     const menuCard = button.closest('.menu-item');
     const qtyInput = menuCard.querySelector('.qty-input');
@@ -314,12 +635,7 @@ function changeItemQuantity(button, change) {
     let currentQty = parseInt(qtyInput.value) || 1;
     currentQty += change;
     
-    // الحد الأدنى = 1
-    if (currentQty < 1) {
-        currentQty = 1;
-    }
-    
-    // الحد الأقصى = 99
+    if (currentQty < 1) currentQty = 1;
     if (currentQty > 99) {
         currentQty = 99;
         showNotification('الحد الأقصى للكمية هو 99');
@@ -327,16 +643,11 @@ function changeItemQuantity(button, change) {
     
     qtyInput.value = currentQty;
     
-    // تأثير بصري
     qtyInput.style.transform = 'scale(1.2)';
     setTimeout(() => {
         qtyInput.style.transform = 'scale(1)';
     }, 200);
 }
-
-// ============================================
-// الدوال العامة
-// ============================================
 
 function openSupport() {
     const phoneNumber = '9647755666073';
@@ -360,11 +671,9 @@ function previewImage(input) {
     
     if (file) {
         const reader = new FileReader();
-        
         reader.onload = function(e) {
             preview.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
         }
-        
         reader.readAsDataURL(file);
     } else {
         preview.innerHTML = '<span>معاينة الصورة</span>';
@@ -372,11 +681,14 @@ function previewImage(input) {
 }
 
 // ============================================
-// التهيئة عند تحميل الصفحة
+// 🚀 التهيئة عند تحميل الصفحة
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تم تحميل صفحة تعلولة بنجاح');
+    
+    // إزالة تأخير 300ms للنقر
+    document.addEventListener('touchstart', function(){}, {passive: true});
     
     // تهيئة Firebase
     const firebaseConfig = {
@@ -390,7 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
         measurementId: "G-L4SLHVVFVR"
     };
 
-    // تحميل Firebase SDK ديناميكياً
     const firebaseScript = document.createElement('script');
     firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     document.head.appendChild(firebaseScript);
@@ -409,6 +720,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuSections = document.querySelectorAll('section.menu-section');
     const menuItems = document.querySelectorAll('.menu-item');
     const cartIcon = document.getElementById('cartIcon');
+    
+    // ============================================
+    // 📍 ربط أزرار الموقع الجغرافي
+    // ============================================
+    
+    const allowLocationBtn = document.getElementById('allowLocationBtn');
+    const denyLocationBtn = document.getElementById('denyLocationBtn');
+    const refreshLocationBtn = document.getElementById('refreshLocationBtn');
+    const updateLocationFromCartBtn = document.getElementById('updateLocationFromCartBtn');
+    
+    // زر السماح بتحديد الموقع
+    if (allowLocationBtn) {
+        allowLocationBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            hideLocationPermissionModal();
+            await requestLocationAndUpdate();
+        });
+    }
+    
+    // زر رفض تحديد الموقع
+    if (denyLocationBtn) {
+        denyLocationBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            hideLocationPermissionModal();
+            localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
+            updateLocationBar('error', 'تم رفض الموقع');
+            updateLocationInCart();
+            showNotification('⚠ تم رفض تحديد الموقع - قد يؤثر على التوصيل');
+        });
+    }
+    
+    // زر تحديث الموقع في الشريط العلوي
+    if (refreshLocationBtn) {
+        refreshLocationBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            await requestLocationAndUpdate();
+        });
+    }
+    
+    // زر تحديث الموقع من نافذة السلة
+    if (updateLocationFromCartBtn) {
+        updateLocationFromCartBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            await requestLocationAndUpdate();
+        });
+    }
     
     // زر العودة لأعلى الصفحة
     window.addEventListener('scroll', () => {
@@ -450,8 +807,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ============================================
-    // 🔥 ربط أزرار الكمية وزر الإضافة للسلة (محسّن)
+    // 🛒 ربط أزرار الكمية وزر الإضافة للسلة
     // ============================================
+    
+    function addTouchClickHandler(element, callback) {
+        let touchHandled = false;
+        
+        element.addEventListener('touchstart', function(e) {
+            touchHandled = false;
+        }, { passive: true });
+        
+        element.addEventListener('touchend', function(e) {
+            if (!touchHandled) {
+                touchHandled = true;
+                e.preventDefault();
+                callback.call(this, e);
+            }
+        }, { passive: false });
+        
+        element.addEventListener('click', function(e) {
+            if (!touchHandled) {
+                callback.call(this, e);
+            }
+            touchHandled = false;
+        });
+    }
     
     menuItems.forEach(item => {
         const decreaseBtn = item.querySelector('.qty-decrease');
@@ -459,27 +839,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const qtyInput = item.querySelector('.qty-input');
         const addToCartBtn = item.querySelector('.add-to-cart-btn');
         
-        // زر نقصان الكمية
         if (decreaseBtn) {
-            decreaseBtn.addEventListener('click', function(e) {
+            addTouchClickHandler(decreaseBtn, function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 changeItemQuantity(this, -1);
             });
         }
         
-        // زر زيادة الكمية
         if (increaseBtn) {
-            increaseBtn.addEventListener('click', function(e) {
+            addTouchClickHandler(increaseBtn, function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 changeItemQuantity(this, 1);
             });
         }
         
-        // زر إضافة للسلة
         if (addToCartBtn) {
-            addToCartBtn.addEventListener('click', function(e) {
+            addTouchClickHandler(addToCartBtn, function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -490,7 +867,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (itemName && itemPrice) {
                     addToCart(itemName, itemPrice, quantity);
                     
-                    // تأثير بصري على الزر
                     this.classList.add('added');
                     const originalHTML = this.innerHTML;
                     this.innerHTML = '<i class="fas fa-check"></i> تم الإضافة';
@@ -498,7 +874,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         this.classList.remove('added');
                         this.innerHTML = originalHTML;
-                        // إعادة الكمية إلى 1 بعد الإضافة
                         qtyInput.value = 1;
                     }, 1500);
                 }
@@ -506,9 +881,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // أيقونة السلة
     if (cartIcon) {
-        cartIcon.addEventListener('click', openCartModal);
+        addTouchClickHandler(cartIcon, function(e) {
+            e.preventDefault();
+            openCartModal();
+        });
     }
     
     // تأثيرات التمرير
@@ -539,23 +916,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const adminPanel = document.getElementById('adminPanel');
         const adminAuthModal = document.getElementById('adminAuthModal');
         const orderReviewModal = document.getElementById('orderReviewModal');
+        const locationPermissionModal = document.getElementById('locationPermissionModal');
         
-        if (event.target === cartModal) {
-            closeCartModal();
-        }
-        if (event.target === orderReviewModal) {
-            closeOrderReview();
-        }
-        if (event.target === adminPanel) {
-            adminPanel.style.display = 'none';
-        }
-        if (event.target === adminAuthModal) {
-            closeAuthModal();
-        }
+        if (event.target === cartModal) closeCartModal();
+        if (event.target === orderReviewModal) closeOrderReview();
+        if (event.target === adminPanel) adminPanel.style.display = 'none';
+        if (event.target === adminAuthModal) closeAuthModal();
+        // لا نغلق نافذة الموقع عند النقر خارجها - يجب على المستخدم الاختيار
     });
     
-    // تحديث واجهة السلة
     updateCartUI();
+    
+    // ============================================
+    // 📍 تهيئة نظام الموقع الجغرافي
+    // ============================================
+    
+    initializeLocationSystem();
     
     // تحميل الإعلانات بعد تحميل Firebase
     firebaseStorageScript.onload = function() {
@@ -584,7 +960,6 @@ const ADMIN_CREDENTIALS = {
 
 function loadCurrentAds() {
     const currentAds = document.getElementById('currentAds');
-    
     if (!currentAds) return;
     
     currentAds.innerHTML = '<p>جاري تحميل الإعلانات...</p>';
@@ -605,7 +980,6 @@ function loadCurrentAds() {
             }
             
             currentAds.innerHTML = '';
-            
             const keys = Object.keys(ads).reverse();
             
             keys.forEach((key) => {
@@ -660,7 +1034,6 @@ function displayAds() {
             }
             
             adsContainer.innerHTML = '';
-            
             const keys = Object.keys(ads).reverse();
             
             keys.forEach((key) => {
@@ -751,9 +1124,7 @@ function createAd() {
 }
 
 function deleteAd(key, imageUrl) {
-    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
-        return;
-    }
+    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
     
     if (typeof firebase === 'undefined' || !firebase.database) {
         alert('Firebase غير متوفر');
@@ -800,7 +1171,6 @@ function clearAdForm() {
     if (imagePreview) imagePreview.innerHTML = '<span>معاينة الصورة</span>';
 }
 
-// تهيئة لوحة التحكم
 document.addEventListener('DOMContentLoaded', function() {
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
@@ -810,9 +1180,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (adminLoginBtn) {
         adminLoginBtn.addEventListener('click', () => {
-            if (adminAuthModal) {
-                adminAuthModal.style.display = 'flex';
-            }
+            if (adminAuthModal) adminAuthModal.style.display = 'flex';
         });
     }
     
@@ -822,12 +1190,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const password = document.getElementById('adminPassword').value;
             
             if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-                if (adminAuthModal) {
-                    adminAuthModal.style.display = 'none';
-                }
-                if (adminPanel) {
-                    adminPanel.style.display = 'flex';
-                }
+                if (adminAuthModal) adminAuthModal.style.display = 'none';
+                if (adminPanel) adminPanel.style.display = 'flex';
                 loadCurrentAds();
             } else {
                 alert('اسم المستخدم أو كلمة المرور غير صحيحة');
@@ -837,14 +1201,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (closeAdminPanel) {
         closeAdminPanel.addEventListener('click', () => {
-            if (adminPanel) {
-                adminPanel.style.display = 'none';
-            }
+            if (adminPanel) adminPanel.style.display = 'none';
         });
     }
 });
 
-// تصدير الدوال العامة للنطاق العام
+// تصدير الدوال العامة
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.changeQuantity = changeQuantity;
@@ -861,3 +1223,4 @@ window.createAd = createAd;
 window.deleteAd = deleteAd;
 window.loadCurrentAds = loadCurrentAds;
 window.displayAds = displayAds;
+window.requestLocationAndUpdate = requestLocationAndUpdate;
