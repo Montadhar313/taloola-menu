@@ -32,7 +32,22 @@ function getLocationFromStorage() {
 }
 
 // ============================================
-// 📍 تحسين دقة تحديد الموقع (خاصة لـ iOS)
+// 📍 كشف نظام التشغيل
+// ============================================
+function detectOS() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+    if (/android/i.test(userAgent)) {
+        return 'android';
+    }
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        return 'ios';
+    }
+    return 'other';
+}
+
+// ============================================
+// 📍 تحسين دقة تحديد الموقع (متعدد الأنظمة)
 // ============================================
 function requestLocationPermission() {
     return new Promise((resolve, reject) => {
@@ -41,61 +56,233 @@ function requestLocationPermission() {
             return;
         }
         
-        // تحسينات خاصة لـ iOS
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 20000,
-            maximumAge: 0
-        };
+        const os = detectOS();
+        console.log('🔍 نظام التشغيل المكتشف:', os);
         
-        // محاولة استخدام watchPosition أولاً (أدق في iOS)
-        let watchId = null;
-        let timeoutId = setTimeout(() => {
-            if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-            }
-            reject(new Error('انتهت مهلة طلب الموقع'));
-        }, options.timeout);
+        // 🆕 إعدادات مختلفة لكل نظام
+        let options;
+        if (os === 'android') {
+            options = {
+                enableHighAccuracy: true,
+                timeout: 25000,  // مهلة أطول لأندرويد
+                maximumAge: 0
+            };
+        } else if (os === 'ios') {
+            options = {
+                enableHighAccuracy: true,
+                timeout: 20000,
+                maximumAge: 0
+            };
+        } else {
+            options = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            };
+        }
         
-        watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                clearTimeout(timeoutId);
-                if (watchId !== null) {
-                    navigator.geolocation.clearWatch(watchId);
-                }
-                
-                const location = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
-                };
-                resolve(location);
-            },
-            (error) => {
-                clearTimeout(timeoutId);
-                if (watchId !== null) {
-                    navigator.geolocation.clearWatch(watchId);
-                }
-                
-                let errorMessage = 'خطأ في تحديد الموقع';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'تم رفض إذن تحديد الموقع';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'معلومات الموقع غير متوفرة';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'انتهت مهلة طلب الموقع';
-                        break;
-                }
-                reject(new Error(errorMessage));
-            },
-            options
-        );
+        // 🆕 استراتيجية مختلفة لكل نظام
+        if (os === 'android') {
+            // استراتيجية أندرويد: محاولة getCurrentPosition أولاً
+            // ثم watchPosition إذا فشلت
+            attemptAndroidLocation(resolve, reject, options);
+        } else if (os === 'ios') {
+            // استراتيجية iOS: استخدام watchPosition مباشرة (أدق)
+            attemptIOSLocation(resolve, reject, options);
+        } else {
+            // استراتيجية الأنظمة الأخرى: getCurrentPosition
+            attemptDefaultLocation(resolve, reject, options);
+        }
     });
 }
 
+// ============================================
+// 🤖 استراتيجية أندرويد
+// ============================================
+function attemptAndroidLocation(resolve, reject, options) {
+    console.log('🤖 محاولة تحديد الموقع لأندرويد...');
+    
+    let watchId = null;
+    let timeoutId = setTimeout(() => {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+        }
+        reject(new Error('انتهت مهلة طلب الموقع - تأكد من تفعيل GPS وإذن الموقع'));
+    }, options.timeout);
+    
+    // 🆕 المحاولة الأولى: getCurrentPosition (أسرع في أندرويد)
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            clearTimeout(timeoutId);
+            const location = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            };
+            console.log('✅ تم تحديد الموقع بنجاح (Android - getCurrentPosition)');
+            resolve(location);
+        },
+        (error) => {
+            console.log('⚠ getCurrentPosition فشل، محاولة watchPosition...');
+            
+            // 🆕 المحاولة الثانية: watchPosition
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    clearTimeout(timeoutId);
+                    if (watchId !== null) {
+                        navigator.geolocation.clearWatch(watchId);
+                    }
+                    const location = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    console.log('✅ تم تحديد الموقع بنجاح (Android - watchPosition)');
+                    resolve(location);
+                },
+                (watchError) => {
+                    clearTimeout(timeoutId);
+                    if (watchId !== null) {
+                        navigator.geolocation.clearWatch(watchId);
+                    }
+                    
+                    // 🆕 رسائل خطأ مخصصة لأندرويد
+                    let errorMessage = handleAndroidError(watchError);
+                    reject(new Error(errorMessage));
+                },
+                options
+            );
+        },
+        options
+    );
+}
+
+// ============================================
+// 🍎 استراتيجية iOS
+// ============================================
+function attemptIOSLocation(resolve, reject, options) {
+    console.log('🍎 محاولة تحديد الموقع لـ iOS...');
+    
+    let watchId = null;
+    let timeoutId = setTimeout(() => {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+        }
+        reject(new Error('انتهت مهلة طلب الموقع - تأكد من تفعيل خدمات الموقع'));
+    }, options.timeout);
+    
+    watchId = navigator.geolocation.watchPosition(
+        (position) => {
+            clearTimeout(timeoutId);
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            const location = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            };
+            console.log('✅ تم تحديد الموقع بنجاح (iOS)');
+            resolve(location);
+        },
+        (error) => {
+            clearTimeout(timeoutId);
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            
+            // 🆕 رسائل خطأ مخصصة لـ iOS
+            let errorMessage = handleIOSError(error);
+            reject(new Error(errorMessage));
+        },
+        options
+    );
+}
+
+// ============================================
+// 💻 استراتيجية الأنظمة الأخرى
+// ============================================
+function attemptDefaultLocation(resolve, reject, options) {
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const location = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            };
+            resolve(location);
+        },
+        (error) => {
+            let errorMessage = 'خطأ في تحديد الموقع';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'تم رفض إذن تحديد الموقع';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'معلومات الموقع غير متوفرة';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'انتهت مهلة طلب الموقع';
+                    break;
+            }
+            reject(new Error(errorMessage));
+        },
+        options
+    );
+}
+
+// ============================================
+// 🤖 معالجة أخطاء أندرويد
+// ============================================
+function handleAndroidError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            return 'تم رفض إذن الموقع. يرجى الذهاب إلى:\n' +
+                   'الإعدادات ← التطبيقات ← المتصفح ← الأذونات ← الموقع ← السماح';
+        
+        case error.POSITION_UNAVAILABLE:
+            return 'خدمات الموقع غير متوفرة.\n' +
+                   'يرجى التأكد من:\n' +
+                   '• تشغيل GPS من الإعدادات السريعة\n' +
+                   '• تفعيل "دقة عالية" في إعدادات الموقع\n' +
+                   '• وجود اتصال بالإنترنت';
+        
+        case error.TIMEOUT:
+            return 'انتهت مهلة طلب الموقع.\n' +
+                   'يرجى التأكد من:\n' +
+                   '• تشغيل GPS\n' +
+                   '• التواجد في مكان مفتوح لاستقبال الإشارة\n' +
+                   '• المحاولة مرة أخرى';
+        
+        default:
+            return 'خطأ غير معروف في تحديد الموقع. تأكد من تفعيل GPS وخدمات الموقع';
+    }
+}
+
+// ============================================
+// 🍎 معالجة أخطاء iOS
+// ============================================
+function handleIOSError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            return 'تم رفض إذن الموقع.\n' +
+                   'يرجى الذهاب إلى:\n' +
+                   'الإعدادات ← الخصوصية ← خدمات الموقع ← Safari ← السماح';
+        
+        case error.POSITION_UNAVAILABLE:
+            return 'معلومات الموقع غير متوفرة.\n' +
+                   'يرجى التأكد من:\n' +
+                   '• تفعيل خدمات الموقع من الإعدادات\n' +
+                   '• تشغيل WiFi أو البيانات الخلوية';
+        
+        case error.TIMEOUT:
+            return 'انتهت مهلة طلب الموقع.\n' +
+                   'يرجى المحاولة مرة أخرى أو التأكد من تفعيل الموقع';
+        
+        default:
+            return 'خطأ في تحديد الموقع على iPhone';
+    }
+}
 // ============================================
 // 📍 نظام أيقونة الموقع في الأسفل
 // ============================================
