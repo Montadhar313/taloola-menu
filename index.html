@@ -26,27 +26,6 @@
 <span id="cartCount" class="cart-count">0</span>
 </div>
 
-<!-- ============================================ -->
-<!-- 📍 شريط الموقع الجغرافي القابل للسحب (محسّن) -->
-<!-- ============================================ -->
-<div id="locationBar" class="location-bar" draggable="false">
-<div class="drag-handle" title="اسحبني لتحريك النافذة">
-<i class="fas fa-grip-vertical"></i>
-<span>اسحب</span>
-</div>
-<div class="location-status" id="locationStatus">
-<i class="fas fa-map-marker-alt"></i>
-<span id="locationText">جاري تحديد موقعك...</span>
-</div>
-<button type="button" id="refreshLocationBtn" class="refresh-location-btn" title="تحديث الموقع">
-<i class="fas fa-sync-alt"></i>
-</button>
-<button type="button" id="resetPositionBtn" class="reset-position-btn" title="إعادة للموقع الأصلي">
-<i class="fas fa-undo"></i>
-</button>
-<div class="drag-hint">💡 اسحبني لتحريك النافذة</div>
-</div>
-
 <header>
 <img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
 <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
@@ -54,16 +33,7 @@
 <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
 </header>
 
-<!-- ============================================ -->
-<!-- 🔄 زر تقليص/توسيع شريط التنقل (جديد) -->
-<!-- ============================================ -->
-<button type="button" id="toggleNavBtn" class="toggle-nav-btn" title="تصغير شريط الأصناف">
-<i class="fas fa-chevron-up" id="toggleNavIcon"></i>
-<span id="toggleNavText">تصغير القائمة</span>
-</button>
-
 <nav class="sections-nav" id="sectionsNav" role="navigation" aria-label="روابط الأقسام">
-<button type="button" data-section="sec0">بركر</button>
 <button type="button" data-section="sec0">بركر</button>
 <button type="button" data-section="sec1">زنكر</button>
 <button type="button" data-section="sec2">ريزو</button>
@@ -79,14 +49,6 @@
 <button type="button" data-section="sec12">مشروبات غازية</button>
 <button type="button" data-section="sec13">مقبلات</button>
 </nav>
-
-<!-- ============================================ -->
-<!-- 📌 زر استعادة شريط التنقل العائم (جديد) -->
-<!-- ============================================ -->
-<button type="button" id="restoreNavBtn" class="restore-nav-btn" title="إظهار قائمة الأصناف" style="display: none;">
-<i class="fas fa-list"></i>
-<span>القائمة</span>
-</button>
 
 <main>
 <!-- قسم الإعلانات -->
@@ -693,11 +655,18 @@
 </section>
 </main>
 
+<!-- ============================================ -->
+<!-- 📍 أيقونة الموقع الثابتة في الأسفل -->
+<!-- ============================================ -->
+<div id="locationIconBtn" class="location-icon-btn" title="تحديد الموقع">
+    <i class="fas fa-map-marker-alt"></i>
+</div>
+
 <!-- زر العودة لأعلى -->
 <button id="scrollToTopBtn" aria-label="العودة لأعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
 
 <!-- ============================================ -->
-<!-- 📍 نافذة طلب إذن الموقع (جديدة) -->
+<!-- 📍 نافذة طلب إذن الموقع -->
 <!-- ============================================ -->
 <div id="locationPermissionModal" class="modal">
 <div class="modal-content location-permission-modal">
@@ -737,6 +706,41 @@
 </div>
 </div>
 
+<!-- ============================================ -->
+<!-- 📍 نافذة تحديد الموقع المنبثقة -->
+<!-- ============================================ -->
+<div id="locationModal" class="modal">
+    <div class="modal-content location-modal-content">
+        <span class="close" onclick="closeLocationModal()">&times;</span>
+        <div class="location-modal-icon">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <h2>📍 تحديد موقعك</h2>
+        <p class="location-modal-text">
+            لتحسين خدمة التوصيل، نحتاج إلى تحديد موقعك الحالي
+        </p>
+        
+        <div id="locationModalStatus" class="location-modal-status">
+            <i class="fas fa-info-circle"></i>
+            <span id="locationModalText">اضغط على الزر لتحديد موقعك</span>
+        </div>
+        
+        <div class="location-modal-actions">
+            <button type="button" id="getLocationBtn" class="btn-get-location">
+                <i class="fas fa-crosshairs"></i> تحديد الموقع الآن
+            </button>
+            <button type="button" onclick="closeLocationModal()" class="btn-close-location">
+                <i class="fas fa-times"></i> إغلاق
+            </button>
+        </div>
+        
+        <div id="locationModalInfo" class="location-modal-info" style="display: none;">
+            <p><i class="fas fa-check-circle"></i> تم تحديد موقعك بنجاح</p>
+            <p class="location-coords" id="locationCoords"></p>
+        </div>
+    </div>
+</div>
+
 <!-- نافذة سلة المشتريات -->
 <div id="cartModal" class="modal">
 <div class="modal-content cart-modal">
@@ -748,7 +752,7 @@
 <i class="fas fa-map-marker-alt"></i>
 <span id="locationStatusText">الموقع غير محدد</span>
 </div>
-<button type="button" id="updateLocationFromCartBtn" class="btn-update-location">
+<button type="button" id="updateLocationFromCartBtn" class="btn-update-location" onclick="requestLocationAndUpdate()">
 <i class="fas fa-sync-alt"></i> تحديث الموقع
 </button>
 </div>
@@ -764,7 +768,7 @@
 </div>
 
 <!-- ============================================ -->
-<!-- 📋 نافذة مراجعة الطلب مع العنوان التفصيلي -->
+<!-- 📋 نافذة مراجعة الطلب -->
 <!-- ============================================ -->
 <div id="orderReviewModal" class="modal">
 <div class="modal-content review-modal">
@@ -773,7 +777,7 @@
 <p class="review-subtitle">تأكد من تفاصيل طلبك وأضف منطقتك للتوصيل</p>
 
 <!-- ============================================ -->
-<!-- 📍 قسم منطقة التوصيل (القطاع / الحي) -->
+<!-- 📍 قسم منطقة التوصيل -->
 <!-- ============================================ -->
 <div class="location-description-section">
     <div class="location-header">
