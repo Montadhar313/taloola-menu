@@ -184,10 +184,10 @@ div.menu-item {
     align-items: center;
     text-align: center;
     transition: all 0.3s ease;
-    cursor: pointer;
     border: 2px solid var(--main-yellow);
     position: relative;
     overflow: hidden;
+    z-index: 1;
 }
 
 div.menu-item::before {
@@ -200,18 +200,17 @@ div.menu-item::before {
     background: linear-gradient(135deg, rgba(254, 219, 23, 0.1), transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
+    z-index: 0;
+    pointer-events: none;
 }
 
-div.menu-item:hover::before,
-div.menu-item:focus::before {
+div.menu-item:hover::before {
     opacity: 1;
 }
 
-div.menu-item:hover,
-div.menu-item:focus {
+div.menu-item:hover {
     box-shadow: var(--shadow-hover);
     transform: translateY(-7px) scale(1.03);
-    outline: none;
 }
 
 .item-image {
@@ -226,6 +225,7 @@ div.menu-item:focus {
     align-items: center;
     justify-content: center;
     position: relative;
+    z-index: 1;
 }
 
 .item-image img {
@@ -236,6 +236,7 @@ div.menu-item:focus {
     z-index: 2;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     transition: transform 0.3s ease;
+    pointer-events: none;
 }
 
 div.menu-item:hover .item-image img {
@@ -248,6 +249,8 @@ div.menu-item h4 {
     color: var(--text-color);
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
 }
 
 div.menu-item p.price {
@@ -257,9 +260,87 @@ div.menu-item p.price {
     margin-top: 0.8rem;
     letter-spacing: 1px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 1;
 }
 
-/* زر إضافة للسلة */
+/* ============================================ */
+/* 🔥 محدد الكمية داخل المنتج (جديد) */
+/* ============================================ */
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 1rem 0;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 50px;
+    border: 2px solid var(--main-yellow);
+    width: 100%;
+    max-width: 180px;
+    position: relative;
+    z-index: 10;
+}
+
+.qty-decrease,
+.qty-increase {
+    background: var(--main-yellow);
+    color: #000;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    pointer-events: auto;
+    position: relative;
+    z-index: 11;
+}
+
+.qty-decrease:hover,
+.qty-increase:hover {
+    background: #ffffff;
+    color: var(--main-red);
+    transform: scale(1.15);
+}
+
+.qty-decrease:active,
+.qty-increase:active {
+    transform: scale(0.95);
+}
+
+.qty-input {
+    width: 50px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background: #ffffff;
+    color: var(--main-red);
+    border: 2px solid var(--main-yellow);
+    border-radius: 50px;
+    padding: 5px;
+    font-family: var(--main-font);
+    pointer-events: none;
+}
+
+.qty-input::-webkit-inner-spin-button,
+.qty-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* ============================================ */
+/* 🔥 زر إضافة للسلة (محسّن) */
+/* ============================================ */
+
 .add-to-cart-btn {
     background: var(--main-yellow);
     color: #000000;
@@ -269,13 +350,19 @@ div.menu-item p.price {
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     transition: all 0.3s ease;
     font-family: var(--main-font);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 220px;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
 }
 
 .add-to-cart-btn:hover {
@@ -287,6 +374,12 @@ div.menu-item p.price {
 
 .add-to-cart-btn:active {
     transform: scale(0.95);
+}
+
+.add-to-cart-btn.added {
+    background: #28a745;
+    color: white;
+    animation: bounce 0.6s ease;
 }
 
 /* أيقونة السلة */
@@ -577,7 +670,10 @@ section.info-section p {
     transform: rotate(90deg);
 }
 
-/* نافذة السلة */
+/* ============================================ */
+/* 🔥 نافذة السلة */
+/* ============================================ */
+
 .cart-modal {
     max-width: 600px;
 }
@@ -706,24 +802,218 @@ section.info-section p {
 .cart-actions button {
     flex: 1;
     min-width: 200px;
+    background: var(--main-red);
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.cart-actions button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn-clear {
     background: #666 !important;
-    color: white !important;
 }
 
 .btn-clear:hover {
     background: #444 !important;
 }
 
-.btn-order {
+.btn-review {
     background: #25D366 !important;
-    color: white !important;
 }
 
-.btn-order:hover {
+.btn-review:hover {
     background: #128C7E !important;
+}
+
+/* ============================================ */
+/* 🔥 نافذة مراجعة الطلب (جديدة) */
+/* ============================================ */
+
+.review-modal {
+    max-width: 700px;
+    text-align: right;
+}
+
+.review-subtitle {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.order-review-items {
+    margin: 20px 0;
+    max-height: 350px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px solid var(--main-yellow);
+}
+
+.review-item {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.review-item:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    transform: translateX(-3px);
+}
+
+.review-item-info {
+    flex: 1;
+    text-align: right;
+}
+
+.review-item-name {
+    font-weight: 700;
+    color: var(--main-red);
+    font-size: 1.05rem;
+    margin-bottom: 5px;
+}
+
+.review-item-details {
+    color: #555;
+    font-size: 0.9rem;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.review-item-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.review-item-details i {
+    color: var(--main-yellow);
+}
+
+.review-item-total {
+    font-weight: 700;
+    color: #000;
+    font-size: 1.1rem;
+    background: var(--main-yellow);
+    padding: 8px 15px;
+    border-radius: 50px;
+    min-width: 100px;
+    text-align: center;
+}
+
+.review-summary {
+    background: #fff8e1;
+    border: 2px solid var(--main-yellow);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ddd;
+    font-size: 1rem;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.total-row {
+    background: var(--main-yellow);
+    color: var(--main-red);
+    margin: 10px -20px -20px;
+    padding: 15px 20px;
+    border-radius: 0 0 10px 10px;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.review-note {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.review-note i {
+    font-size: 1.2rem;
+}
+
+.review-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.review-actions button {
+    flex: 1;
+    min-width: 200px;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-back {
+    background: #999;
+    color: white;
+}
+
+.btn-back:hover {
+    background: #666;
+    transform: translateY(-3px);
+}
+
+.btn-confirm {
+    background: #25D366;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background: #128C7E;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
 }
 
 /* لوحة التحكم */
@@ -1050,6 +1340,7 @@ section.info-section p {
     z-index: 10001;
     display: none;
     animation: slideInDown 0.5s ease;
+    font-family: var(--main-font);
 }
 
 @keyframes slideInDown {
@@ -1180,6 +1471,10 @@ section.info-section p {
         max-width: 95%;
     }
 
+    .review-modal {
+        max-width: 95%;
+    }
+
     .cart-item {
         flex-direction: column;
         align-items: stretch;
@@ -1197,6 +1492,24 @@ section.info-section p {
 
     .cart-actions button {
         width: 100%;
+    }
+
+    .review-actions {
+        flex-direction: column;
+    }
+
+    .review-actions button {
+        width: 100%;
+    }
+
+    .review-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .review-item-total {
+        margin-top: 10px;
+        text-align: center;
     }
 
     .cart-icon {
@@ -1254,10 +1567,6 @@ section.info-section p {
 }
 
 /* تأثيرات خاصة */
-.add-to-cart-btn.added {
-    animation: bounce 0.6s ease;
-}
-
 @keyframes bounce {
     0%, 100% {
         transform: translateY(0) scale(1);
