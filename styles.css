@@ -2558,3 +2558,295 @@ section.info-section p {
         padding: 2px 8px;
     }
 }
+
+/* ============================================ */
+/* 🎯 النافذة العائمة القابلة للسحب (محسّنة) */
+/* ============================================ */
+
+.location-bar {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.92);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--main-yellow);
+    backdrop-filter: blur(12px);
+    font-family: var(--main-font);
+    max-width: 320px;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.location-bar.dragging {
+    cursor: grabbing;
+    box-shadow: 0 12px 35px rgba(254, 219, 23, 0.5);
+    transform: scale(1.05);
+    z-index: 10000;
+    opacity: 0.95;
+}
+
+.location-bar.dragging * {
+    pointer-events: none;
+}
+
+/* مؤشر السحب */
+.drag-handle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--main-yellow);
+    font-size: 0.8rem;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    cursor: grab;
+}
+
+.location-bar:hover .drag-handle {
+    opacity: 1;
+}
+
+.drag-handle i {
+    font-size: 1rem;
+    animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+}
+
+.location-bar.dragging .drag-handle i {
+    animation: none;
+}
+
+/* زر إعادة الموقع الأصلي */
+.reset-position-btn {
+    background: var(--main-red);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    touch-action: manipulation;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.reset-position-btn:hover,
+.reset-position-btn:active {
+    background: #a50301;
+    transform: rotate(360deg) scale(1.1);
+}
+
+/* تحسين منطقة الحالة */
+.location-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    pointer-events: none;
+}
+
+.location-status i {
+    color: var(--main-yellow);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.location-status span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.location-status.success i {
+    color: #28a745;
+}
+
+.location-status.error i {
+    color: #dc3545;
+}
+
+.location-status.loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* زر التحديث */
+.refresh-location-btn {
+    background: var(--main-yellow);
+    color: #000;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-location-btn:hover,
+.refresh-location-btn:active {
+    background: #fff;
+    color: var(--main-red);
+    transform: rotate(180deg);
+}
+
+/* تأثير عند السحب */
+.drag-preview {
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    opacity: 0.5;
+    transform: scale(0.9);
+}
+
+/* إرشادات السحب */
+.drag-hint {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.location-bar:hover .drag-hint {
+    opacity: 1;
+}
+
+.location-bar.dragging .drag-hint {
+    opacity: 0;
+}
+
+/* ============================================ */
+/* 📱 استجابة الهاتف للنافذة العائمة */
+/* ============================================ */
+
+@media (max-width: 900px) {
+    .location-bar {
+        top: auto;
+        bottom: 90px;
+        right: 15px;
+        left: auto;
+        max-width: 280px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .drag-handle {
+        font-size: 0.7rem;
+    }
+    
+    .drag-handle i {
+        font-size: 0.9rem;
+    }
+    
+    .location-status {
+        font-size: 0.8rem;
+    }
+    
+    .refresh-location-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .reset-position-btn {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+@media (max-width: 600px) {
+    .location-bar {
+        max-width: 250px;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .drag-handle {
+        font-size: 0.65rem;
+    }
+    
+    .location-status {
+        font-size: 0.75rem;
+    }
+    
+    .location-status i {
+        font-size: 0.95rem;
+    }
+    
+    .refresh-location-btn {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .reset-position-btn {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 400px) {
+    .location-bar {
+        max-width: 220px;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+    
+    .drag-handle span {
+        display: none;
+    }
+    
+    .location-status {
+        font-size: 0.7rem;
+    }
+}
+
+/* تحسينات اللمس */
+@media (hover: none) and (pointer: coarse) {
+    .location-bar {
+        touch-action: none;
+    }
+    
+    .location-bar.dragging {
+        transform: scale(1.02);
+    }
+    
+    .reset-position-btn:active,
+    .refresh-location-btn:active {
+        transform: scale(0.9);
+    }
+}
+
