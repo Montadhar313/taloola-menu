@@ -1,4 +1,230 @@
 // ============================================
+// 🎯 نظام النافذة العائمة القابلة للسحب (جديد)
+// ============================================
+
+const LOCATION_BAR_POSITION_KEY = 'taloola_location_bar_position';
+const DEFAULT_POSITION = { top: '70px', right: '20px', left: 'auto', bottom: 'auto' };
+
+/**
+ * حفظ موقع النافذة في التخزين المحلي
+ */
+function saveBarPosition(position) {
+    try {
+        localStorage.setItem(LOCATION_BAR_POSITION_KEY, JSON.stringify(position));
+        console.log('✅ تم حفظ موقع النافذة');
+    } catch (error) {
+        console.error('خطأ في حفظ موقع النافذة:', error);
+    }
+}
+
+/**
+ * جلب موقع النافذة من التخزين المحلي
+ */
+function getBarPosition() {
+    try {
+        const saved = localStorage.getItem(LOCATION_BAR_POSITION_KEY);
+        return saved ? JSON.parse(saved) : DEFAULT_POSITION;
+    } catch (error) {
+        console.error('خطأ في جلب موقع النافذة:', error);
+        return DEFAULT_POSITION;
+    }
+}
+
+/**
+ * تطبيق موقع النافذة
+ */
+function applyBarPosition(position) {
+    const bar = document.getElementById('locationBar');
+    if (!bar) return;
+    
+    bar.style.top = position.top;
+    bar.style.right = position.right;
+    bar.style.left = position.left;
+    bar.style.bottom = position.bottom;
+}
+
+/**
+ * إعادة النافذة للموقع الأصلي
+ */
+function resetBarPosition() {
+    applyBarPosition(DEFAULT_POSITION);
+    saveBarPosition(DEFAULT_POSITION);
+    showNotification('✅ تم إعادة النافذة للموقع الأصلي');
+    
+    // تأثير بصري
+    const bar = document.getElementById('locationBar');
+    if (bar) {
+        bar.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+        setTimeout(() => {
+            bar.style.transition = '';
+        }, 500);
+    }
+}
+
+/**
+ * تهيئة نظام السحب للنافذة العائمة
+ */
+function initDraggableBar() {
+    const bar = document.getElementById('locationBar');
+    if (!bar) return;
+    
+    // تطبيق الموقع المحفوظ
+    const savedPosition = getBarPosition();
+    applyBarPosition(savedPosition);
+    
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+    
+    // ============================================
+    // 🖱️ أحداث الماوس (للكمبيوتر)
+    // ============================================
+    
+    bar.addEventListener('mousedown', function(e) {
+        // منع السحب إذا كان النقر على الأزرار
+        if (e.target.closest('button') || e.target.tagName === 'BUTTON') {
+            return;
+        }
+        
+        isDragging = true;
+        bar.classList.add('dragging');
+        
+        const rect = bar.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        let newLeft = initialLeft + deltaX;
+        let newTop = initialTop + deltaY;
+        
+        // منع الخروج من الشاشة
+        const barRect = bar.getBoundingClientRect();
+        const maxX = window.innerWidth - barRect.width;
+        const maxY = window.innerHeight - barRect.height;
+        
+        newLeft = Math.max(10, Math.min(newLeft, maxX - 10));
+        newTop = Math.max(10, Math.min(newTop, maxY - 10));
+        
+        bar.style.left = newLeft + 'px';
+        bar.style.top = newTop + 'px';
+        bar.style.right = 'auto';
+        bar.style.bottom = 'auto';
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        bar.classList.remove('dragging');
+        
+        // حفظ الموقع الجديد
+        const rect = bar.getBoundingClientRect();
+        const newPosition = {
+            top: rect.top + 'px',
+            left: rect.left + 'px',
+            right: 'auto',
+            bottom: 'auto'
+        };
+        saveBarPosition(newPosition);
+    });
+    
+    // ============================================
+    // 📱 أحداث اللمس (للهاتف)
+    // ============================================
+    
+    bar.addEventListener('touchstart', function(e) {
+        // منع السحب إذا كان اللمس على الأزرار
+        if (e.target.closest('button') || e.target.tagName === 'BUTTON') {
+            return;
+        }
+        
+        isDragging = true;
+        bar.classList.add('dragging');
+        
+        const touch = e.touches[0];
+        const rect = bar.getBoundingClientRect();
+        startX = touch.clientX;
+        startY = touch.clientY;
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        // منع التمرير أثناء السحب
+        e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        
+        let newLeft = initialLeft + deltaX;
+        let newTop = initialTop + deltaY;
+        
+        // منع الخروج من الشاشة
+        const barRect = bar.getBoundingClientRect();
+        const maxX = window.innerWidth - barRect.width;
+        const maxY = window.innerHeight - barRect.height;
+        
+        newLeft = Math.max(10, Math.min(newLeft, maxX - 10));
+        newTop = Math.max(10, Math.min(newTop, maxY - 10));
+        
+        bar.style.left = newLeft + 'px';
+        bar.style.top = newTop + 'px';
+        bar.style.right = 'auto';
+        bar.style.bottom = 'auto';
+        
+        // منع التمرير أثناء السحب
+        e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('touchend', function() {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        bar.classList.remove('dragging');
+        
+        // حفظ الموقع الجديد
+        const rect = bar.getBoundingClientRect();
+        const newPosition = {
+            top: rect.top + 'px',
+            left: rect.left + 'px',
+            right: 'auto',
+            bottom: 'auto'
+        };
+        saveBarPosition(newPosition);
+    });
+    
+    // ============================================
+    // 🔄 زر إعادة الموقع الأصلي
+    // ============================================
+    
+    const resetBtn = document.getElementById('resetPositionBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            resetBarPosition();
+        });
+    }
+    
+    console.log('✅ تم تهيئة نظام السحب للنافذة العائمة');
+}
+
+// ============================================
 // 📍 نظام تحديد الموقع الجغرافي (جديد)
 // ============================================
 
