@@ -1,7 +1,7 @@
 // بيانات المسؤول
 const ADMIN_CREDENTIALS = {
-    username: "admin",
-    password: "admin123"
+    username: "aluky",
+    password: "aluky121212"
 };
 
 // تحميل الإعلانات الحالية
