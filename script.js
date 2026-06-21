@@ -1399,7 +1399,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     updateCartUI();
-    
+        
+
+    // 🆕 تهيئة نظام السحب للنافذة العائمة (قبل الموقع الجغرافي)
+    initDraggableBar();
+    // 🆕 تهيئة نظام شريط التنقل القابل للإخفاء
+    initToggleNavigation();
     // ============================================
     // 📍 تهيئة نظام الموقع الجغرافي
     // ============================================
@@ -1697,3 +1702,6 @@ window.deleteAd = deleteAd;
 window.loadCurrentAds = loadCurrentAds;
 window.displayAds = displayAds;
 window.requestLocationAndUpdate = requestLocationAndUpdate;
+window.toggleNavigation = toggleNavigation;
+window.initToggleNavigation = initToggleNavigation;
+window.applyNavState = applyNavState;
