@@ -774,6 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     updateCartUI();
+    updateCartVisibility(); // 🆕 استدعاء الدالة الجديدة عند التحميل
     initLocationIcon();
     initializeLocationSystem();
 
