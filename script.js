@@ -4,7 +4,12 @@
 
 const LOCATION_BAR_POSITION_KEY = 'taloola_location_bar_position';
 const DEFAULT_POSITION = { top: '70px', right: '20px', left: 'auto', bottom: 'auto' };
+// ============================================
+// 🔄 متغيرات شريط التنقل القابل للإخفاء (جديد)
+// ============================================
 
+const NAV_COLLAPSED_KEY = 'taloola_nav_collapsed';
+let isNavCollapsed = localStorage.getItem(NAV_COLLAPSED_KEY) === 'true';
 /**
  * حفظ موقع النافذة في التخزين المحلي
  */
@@ -265,7 +270,103 @@ function saveLocationToStorage(location) {
         return null;
     }
 }
+// ============================================
+// 🔄 دوال شريط التنقل القابل للإخفاء (جديد)
+// ============================================
 
+/**
+ * حفظ حالة شريط التنقل في التخزين المحلي
+ */
+function saveNavState(collapsed) {
+    try {
+        localStorage.setItem(NAV_COLLAPSED_KEY, collapsed.toString());
+        isNavCollapsed = collapsed;
+        console.log(`✅ تم حفظ حالة التنقل: ${collapsed ? 'مخفي' : 'ظاهر'}`);
+    } catch (error) {
+        console.error('خطأ في حفظ حالة التنقل:', error);
+    }
+}
+
+/**
+ * تطبيق حالة شريط التنقل على العناصر
+ */
+function applyNavState() {
+    const nav = document.getElementById('sectionsNav');
+    const toggleBtn = document.getElementById('toggleNavBtn');
+    const toggleIcon = document.getElementById('toggleNavIcon');
+    const toggleText = document.getElementById('toggleNavText');
+    const restoreBtn = document.getElementById('restoreNavBtn');
+    
+    if (!nav || !toggleBtn) return;
+    
+    if (isNavCollapsed) {
+        // حالة الإخفاء
+        nav.classList.add('collapsed');
+        toggleBtn.style.display = 'none';
+        restoreBtn.style.display = 'flex';
+        
+        if (toggleIcon) toggleIcon.className = 'fas fa-chevron-down';
+        if (toggleText) toggleText.textContent = 'إظهار القائمة';
+    } else {
+        // حالة الظهور
+        nav.classList.remove('collapsed');
+        toggleBtn.style.display = 'flex';
+        restoreBtn.style.display = 'none';
+        
+        if (toggleIcon) toggleIcon.className = 'fas fa-chevron-up';
+        if (toggleText) toggleText.textContent = 'تصغير القائمة';
+    }
+}
+
+/**
+ * تبديل حالة شريط التنقل (إخفاء/إظهار)
+ */
+function toggleNavigation() {
+    isNavCollapsed = !isNavCollapsed;
+    saveNavState(isNavCollapsed);
+    applyNavState();
+    
+    // إظهار إشعار
+    const message = isNavCollapsed 
+        ? '✓ تم تصغير قائمة الأصناف' 
+        : '✓ تم إظهار قائمة الأصناف';
+    showNotification(message);
+    
+    // تأثير بصري على الزر
+    const toggleBtn = document.getElementById('toggleNavBtn');
+    if (toggleBtn) {
+        toggleBtn.classList.toggle('collapsed', isNavCollapsed);
+    }
+}
+
+/**
+ * تهيئة نظام شريط التنقل القابل للإخفاء
+ */
+function initToggleNavigation() {
+    const toggleBtn = document.getElementById('toggleNavBtn');
+    const restoreBtn = document.getElementById('restoreNavBtn');
+    
+    // تطبيق الحالة المحفوظة
+    applyNavState();
+    
+    // ربط زر التقليص/التوسيع
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleNavigation();
+        });
+    }
+    
+    // ربط زر الاستعادة
+    if (restoreBtn) {
+        restoreBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleNavigation();
+        });
+    }
+    
+    console.log('✅ تم تهيئة نظام شريط التنقل القابل للإخفاء');
+}
 /**
  * جلب الموقع من التخزين المحلي
  */
