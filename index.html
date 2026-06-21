@@ -740,26 +740,79 @@
     </div>
   </div>
 
-  <!-- نافذة مراجعة الطلب قبل الإرسال -->
+  <!-- ============================================ -->
+  <!-- 📋 نافذة مراجعة الطلب مع العنوان التفصيلي -->
+  <!-- ============================================ -->
   <div id="orderReviewModal" class="modal">
     <div class="modal-content review-modal">
       <span class="close" onclick="closeOrderReview()">&times;</span>
       <h2><i class="fas fa-clipboard-check"></i> مراجعة طلبك</h2>
-      <p class="review-subtitle">تأكد من تفاصيل طلبك وموقعك قبل الإرسال</p>
+      <p class="review-subtitle">تأكد من تفاصيل طلبك وأضف عنوانك التفصيلي</p>
       
-      <!-- معلومات الموقع في المراجعة -->
-      <div class="review-location-info">
+      <!-- ============================================ -->
+      <!-- 📍 قسم العنوان التفصيلي (جديد) -->
+      <!-- ============================================ -->
+      <div class="location-description-section">
         <div class="location-header">
-          <i class="fas fa-map-marker-alt"></i>
-          <h4>موقع التوصيل</h4>
+          <i class="fas fa-map-marked-alt"></i>
+          <h4>🏠 عنوان التوصيل التفصيلي</h4>
+          <span class="required-badge">مطلوب</span>
         </div>
-        <div id="reviewLocationDetails" class="location-details">
-          <p>جاري تحميل الموقع...</p>
+        
+        <!-- زر استخدام العنوان المحفوظ -->
+        <button type="button" id="useSavedAddressBtn" class="use-saved-address-btn" style="display: none;">
+          <i class="fas fa-history"></i>
+          <span>استخدام العنوان المحفوظ</span>
+          <small id="savedAddressPreview"></small>
+        </button>
+        
+        <!-- حقل كتابة العنوان -->
+        <div class="location-textarea-wrapper">
+          <textarea 
+            id="locationDescription" 
+            class="location-textarea" 
+            placeholder="اكتب عنوانك التفصيلي هنا...&#10;مثال: بغداد - مدينة الصدر - قطاع 70 - قرب مسجد الإمام علي - العمارة الثانية - الطابق الثالث - شقة رقم 5"
+            rows="4"
+            maxlength="500"
+          ></textarea>
+          <div class="textarea-footer">
+            <span class="char-counter">
+              <i class="fas fa-pencil-alt"></i>
+              <span id="charCount">0</span>/500
+            </span>
+            <span class="helper-text">
+              <i class="fas fa-info-circle"></i>
+              كلما كان العنوان أدق، كان التوصيل أسرع
+            </span>
+          </div>
+        </div>
+        
+        <!-- خيارات إضافية -->
+        <div class="location-options">
+          <label class="checkbox-wrapper">
+            <input type="checkbox" id="saveLocationForFuture" checked>
+            <span class="checkmark"></span>
+            <span>💾 حفظ العنوان للطلبات القادمة</span>
+          </label>
+          
+          <a href="https://www.google.com/maps" target="_blank" class="map-picker-link">
+            <i class="fas fa-map"></i>
+            <span>افتح الخريطة لمساعدتك في تحديد العنوان</span>
+          </a>
+        </div>
+        
+        <!-- معلومات GPS المحفوظة -->
+        <div id="gpsInfoInReview" class="gps-info-compact">
+          <i class="fas fa-satellite-dish"></i>
+          <span id="gpsStatusText">جاري التحقق من الموقع الجغرافي...</span>
         </div>
       </div>
       
+      <!-- تفاصيل المنتجات -->
+      <h3 class="review-section-title">🛒 تفاصيل المنتجات</h3>
       <div id="orderReviewItems" class="order-review-items"></div>
       
+      <!-- ملخص الطلب -->
       <div class="review-summary">
         <div class="summary-row">
           <span>عدد المنتجات:</span>
@@ -775,11 +828,13 @@
         </div>
       </div>
       
+      <!-- ملاحظة الإرسال -->
       <div class="review-note">
         <i class="fas fa-info-circle"></i>
-        <span>سيتم إرسال طلبك مع موقعك عبر واتساب للتأكيد</span>
+        <span>سيتم إرسال طلبك مع العنوان التفصيلي عبر واتساب</span>
       </div>
       
+      <!-- أزرار الإجراءات -->
       <div class="review-actions">
         <button onclick="closeOrderReview()" class="btn-back">
           <i class="fas fa-arrow-right"></i> العودة للسلة
