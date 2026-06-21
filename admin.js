@@ -232,7 +232,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminPanel = document.getElementById('adminPanel');
     const closeAdminPanel = document.getElementById('closeAdminPanel');
     const adminAuthModal = document.getElementById('adminAuthModal');
-    
+    // 🆕 التحقق من HTTPS لأندرويد
+    if (detectOS() === 'android' && window.location.protocol !== 'https:') {
+        console.warn('⚠ الموقع يجب أن يكون على HTTPS ليعمل تحديد الموقع في أندرويد');
+    }
     // فتح نافذة تسجيل دخول المسؤول
     if (adminLoginBtn) {
         adminLoginBtn.addEventListener('click', () => {
