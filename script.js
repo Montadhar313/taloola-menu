@@ -29,25 +29,25 @@ function updateCartUI() {
     }
 }
 
-// إضافة عنصر إلى السلة
-function addToCart(name, price) {
+// إضافة عنصر إلى السلة مع الكمية المحددة
+function addToCart(name, price, quantity = 1) {
     // التحقق من وجود العنصر مسبقاً في السلة
     const existingItem = shoppingCart.find(item => item.name === name);
     
     if (existingItem) {
         // زيادة الكمية إذا كان العنصر موجوداً
-        existingItem.quantity += 1;
+        existingItem.quantity += quantity;
     } else {
         // إضافة عنصر جديد
         shoppingCart.push({
             name: name,
             price: parseInt(price),
-            quantity: 1
+            quantity: quantity
         });
     }
     
     saveCart();
-    showNotification(`تم إضافة ${name} إلى السلة ✓`);
+    showNotification(`✓ تم إضافة ${quantity} × ${name} إلى السلة`);
 }
 
 // إزالة عنصر من السلة
@@ -81,7 +81,7 @@ function clearCart() {
         shoppingCart = [];
         saveCart();
         displayCartItems();
-        showNotification('تم تفريغ السلة ✓');
+        showNotification('✓ تم تفريغ السلة');
     }
 }
 
@@ -116,7 +116,7 @@ function displayCartItems() {
         itemElement.innerHTML = `
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">${item.price} د.ع × ${item.quantity} = ${itemTotal} د.ع</div>
+                <div class="cart-item-price">${item.price} د.ع × ${item.quantity} = ${itemTotal.toLocaleString('ar-EG')} د.ع</div>
                 <div class="cart-item-quantity">
                     <button class="qty-btn" onclick="changeQuantity(${index}, -1)">
                         <i class="fas fa-minus"></i>
@@ -157,6 +157,125 @@ function closeCartModal() {
     }
 }
 
+// ============================================
+// 🔥 نافذة مراجعة الطلب قبل الإرسال (جديدة)
+// ============================================
+
+// عرض نافذة مراجعة الطلب
+function showOrderReview() {
+    if (shoppingCart.length === 0) {
+        alert('السلة فارغة! الرجاء إضافة منتجات أولاً.');
+        return;
+    }
+    
+    // إغلاق نافذة السلة وفتح نافذة المراجعة
+    closeCartModal();
+    
+    const reviewModal = document.getElementById('orderReviewModal');
+    if (reviewModal) {
+        reviewModal.style.display = 'flex';
+        displayOrderReview();
+    }
+}
+
+// عرض تفاصيل الطلب في نافذة المراجعة
+function displayOrderReview() {
+    const reviewItemsContainer = document.getElementById('orderReviewItems');
+    const reviewItemCount = document.getElementById('reviewItemCount');
+    const reviewTotalQuantity = document.getElementById('reviewTotalQuantity');
+    const reviewTotalAmount = document.getElementById('reviewTotalAmount');
+    
+    if (!reviewItemsContainer) return;
+    
+    reviewItemsContainer.innerHTML = '';
+    let totalQuantity = 0;
+    let totalAmount = 0;
+    
+    shoppingCart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        totalQuantity += item.quantity;
+        totalAmount += itemTotal;
+        
+        const reviewItem = document.createElement('div');
+        reviewItem.className = 'review-item';
+        reviewItem.innerHTML = `
+            <div class="review-item-info">
+                <div class="review-item-name">${item.name}</div>
+                <div class="review-item-details">
+                    <span><i class="fas fa-box"></i> الكمية: ${item.quantity}</span>
+                    <span><i class="fas fa-tag"></i> السعر: ${item.price.toLocaleString('ar-EG')} د.ع</span>
+                </div>
+            </div>
+            <div class="review-item-total">${itemTotal.toLocaleString('ar-EG')} د.ع</div>
+        `;
+        
+        reviewItemsContainer.appendChild(reviewItem);
+    });
+    
+    if (reviewItemCount) {
+        reviewItemCount.textContent = `${shoppingCart.length} منتج`;
+    }
+    if (reviewTotalQuantity) {
+        reviewTotalQuantity.textContent = `${totalQuantity} قطعة`;
+    }
+    if (reviewTotalAmount) {
+        reviewTotalAmount.textContent = `${totalAmount.toLocaleString('ar-EG')} د.ع`;
+    }
+}
+
+// إغلاق نافذة المراجعة
+function closeOrderReview() {
+    const reviewModal = document.getElementById('orderReviewModal');
+    if (reviewModal) {
+        reviewModal.style.display = 'none';
+    }
+}
+
+// تأكيد الطلب وإرساله عبر واتساب
+function confirmAndSendOrder() {
+    if (shoppingCart.length === 0) {
+        alert('السلة فارغة!');
+        return;
+    }
+    
+    const phoneNumber = '9647755666073';
+    
+    // بناء رسالة الطلب بالتنسيق المطلوب
+    let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
+    message += 'الطلب :\n';
+    
+    let totalAmount = 0;
+    
+    shoppingCart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        totalAmount += itemTotal;
+        
+        message += `\n${index + 1}.${item.name}`;
+        message += `\nالكمية : ${item.quantity}`;
+        message += `\nالسعر :${item.price}`;
+        message += `\n`;
+    });
+    
+    message += `\nالاجمالي : ${totalAmount}`;
+    message += `\nالمجموع النهائي ${totalAmount}`;
+    
+    // فتح واتساب مع الرسالة
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
+    
+    // إغلاق نافذة المراجعة
+    closeOrderReview();
+    
+    // إظهار إشعار النجاح
+    showNotification('✓ تم إرسال طلبك عبر واتساب بنجاح!');
+    
+    // تفريغ السلة بعد الإرسال الناجح
+    setTimeout(() => {
+        shoppingCart = [];
+        saveCart();
+    }, 500);
+}
+
 // إظهار إشعار
 function showNotification(message) {
     // إزالة الإشعار السابق إذا وجد
@@ -181,53 +300,44 @@ function showNotification(message) {
     }, 3000);
 }
 
-// ========================
-// إرسال الطلب عبر واتساب
-// ========================
+// ============================================
+// 🔥 التحكم بالكمية داخل عناصر المنيو (جديد)
+// ============================================
 
-function sendOrderToWhatsApp() {
-    if (shoppingCart.length === 0) {
-        alert('السلة فارغة! الرجاء إضافة منتجات أولاً.');
-        return;
+// تغيير الكمية داخل المنتج
+function changeItemQuantity(button, change) {
+    const menuCard = button.closest('.menu-item');
+    const qtyInput = menuCard.querySelector('.qty-input');
+    
+    if (!qtyInput) return;
+    
+    let currentQty = parseInt(qtyInput.value) || 1;
+    currentQty += change;
+    
+    // الحد الأدنى = 1
+    if (currentQty < 1) {
+        currentQty = 1;
     }
     
-    const phoneNumber = '9647755666073';
+    // الحد الأقصى = 99
+    if (currentQty > 99) {
+        currentQty = 99;
+        showNotification('الحد الأقصى للكمية هو 99');
+    }
     
-    // بناء رسالة الطلب
-    let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
-    message += 'الطلب :\n';
+    qtyInput.value = currentQty;
     
-    let totalAmount = 0;
-    
-    shoppingCart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        totalAmount += itemTotal;
-        
-        message += `\n${index + 1}.${item.name}`;
-        message += `\nالكمية : ${item.quantity}`;
-        message += `\nالسعر :${item.price}`;
-        message += `\n`;
-    });
-    
-    message += `\nالاجمالي : ${totalAmount}`;
-    message += `\nالمجموع النهائي ${totalAmount}`;
-    
-    // فتح واتساب مع الرسالة
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappURL, '_blank');
-    
-    // إغلاق السلة بعد الإرسال
-    closeCartModal();
-    
-    // إظهار إشعار النجاح
-    showNotification('تم إرسال طلبك عبر واتساب ✓');
+    // تأثير بصري
+    qtyInput.style.transform = 'scale(1.2)';
+    setTimeout(() => {
+        qtyInput.style.transform = 'scale(1)';
+    }, 200);
 }
 
-// ========================
+// ============================================
 // الدوال العامة
-// ========================
+// ============================================
 
-// فتح نموذج الدعم
 function openSupport() {
     const phoneNumber = '9647755666073';
     const message = 'أحتاج إلى مساعدة بخصوص...';
@@ -235,7 +345,6 @@ function openSupport() {
     window.open(whatsappURL, '_blank');
 }
 
-// إغلاق نافذة المصادقة
 function closeAuthModal() {
     const adminAuthModal = document.getElementById('adminAuthModal');
     if (adminAuthModal) {
@@ -243,7 +352,6 @@ function closeAuthModal() {
     }
 }
 
-// معاينة الصورة قبل الرفع
 function previewImage(input) {
     const preview = document.getElementById('imagePreview');
     if (!preview) return;
@@ -263,17 +371,14 @@ function previewImage(input) {
     }
 }
 
-// ========================
+// ============================================
 // التهيئة عند تحميل الصفحة
-// ========================
+// ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تم تحميل صفحة تعلولة بنجاح');
     
-    // ========================
     // تهيئة Firebase
-    // ========================
-    
     const firebaseConfig = {
         apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
         authDomain: "talola-food.firebaseapp.com",
@@ -298,20 +403,14 @@ document.addEventListener('DOMContentLoaded', function() {
     firebaseStorageScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js';
     document.head.appendChild(firebaseStorageScript);
     
-    // ========================
     // عناصر DOM
-    // ========================
-    
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
     const menuItems = document.querySelectorAll('.menu-item');
     const cartIcon = document.getElementById('cartIcon');
     
-    // ========================
     // زر العودة لأعلى الصفحة
-    // ========================
-    
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) {
             if (window.pageYOffset > 300) {
@@ -330,10 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ========================
     // التنقل بين الأقسام
-    // ========================
-    
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const targetSection = this.getAttribute('data-section');
@@ -342,58 +438,80 @@ document.addEventListener('DOMContentLoaded', function() {
             if (sectionElement) {
                 sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
-                // إضافة تأثير مرئي للقسم النشط
                 menuSections.forEach(section => {
                     section.classList.remove('active');
                 });
                 sectionElement.classList.add('active');
                 
-                // تأثير بصري على الزر النشط
                 navButtons.forEach(btn => btn.style.background = 'var(--main-yellow)');
                 this.style.background = '#ffffff';
             }
         });
     });
     
-    // ========================
-    // أزرار إضافة للسلة
-    // ========================
+    // ============================================
+    // 🔥 ربط أزرار الكمية وزر الإضافة للسلة (محسّن)
+    // ============================================
     
     menuItems.forEach(item => {
+        const decreaseBtn = item.querySelector('.qty-decrease');
+        const increaseBtn = item.querySelector('.qty-increase');
+        const qtyInput = item.querySelector('.qty-input');
         const addToCartBtn = item.querySelector('.add-to-cart-btn');
         
+        // زر نقصان الكمية
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                changeItemQuantity(this, -1);
+            });
+        }
+        
+        // زر زيادة الكمية
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                changeItemQuantity(this, 1);
+            });
+        }
+        
+        // زر إضافة للسلة
         if (addToCartBtn) {
             addToCartBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
                 
                 const itemName = item.getAttribute('data-name');
                 const itemPrice = item.getAttribute('data-price');
+                const quantity = parseInt(qtyInput.value) || 1;
                 
                 if (itemName && itemPrice) {
-                    addToCart(itemName, itemPrice);
+                    addToCart(itemName, itemPrice, quantity);
                     
                     // تأثير بصري على الزر
                     this.classList.add('added');
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> تم الإضافة';
+                    
                     setTimeout(() => {
                         this.classList.remove('added');
-                    }, 600);
+                        this.innerHTML = originalHTML;
+                        // إعادة الكمية إلى 1 بعد الإضافة
+                        qtyInput.value = 1;
+                    }, 1500);
                 }
             });
         }
     });
     
-    // ========================
     // أيقونة السلة
-    // ========================
-    
     if (cartIcon) {
         cartIcon.addEventListener('click', openCartModal);
     }
     
-    // ========================
     // تأثيرات التمرير
-    // ========================
-    
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -407,27 +525,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, observerOptions);
     
-    // مراقبة الأقسام
     menuSections.forEach(section => {
         observer.observe(section);
     });
     
-    // مراقبة أقسام المعلومات
     document.querySelectorAll('section.info-section').forEach(section => {
         observer.observe(section);
     });
     
-    // ========================
     // إغلاق النوافذ عند النقر خارجها
-    // ========================
-    
     window.addEventListener('click', function(event) {
         const cartModal = document.getElementById('cartModal');
         const adminPanel = document.getElementById('adminPanel');
         const adminAuthModal = document.getElementById('adminAuthModal');
+        const orderReviewModal = document.getElementById('orderReviewModal');
         
         if (event.target === cartModal) {
             closeCartModal();
+        }
+        if (event.target === orderReviewModal) {
+            closeOrderReview();
         }
         if (event.target === adminPanel) {
             adminPanel.style.display = 'none';
@@ -437,16 +554,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // ========================
     // تحديث واجهة السلة
-    // ========================
-    
     updateCartUI();
     
-    // ========================
     // تحميل الإعلانات بعد تحميل Firebase
-    // ========================
-    
     firebaseStorageScript.onload = function() {
         setTimeout(() => {
             if (typeof firebase !== 'undefined') {
@@ -462,17 +573,15 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 
-// ========================
+// ============================================
 // نظام الإعلانات (Firebase)
-// ========================
+// ============================================
 
-// بيانات المسؤول
 const ADMIN_CREDENTIALS = {
     username: "admin",
     password: "admin123"
 };
 
-// تحميل الإعلانات الحالية للمسؤول
 function loadCurrentAds() {
     const currentAds = document.getElementById('currentAds');
     
@@ -497,7 +606,6 @@ function loadCurrentAds() {
             
             currentAds.innerHTML = '';
             
-            // عكس الترتيب لعرض الأحدث أولاً
             const keys = Object.keys(ads).reverse();
             
             keys.forEach((key) => {
@@ -530,7 +638,6 @@ function loadCurrentAds() {
         });
 }
 
-// عرض الإعلانات للزوار
 function displayAds() {
     const adsContainer = document.getElementById('adsContainer');
     if (!adsContainer) return;
@@ -580,7 +687,6 @@ function displayAds() {
         });
 }
 
-// إنشاء إعلان جديد
 function createAd() {
     const title = document.getElementById('adTitle').value;
     const description = document.getElementById('adDescription').value;
@@ -604,7 +710,6 @@ function createAd() {
     
     let imageUrl = '';
     
-    // رفع الصورة إذا تم اختيارها
     const uploadImage = imageFile ? new Promise((resolve, reject) => {
         const storageRef = storage.ref();
         const imageRef = storageRef.child('ads/' + Date.now() + '_' + imageFile.name.replace(/\s+/g, '_'));
@@ -637,8 +742,6 @@ function createAd() {
         alert('تم إنشاء الإعلان بنجاح!');
         clearAdForm();
         loadCurrentAds();
-        
-        // تحديث عرض الإعلانات للزوار
         displayAds();
     })
     .catch((error) => {
@@ -647,7 +750,6 @@ function createAd() {
     });
 }
 
-// حذف إعلان
 function deleteAd(key, imageUrl) {
     if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
         return;
@@ -661,10 +763,8 @@ function deleteAd(key, imageUrl) {
     const database = firebase.database();
     const storage = firebase.storage();
     
-    // حذف الإعلان من قاعدة البيانات
     database.ref('ads/' + key).remove()
         .then(() => {
-            // حذف الصورة من التخزين إذا كانت موجودة
             if (imageUrl) {
                 const imageRef = storage.refFromURL(imageUrl);
                 return imageRef.delete();
@@ -682,7 +782,6 @@ function deleteAd(key, imageUrl) {
         });
 }
 
-// مسح نموذج الإعلان
 function clearAdForm() {
     const adTitle = document.getElementById('adTitle');
     const adDescription = document.getElementById('adDescription');
@@ -701,10 +800,7 @@ function clearAdForm() {
     if (imagePreview) imagePreview.innerHTML = '<span>معاينة الصورة</span>';
 }
 
-// ========================
 // تهيئة لوحة التحكم
-// ========================
-
 document.addEventListener('DOMContentLoaded', function() {
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
@@ -712,7 +808,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeAdminPanel = document.getElementById('closeAdminPanel');
     const adminAuthModal = document.getElementById('adminAuthModal');
     
-    // فتح نافذة تسجيل دخول المسؤول
     if (adminLoginBtn) {
         adminLoginBtn.addEventListener('click', () => {
             if (adminAuthModal) {
@@ -721,7 +816,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // تسجيل دخول المسؤول
     if (adminLoginSubmit) {
         adminLoginSubmit.addEventListener('click', () => {
             const username = document.getElementById('adminUsername').value;
@@ -741,7 +835,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // إغلاق لوحة التحكم
     if (closeAdminPanel) {
         closeAdminPanel.addEventListener('click', () => {
             if (adminPanel) {
@@ -758,7 +851,9 @@ window.changeQuantity = changeQuantity;
 window.clearCart = clearCart;
 window.openCartModal = openCartModal;
 window.closeCartModal = closeCartModal;
-window.sendOrderToWhatsApp = sendOrderToWhatsApp;
+window.showOrderReview = showOrderReview;
+window.closeOrderReview = closeOrderReview;
+window.confirmAndSendOrder = confirmAndSendOrder;
 window.openSupport = openSupport;
 window.closeAuthModal = closeAuthModal;
 window.previewImage = previewImage;
