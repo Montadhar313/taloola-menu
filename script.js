@@ -1,33 +1,250 @@
-// تهيئة Supabase
-const SUPABASE_URL = 'https://vtntyscabuyleeqqfhdh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bnR5c2NhYnV5bGVlcXFmaGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MDg0NzQsImV4cCI6MjA3MzA4NDQ3NH0.G3-4dkrHHVSxOjVqguNyQ2BC2YWmIm7E2k7s_6uJBOA';
+// ========================
+// سلة المشتريات - Core Logic
+// ========================
 
-// إنشاء عميل Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// مصفوفة السلة - تخزين العناصر
+let shoppingCart = JSON.parse(localStorage.getItem('taloola_cart')) || [];
 
-// اختبار اتصال Supabase
-async function testSupabaseConnection() {
-    try {
-        console.log('Testing Supabase connection...');
+// حفظ السلة في التخزين المحلي
+function saveCart() {
+    localStorage.setItem('taloola_cart', JSON.stringify(shoppingCart));
+    updateCartUI();
+}
+
+// تحديث واجهة السلة
+function updateCartUI() {
+    const cartCount = document.getElementById('cartCount');
+    const totalItems = shoppingCart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    if (cartCount) {
+        cartCount.textContent = totalItems;
         
-        // محاولة الحصول على معلومات الـ bucket
-        const { data, error } = await supabase.storage.getBucket('images');
-        
-        if (error) {
-            console.error('Connection error:', error);
-            return false;
+        // تأثير نبض عند تغيير الكمية
+        if (totalItems > 0) {
+            cartCount.style.animation = 'none';
+            setTimeout(() => {
+                cartCount.style.animation = 'pulse 2s infinite';
+            }, 10);
         }
-        
-        console.log('Connection successful! Bucket info:', data);
-        return true;
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        return false;
     }
 }
 
-// تعريف الدوال العامة التي سيتم استخدامها في admin.js
-window.previewImage = function(input) {
+// إضافة عنصر إلى السلة
+function addToCart(name, price) {
+    // التحقق من وجود العنصر مسبقاً في السلة
+    const existingItem = shoppingCart.find(item => item.name === name);
+    
+    if (existingItem) {
+        // زيادة الكمية إذا كان العنصر موجوداً
+        existingItem.quantity += 1;
+    } else {
+        // إضافة عنصر جديد
+        shoppingCart.push({
+            name: name,
+            price: parseInt(price),
+            quantity: 1
+        });
+    }
+    
+    saveCart();
+    showNotification(`تم إضافة ${name} إلى السلة ✓`);
+}
+
+// إزالة عنصر من السلة
+function removeFromCart(index) {
+    shoppingCart.splice(index, 1);
+    saveCart();
+    displayCartItems();
+}
+
+// تغيير كمية العنصر
+function changeQuantity(index, change) {
+    shoppingCart[index].quantity += change;
+    
+    // إزالة العنصر إذا كانت الكمية صفر أو أقل
+    if (shoppingCart[index].quantity <= 0) {
+        shoppingCart.splice(index, 1);
+    }
+    
+    saveCart();
+    displayCartItems();
+}
+
+// تفريغ السلة
+function clearCart() {
+    if (shoppingCart.length === 0) {
+        alert('السلة فارغة بالفعل!');
+        return;
+    }
+    
+    if (confirm('هل أنت متأكد من تفريغ السلة؟')) {
+        shoppingCart = [];
+        saveCart();
+        displayCartItems();
+        showNotification('تم تفريغ السلة ✓');
+    }
+}
+
+// عرض عناصر السلة
+function displayCartItems() {
+    const cartItemsContainer = document.getElementById('cartItems');
+    const cartTotalElement = document.getElementById('cartTotal');
+    
+    if (!cartItemsContainer) return;
+    
+    if (shoppingCart.length === 0) {
+        cartItemsContainer.innerHTML = `
+            <div class="empty-cart-message">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>السلة فارغة</h3>
+                <p>لم تضف أي منتجات بعد</p>
+            </div>
+        `;
+        if (cartTotalElement) cartTotalElement.textContent = '0';
+        return;
+    }
+    
+    cartItemsContainer.innerHTML = '';
+    let total = 0;
+    
+    shoppingCart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        
+        const itemElement = document.createElement('div');
+        itemElement.className = 'cart-item';
+        itemElement.innerHTML = `
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">${item.price} د.ع × ${item.quantity} = ${itemTotal} د.ع</div>
+                <div class="cart-item-quantity">
+                    <button class="qty-btn" onclick="changeQuantity(${index}, -1)">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <span class="qty-display">${item.quantity}</span>
+                    <button class="qty-btn" onclick="changeQuantity(${index}, 1)">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="cart-item-remove" onclick="removeFromCart(${index})">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        
+        cartItemsContainer.appendChild(itemElement);
+    });
+    
+    if (cartTotalElement) {
+        cartTotalElement.textContent = total.toLocaleString('ar-EG');
+    }
+}
+
+// فتح نافذة السلة
+function openCartModal() {
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal) {
+        cartModal.style.display = 'flex';
+        displayCartItems();
+    }
+}
+
+// إغلاق نافذة السلة
+function closeCartModal() {
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal) {
+        cartModal.style.display = 'none';
+    }
+}
+
+// إظهار إشعار
+function showNotification(message) {
+    // إزالة الإشعار السابق إذا وجد
+    const existingNotification = document.querySelector('.cart-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // إنشاء إشعار جديد
+    const notification = document.createElement('div');
+    notification.className = 'cart-notification';
+    notification.textContent = message;
+    notification.style.display = 'block';
+    document.body.appendChild(notification);
+    
+    // إخفاء الإشعار بعد 3 ثواني
+    setTimeout(() => {
+        notification.style.animation = 'slideInDown 0.5s ease reverse';
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 3000);
+}
+
+// ========================
+// إرسال الطلب عبر واتساب
+// ========================
+
+function sendOrderToWhatsApp() {
+    if (shoppingCart.length === 0) {
+        alert('السلة فارغة! الرجاء إضافة منتجات أولاً.');
+        return;
+    }
+    
+    const phoneNumber = '9647755666073';
+    
+    // بناء رسالة الطلب
+    let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
+    message += 'الطلب :\n';
+    
+    let totalAmount = 0;
+    
+    shoppingCart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        totalAmount += itemTotal;
+        
+        message += `\n${index + 1}.${item.name}`;
+        message += `\nالكمية : ${item.quantity}`;
+        message += `\nالسعر :${item.price}`;
+        message += `\n`;
+    });
+    
+    message += `\nالاجمالي : ${totalAmount}`;
+    message += `\nالمجموع النهائي ${totalAmount}`;
+    
+    // فتح واتساب مع الرسالة
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
+    
+    // إغلاق السلة بعد الإرسال
+    closeCartModal();
+    
+    // إظهار إشعار النجاح
+    showNotification('تم إرسال طلبك عبر واتساب ✓');
+}
+
+// ========================
+// الدوال العامة
+// ========================
+
+// فتح نموذج الدعم
+function openSupport() {
+    const phoneNumber = '9647755666073';
+    const message = 'أحتاج إلى مساعدة بخصوص...';
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
+}
+
+// إغلاق نافذة المصادقة
+function closeAuthModal() {
+    const adminAuthModal = document.getElementById('adminAuthModal');
+    if (adminAuthModal) {
+        adminAuthModal.style.display = 'none';
+    }
+}
+
+// معاينة الصورة قبل الرفع
+function previewImage(input) {
     const preview = document.getElementById('imagePreview');
     if (!preview) return;
     
@@ -46,90 +263,61 @@ window.previewImage = function(input) {
     }
 }
 
-window.closeAuthModal = function() {
-    const adminAuthModal = document.getElementById('adminAuthModal');
-    if (adminAuthModal) {
-        adminAuthModal.style.display = 'none';
-    }
-}
+// ========================
+// التهيئة عند تحميل الصفحة
+// ========================
 
-// دالة لعرض الإعلانات للزوار
-window.displayAds = async function() {
-    const adsContainer = document.getElementById('adsContainer');
-    if (!adsContainer) return;
-    
-    adsContainer.innerHTML = '<p class="no-ads">جاري تحميل العروض...</p>';
-    
-    try {
-        // جلب الإعلانات من جدول Supabase
-        const { data: ads, error } = await supabase
-            .from('ads')
-            .select('*')
-            .order('created_at', { ascending: false });
-        
-        if (error) {
-            console.error('Error loading ads:', error);
-            adsContainer.innerHTML = '<p class="no-ads">حدث خطأ أثناء تحميل الإعلانات</p>';
-            return;
-        }
-        
-        if (!ads || ads.length === 0) {
-            adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
-            return;
-        }
-        
-        adsContainer.innerHTML = '';
-        
-        ads.forEach((ad) => {
-            const adElement = document.createElement('div');
-            adElement.className = `ad-card ${ad.template || ''}`;
-            adElement.innerHTML = `
-                ${ad.image_url ? `
-                    <div class="ad-image">
-                        <img src="${ad.image_url}" alt="${ad.title}">
-                    </div>
-                ` : ''}
-                <h4>${ad.title}</h4>
-                <p>${ad.description}</p>
-                ${ad.price ? `<p class="ad-price">السعر: ${ad.price}</p>` : ''}
-                ${ad.duration ? `<p class="ad-duration">${ad.duration}</p>` : ''}
-            `;
-            adsContainer.appendChild(adElement);
-        });
-    } catch (error) {
-        console.error('Error loading ads:', error);
-        adsContainer.innerHTML = '<p class="no-ads">حدث خطأ أثناء تحميل الإعلانات</p>';
-    }
-}
-
-// فتح نموذج الدعم
-window.openSupport = function() {
-    const phoneNumber = '9647755666073';
-    const message = 'أحتاج إلى مساعدة بخصوص...';
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappURL, '_blank');
-}
-
-// تهيئة الصفحة عند التحميل
 document.addEventListener('DOMContentLoaded', function() {
-    // اختبار اتصال Supabase
-    testSupabaseConnection().then(success => {
-        if (!success) {
-            console.warn('Supabase connection test failed. Check your settings.');
-        }
-    });
+    console.log('🚀 تم تحميل صفحة تعلولة بنجاح');
     
+    // ========================
+    // تهيئة Firebase
+    // ========================
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
+        authDomain: "talola-food.firebaseapp.com",
+        databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
+        projectId: "talola-food",
+        storageBucket: "talola-food.firebasestorage.app",
+        messagingSenderId: "440585170470",
+        appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7",
+        measurementId: "G-L4SLHVVFVR"
+    };
+
+    // تحميل Firebase SDK ديناميكياً
+    const firebaseScript = document.createElement('script');
+    firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+    document.head.appendChild(firebaseScript);
+    
+    const firebaseDbScript = document.createElement('script');
+    firebaseDbScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
+    document.head.appendChild(firebaseDbScript);
+    
+    const firebaseStorageScript = document.createElement('script');
+    firebaseStorageScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js';
+    document.head.appendChild(firebaseStorageScript);
+    
+    // ========================
     // عناصر DOM
+    // ========================
+    
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
-    const orderBtn = document.getElementById('orderBtn');
+    const menuItems = document.querySelectorAll('.menu-item');
+    const cartIcon = document.getElementById('cartIcon');
     
+    // ========================
     // زر العودة لأعلى الصفحة
+    // ========================
+    
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) {
             if (window.pageYOffset > 300) {
                 scrollToTopBtn.style.display = 'flex';
+                scrollToTopBtn.style.alignItems = 'center';
+                scrollToTopBtn.style.justifyContent = 'center';
             } else {
                 scrollToTopBtn.style.display = 'none';
             }
@@ -138,39 +326,74 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (scrollToTopBtn) {
         scrollToTopBtn.addEventListener('click', () => {
-            window.scrollTo({top: 0, behavior: 'smooth'});
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
     
+    // ========================
     // التنقل بين الأقسام
+    // ========================
+    
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const targetSection = this.getAttribute('data-section');
             const sectionElement = document.getElementById(targetSection);
             
             if (sectionElement) {
-                sectionElement.scrollIntoView({behavior: 'smooth'});
+                sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
                 // إضافة تأثير مرئي للقسم النشط
                 menuSections.forEach(section => {
                     section.classList.remove('active');
                 });
                 sectionElement.classList.add('active');
+                
+                // تأثير بصري على الزر النشط
+                navButtons.forEach(btn => btn.style.background = 'var(--main-yellow)');
+                this.style.background = '#ffffff';
             }
         });
     });
     
-    // زر الطلب الآن - واتساب
-    if (orderBtn) {
-        orderBtn.addEventListener('click', function() {
-            const phoneNumber = '9647755666073';
-            const message = 'مرحباً، أريد طلب وجبة من تعلولة';
-            const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappURL, '_blank');
-        });
+    // ========================
+    // أزرار إضافة للسلة
+    // ========================
+    
+    menuItems.forEach(item => {
+        const addToCartBtn = item.querySelector('.add-to-cart-btn');
+        
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                const itemName = item.getAttribute('data-name');
+                const itemPrice = item.getAttribute('data-price');
+                
+                if (itemName && itemPrice) {
+                    addToCart(itemName, itemPrice);
+                    
+                    // تأثير بصري على الزر
+                    this.classList.add('added');
+                    setTimeout(() => {
+                        this.classList.remove('added');
+                    }, 600);
+                }
+            });
+        }
+    });
+    
+    // ========================
+    // أيقونة السلة
+    // ========================
+    
+    if (cartIcon) {
+        cartIcon.addEventListener('click', openCartModal);
     }
     
-    // إضافة تأثيرات للعناصر عند التمرير
+    // ========================
+    // تأثيرات التمرير
+    // ========================
+    
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -184,13 +407,362 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, observerOptions);
     
-    // مراقبة العناصر لإضافة تأثيرات التمرير
+    // مراقبة الأقسام
     menuSections.forEach(section => {
         observer.observe(section);
     });
     
-    // عرض الإعلانات عند تحميل الصفحة
-    if (typeof window.displayAds === 'function') {
-        window.displayAds();
+    // مراقبة أقسام المعلومات
+    document.querySelectorAll('section.info-section').forEach(section => {
+        observer.observe(section);
+    });
+    
+    // ========================
+    // إغلاق النوافذ عند النقر خارجها
+    // ========================
+    
+    window.addEventListener('click', function(event) {
+        const cartModal = document.getElementById('cartModal');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminAuthModal = document.getElementById('adminAuthModal');
+        
+        if (event.target === cartModal) {
+            closeCartModal();
+        }
+        if (event.target === adminPanel) {
+            adminPanel.style.display = 'none';
+        }
+        if (event.target === adminAuthModal) {
+            closeAuthModal();
+        }
+    });
+    
+    // ========================
+    // تحديث واجهة السلة
+    // ========================
+    
+    updateCartUI();
+    
+    // ========================
+    // تحميل الإعلانات بعد تحميل Firebase
+    // ========================
+    
+    firebaseStorageScript.onload = function() {
+        setTimeout(() => {
+            if (typeof firebase !== 'undefined') {
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log('✅ تم تهيئة Firebase بنجاح');
+                    displayAds();
+                } catch (error) {
+                    console.error('خطأ في تهيئة Firebase:', error);
+                }
+            }
+        }, 500);
+    };
+});
+
+// ========================
+// نظام الإعلانات (Firebase)
+// ========================
+
+// بيانات المسؤول
+const ADMIN_CREDENTIALS = {
+    username: "admin",
+    password: "admin123"
+};
+
+// تحميل الإعلانات الحالية للمسؤول
+function loadCurrentAds() {
+    const currentAds = document.getElementById('currentAds');
+    
+    if (!currentAds) return;
+    
+    currentAds.innerHTML = '<p>جاري تحميل الإعلانات...</p>';
+    
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        currentAds.innerHTML = '<p>Firebase غير متوفر</p>';
+        return;
+    }
+    
+    const database = firebase.database();
+    
+    database.ref('ads/').orderByChild('timestamp').once('value')
+        .then((snapshot) => {
+            const ads = snapshot.val();
+            if (!ads) {
+                currentAds.innerHTML = '<p>لا توجد إعلانات حالية</p>';
+                return;
+            }
+            
+            currentAds.innerHTML = '';
+            
+            // عكس الترتيب لعرض الأحدث أولاً
+            const keys = Object.keys(ads).reverse();
+            
+            keys.forEach((key) => {
+                const ad = ads[key];
+                const adElement = document.createElement('div');
+                adElement.className = 'ad-card';
+                adElement.innerHTML = `
+                    ${ad.imageUrl ? `
+                        <div class="ad-image">
+                            <img src="${ad.imageUrl}" alt="${ad.title}">
+                        </div>
+                    ` : ''}
+                    <h4>${ad.title}</h4>
+                    <p>${ad.description}</p>
+                    ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+                    ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
+                    <p><small>تم الإنشاء: ${ad.date || new Date(ad.timestamp).toLocaleDateString('ar-EG')}</small></p>
+                    <div class="ad-actions">
+                        <button onclick="deleteAd('${key}', '${ad.imageUrl}')">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                    </div>
+                `;
+                currentAds.appendChild(adElement);
+            });
+        })
+        .catch((error) => {
+            console.error('خطأ في تحميل الإعلانات:', error);
+            currentAds.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
+        });
+}
+
+// عرض الإعلانات للزوار
+function displayAds() {
+    const adsContainer = document.getElementById('adsContainer');
+    if (!adsContainer) return;
+    
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        adsContainer.innerHTML = '<p class="no-ads">Firebase غير متوفر</p>';
+        return;
+    }
+    
+    const database = firebase.database();
+    
+    adsContainer.innerHTML = '<p class="no-ads">جاري تحميل العروض...</p>';
+    
+    database.ref('ads/').orderByChild('timestamp').once('value')
+        .then((snapshot) => {
+            const ads = snapshot.val();
+            if (!ads) {
+                adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
+                return;
+            }
+            
+            adsContainer.innerHTML = '';
+            
+            const keys = Object.keys(ads).reverse();
+            
+            keys.forEach((key) => {
+                const ad = ads[key];
+                const adElement = document.createElement('div');
+                adElement.className = `ad-card ${ad.template || 'red'}`;
+                adElement.innerHTML = `
+                    ${ad.imageUrl ? `
+                        <div class="ad-image">
+                            <img src="${ad.imageUrl}" alt="${ad.title}">
+                        </div>
+                    ` : ''}
+                    <h4>${ad.title}</h4>
+                    <p>${ad.description}</p>
+                    ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+                    ${ad.duration ? `<p class="ad-duration">${ad.duration}</p>` : ''}
+                `;
+                adsContainer.appendChild(adElement);
+            });
+        })
+        .catch((error) => {
+            console.error('خطأ في تحميل الإعلانات:', error);
+            adsContainer.innerHTML = '<p class="no-ads">حدث خطأ أثناء تحميل الإعلانات</p>';
+        });
+}
+
+// إنشاء إعلان جديد
+function createAd() {
+    const title = document.getElementById('adTitle').value;
+    const description = document.getElementById('adDescription').value;
+    const price = document.getElementById('adPrice').value;
+    const duration = document.getElementById('adDuration').value;
+    const template = document.getElementById('adTemplate').value;
+    const imageFile = document.getElementById('adImage').files[0];
+    
+    if (!title || !description) {
+        alert('الرجاء ملء الحقول الإلزامية (العنوان والوصف)');
+        return;
+    }
+    
+    if (typeof firebase === 'undefined' || !firebase.storage || !firebase.database) {
+        alert('Firebase غير متوفر');
+        return;
+    }
+    
+    const storage = firebase.storage();
+    const database = firebase.database();
+    
+    let imageUrl = '';
+    
+    // رفع الصورة إذا تم اختيارها
+    const uploadImage = imageFile ? new Promise((resolve, reject) => {
+        const storageRef = storage.ref();
+        const imageRef = storageRef.child('ads/' + Date.now() + '_' + imageFile.name.replace(/\s+/g, '_'));
+        
+        imageRef.put(imageFile).then((snapshot) => {
+            snapshot.ref.getDownloadURL().then((url) => {
+                resolve(url);
+            }).catch(reject);
+        }).catch(reject);
+    }) : Promise.resolve('');
+    
+    uploadImage.then((url) => {
+        imageUrl = url;
+        
+        const newAd = {
+            title,
+            description,
+            price,
+            duration,
+            template,
+            imageUrl,
+            date: new Date().toLocaleDateString('ar-EG'),
+            timestamp: Date.now()
+        };
+        
+        const newAdRef = database.ref('ads/').push();
+        return newAdRef.set(newAd);
+    })
+    .then(() => {
+        alert('تم إنشاء الإعلان بنجاح!');
+        clearAdForm();
+        loadCurrentAds();
+        
+        // تحديث عرض الإعلانات للزوار
+        displayAds();
+    })
+    .catch((error) => {
+        console.error('خطأ في إنشاء الإعلان:', error);
+        alert('حدث خطأ أثناء إنشاء الإعلان: ' + error.message);
+    });
+}
+
+// حذف إعلان
+function deleteAd(key, imageUrl) {
+    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
+        return;
+    }
+    
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        alert('Firebase غير متوفر');
+        return;
+    }
+    
+    const database = firebase.database();
+    const storage = firebase.storage();
+    
+    // حذف الإعلان من قاعدة البيانات
+    database.ref('ads/' + key).remove()
+        .then(() => {
+            // حذف الصورة من التخزين إذا كانت موجودة
+            if (imageUrl) {
+                const imageRef = storage.refFromURL(imageUrl);
+                return imageRef.delete();
+            }
+            return Promise.resolve();
+        })
+        .then(() => {
+            alert('تم حذف الإعلان بنجاح');
+            loadCurrentAds();
+            displayAds();
+        })
+        .catch((error) => {
+            console.error('خطأ في حذف الإعلان:', error);
+            alert('حدث خطأ أثناء حذف الإعلان');
+        });
+}
+
+// مسح نموذج الإعلان
+function clearAdForm() {
+    const adTitle = document.getElementById('adTitle');
+    const adDescription = document.getElementById('adDescription');
+    const adPrice = document.getElementById('adPrice');
+    const adDuration = document.getElementById('adDuration');
+    const adTemplate = document.getElementById('adTemplate');
+    const adImage = document.getElementById('adImage');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    if (adTitle) adTitle.value = '';
+    if (adDescription) adDescription.value = '';
+    if (adPrice) adPrice.value = '';
+    if (adDuration) adDuration.value = '';
+    if (adTemplate) adTemplate.value = 'red';
+    if (adImage) adImage.value = '';
+    if (imagePreview) imagePreview.innerHTML = '<span>معاينة الصورة</span>';
+}
+
+// ========================
+// تهيئة لوحة التحكم
+// ========================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminLoginSubmit = document.getElementById('adminLoginSubmit');
+    const adminPanel = document.getElementById('adminPanel');
+    const closeAdminPanel = document.getElementById('closeAdminPanel');
+    const adminAuthModal = document.getElementById('adminAuthModal');
+    
+    // فتح نافذة تسجيل دخول المسؤول
+    if (adminLoginBtn) {
+        adminLoginBtn.addEventListener('click', () => {
+            if (adminAuthModal) {
+                adminAuthModal.style.display = 'flex';
+            }
+        });
+    }
+    
+    // تسجيل دخول المسؤول
+    if (adminLoginSubmit) {
+        adminLoginSubmit.addEventListener('click', () => {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                if (adminAuthModal) {
+                    adminAuthModal.style.display = 'none';
+                }
+                if (adminPanel) {
+                    adminPanel.style.display = 'flex';
+                }
+                loadCurrentAds();
+            } else {
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+            }
+        });
+    }
+    
+    // إغلاق لوحة التحكم
+    if (closeAdminPanel) {
+        closeAdminPanel.addEventListener('click', () => {
+            if (adminPanel) {
+                adminPanel.style.display = 'none';
+            }
+        });
     }
 });
+
+// تصدير الدوال العامة للنطاق العام
+window.addToCart = addToCart;
+window.removeFromCart = removeFromCart;
+window.changeQuantity = changeQuantity;
+window.clearCart = clearCart;
+window.openCartModal = openCartModal;
+window.closeCartModal = closeCartModal;
+window.sendOrderToWhatsApp = sendOrderToWhatsApp;
+window.openSupport = openSupport;
+window.closeAuthModal = closeAuthModal;
+window.previewImage = previewImage;
+window.createAd = createAd;
+window.deleteAd = deleteAd;
+window.loadCurrentAds = loadCurrentAds;
+window.displayAds = displayAds;
