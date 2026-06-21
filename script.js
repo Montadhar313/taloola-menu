@@ -486,12 +486,35 @@ function displayOrderReview() {
     const reviewItemCount = document.getElementById('reviewItemCount');
     const reviewTotalQuantity = document.getElementById('reviewTotalQuantity');
     const reviewTotalAmount = document.getElementById('reviewTotalAmount');
+    const locationTextarea = document.getElementById('locationDescription');
     
     if (!reviewItemsContainer) return;
     
-    // عرض معلومات الموقع أولاً
+    // عرض معلومات الموقع
     displayLocationInReview();
     
+    // 🆕 إظهار زر العنوان المحفوظ
+    showSavedAddressButton();
+    
+    // 🆕 تحديث معلومات GPS
+    updateGPSInfoInReview();
+    
+    // 🆕 استرجاع العنوان النصي إذا كان محفوظاً في السلة الحالية
+    const currentOrderAddress = sessionStorage.getItem('current_order_address');
+    if (locationTextarea) {
+        if (currentOrderAddress) {
+            locationTextarea.value = currentOrderAddress;
+        } else if (savedAddressText && !locationTextarea.value) {
+            // لا تملأ تلقائياً، لكن اجعل الزر متاحاً
+            locationTextarea.value = '';
+        }
+        updateCharCounter();
+        
+        // 🆕 ربط عداد الأحرف
+        locationTextarea.oninput = updateCharCounter;
+    }
+    
+    // عرض المنتجات
     reviewItemsContainer.innerHTML = '';
     let totalQuantity = 0;
     let totalAmount = 0;
