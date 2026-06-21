@@ -2850,3 +2850,182 @@ section.info-section p {
     }
 }
 
+/* ============================================ */
+/* 🔄 زر تقليص/توسيع شريط التنقل */
+/* ============================================ */
+
+.toggle-nav-btn {
+    position: fixed;
+    top: 15px;
+    right: 50%;
+    transform: translateX(50%);
+    background: linear-gradient(135deg, var(--main-red), #a50301);
+    color: white;
+    border: 2px solid var(--main-yellow);
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-nav-btn:hover,
+.toggle-nav-btn:active {
+    background: linear-gradient(135deg, var(--main-yellow), #f39c12);
+    color: var(--main-red);
+    transform: translateX(50%) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(254, 219, 23, 0.5);
+}
+
+.toggle-nav-btn i {
+    transition: transform 0.4s ease;
+    font-size: 0.9rem;
+}
+
+.toggle-nav-btn.collapsed i {
+    transform: rotate(180deg);
+}
+
+/* حالة شريط التنقل المُصغّر */
+nav.sections-nav.collapsed {
+    transform: translateY(-150%);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+nav.sections-nav {
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ============================================ */
+/* 📌 زر استعادة شريط التنقل العائم */
+/* ============================================ */
+
+.restore-nav-btn {
+    position: fixed;
+    top: 15px;
+    right: 50%;
+    transform: translateX(50%);
+    background: var(--main-yellow);
+    color: var(--main-red);
+    border: 2px solid var(--main-red);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    animation: slideDown 0.5s ease;
+}
+
+.restore-nav-btn:hover,
+.restore-nav-btn:active {
+    background: var(--main-red);
+    color: var(--main-yellow);
+    transform: translateX(50%) translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.5);
+}
+
+.restore-nav-btn i {
+    font-size: 1.1rem;
+    animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-15deg); }
+    75% { transform: rotate(15deg); }
+}
+
+/* ============================================ */
+/* 📱 استجابة الهاتف */
+/* ============================================ */
+
+@media (max-width: 900px) {
+    .toggle-nav-btn {
+        top: 10px;
+        padding: 7px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .toggle-nav-btn span {
+        display: none;
+    }
+    
+    .toggle-nav-btn {
+        padding: 10px 14px;
+    }
+    
+    .restore-nav-btn {
+        top: 10px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .restore-nav-btn span {
+        display: inline;
+    }
+}
+
+@media (max-width: 600px) {
+    .toggle-nav-btn {
+        top: 8px;
+        right: 80px;
+        transform: none;
+    }
+    
+    .toggle-nav-btn:hover,
+    .toggle-nav-btn:active {
+        transform: translateY(-2px);
+    }
+    
+    .restore-nav-btn {
+        top: 8px;
+        right: 80px;
+        transform: none;
+    }
+    
+    .restore-nav-btn:hover,
+    .restore-nav-btn:active {
+        transform: translateY(-2px) scale(1.05);
+    }
+}
+
+@media (max-width: 400px) {
+    .toggle-nav-btn {
+        right: 70px;
+        padding: 8px 12px;
+    }
+    
+    .restore-nav-btn {
+        right: 70px;
+        padding: 8px 14px;
+    }
+}
+
+/* تحسينات اللمس */
+@media (hover: none) and (pointer: coarse) {
+    .toggle-nav-btn,
+    .restore-nav-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
