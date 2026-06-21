@@ -140,8 +140,8 @@ header p.hours {
 /* ============================================ */
 nav.sections-nav {
     display: flex;
-    flex-wrap: nowrap; /* 🆕 منع الالتفاف */
-    justify-content: flex-start; /* 🆕 محاذاة لليسار */
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 0.8rem;
     padding: 1rem;
     background: var(--main-red);
@@ -152,7 +152,6 @@ nav.sections-nav {
     top: 10px;
     z-index: 100;
     backdrop-filter: blur(10px);
-    /* 🆕 تفعيل التمرير الأفقي */
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
@@ -161,7 +160,6 @@ nav.sections-nav {
     scrollbar-color: var(--main-yellow) var(--main-red);
 }
 
-/* 🆕 تخصيص شريط التمرير الأفقي */
 nav.sections-nav::-webkit-scrollbar {
     height: 6px;
 }
@@ -192,7 +190,6 @@ nav.sections-nav button {
     font-weight: 600;
     transition: all 0.3s ease;
     font-family: var(--main-font);
-    /* 🆕 منع تقليص الأزرار */
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -466,7 +463,7 @@ div.menu-item p.price {
 }
 
 /* ============================================ */
-/* أيقونة السلة */
+/* 🛒 أيقونة السلة (مُحدّثة) */
 /* ============================================ */
 .cart-icon {
     position: fixed;
@@ -484,13 +481,48 @@ div.menu-item p.price {
     cursor: pointer;
     z-index: 1001;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     border: 3px solid var(--main-red);
+}
+
+/* 🆕 حالة السلة الفارغة - مخفية */
+.cart-icon.empty {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.3);
+}
+
+/* 🆕 حالة السلة الممتلئة - ظاهرة */
+.cart-icon:not(.empty) {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    animation: cartAppear 0.5s ease;
+}
+
+@keyframes cartAppear {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .cart-icon:hover {
     transform: scale(1.1) rotate(10deg);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.cart-icon:not(.empty):hover {
+    transform: scale(1.15) rotate(10deg);
 }
 
 .cart-count {
@@ -519,6 +551,56 @@ div.menu-item p.price {
     50% {
         transform: scale(1.1);
     }
+}
+
+/* ============================================ */
+/* 👤 زر تسجيل الدخول الدائري (مُحدّث) */
+/* ============================================ */
+.admin-login-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px; /* 🆕 الزاوية اليمنى */
+    z-index: 1000;
+    background: var(--main-yellow);
+    color: #000;
+    border: 3px solid var(--main-red);
+    width: 50px; /* 🆕 عرض دائري */
+    height: 50px; /* 🆕 ارتفاع دائري */
+    padding: 0; /* 🆕 بدون padding */
+    border-radius: 50%; /* 🆕 دائري */
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* 🆕 إخفاء النص وإظهار الأيقونة فقط */
+.admin-login-btn {
+    font-size: 0; /* إخفاء النص */
+    line-height: 0;
+}
+
+.admin-login-btn i {
+    font-size: 1.3rem; /* حجم الأيقونة */
+    color: var(--main-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-login-btn:hover {
+    background: var(--main-red);
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.admin-login-btn:hover i {
+    color: var(--main-yellow);
 }
 
 /* ============================================ */
@@ -638,14 +720,12 @@ section.info-section p {
     transition: all 0.3s ease;
     font-size: 1.3rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    /* 🆕 إصلاح توسيط السهم */
     align-items: center;
     justify-content: center;
     padding: 0;
     line-height: 1;
 }
 
-/* 🆕 توسيط أيقونة السهم داخل الزر */
 #scrollToTopBtn i {
     display: flex;
     align-items: center;
@@ -662,12 +742,12 @@ section.info-section p {
 }
 
 /* ============================================ */
-/* 📍 أيقونة الموقع الثابتة في الأسفل (جديد) */
+/* 📍 أيقونة الموقع الثابتة في الأسفل */
 /* ============================================ */
 .location-icon-btn {
     position: fixed;
     bottom: 30px;
-    left: 100px; /* بجانب زر الرجوع للأعلى */
+    left: 100px;
     z-index: 9999;
     background: var(--main-yellow);
     color: var(--main-red);
@@ -700,7 +780,7 @@ section.info-section p {
 }
 
 /* ============================================ */
-/* 📍 نافذة تحديد الموقع المنبثقة (جديد) */
+/* 📍 نافذة تحديد الموقع المنبثقة */
 /* ============================================ */
 .location-modal-content {
     max-width: 450px;
@@ -1319,33 +1399,6 @@ section.info-section p {
 /* ============================================ */
 /* لوحة التحكم */
 /* ============================================ */
-.admin-login-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-    background: var(--main-yellow);
-    color: #000;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-    transition: all 0.3s ease;
-    font-family: var(--main-font);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.admin-login-btn:hover {
-    background: #fff;
-    color: var(--main-red);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
 .admin-panel {
     display: none;
     position: fixed;
@@ -1578,7 +1631,6 @@ section.info-section p {
     transform: translateY(-2px);
 }
 
-/* إعلانات للزوار */
 #adsContainer {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1631,7 +1683,6 @@ section.info-section p {
     }
 }
 
-/* إشعار إضافة للسلة */
 .cart-notification {
     position: fixed;
     top: 100px;
@@ -1664,7 +1715,6 @@ section.info-section p {
     display: block;
 }
 
-/* رسالة فارغة للسلة */
 .empty-cart-message {
     text-align: center;
     padding: 40px;
@@ -1820,7 +1870,6 @@ section.info-section p {
     color: #28a745;
 }
 
-/* حالة الموقع في السلة */
 .location-in-cart {
     background: linear-gradient(135deg, #fff8e1, #fff3c4);
     border: 2px solid var(--main-yellow);
@@ -1885,7 +1934,6 @@ section.info-section p {
     transform: translateY(-2px);
 }
 
-/* معلومات الموقع في نافذة المراجعة */
 .review-location-info {
     background: linear-gradient(135deg, #fff8e1, #fff3c4);
     border: 2px solid var(--main-yellow);
@@ -2001,57 +2049,77 @@ section.info-section p {
         padding: 20px;
     }
 
+    /* 🆕 زر السلة في المنتصف السفلي */
     .cart-icon {
-        width: 55px;
-        height: 55px;
+        top: auto;
+        right: 50%;
+        transform: translateX(50%);
+        bottom: 20px;
+    }
+
+    .cart-icon:not(.empty) {
+        transform: translateX(50%) scale(1);
+    }
+
+    .cart-icon:not(.empty):hover {
+        transform: translateX(50%) scale(1.1) rotate(10deg);
+    }
+
+    /* 🆕 زر تسجيل الدخول الدائري - تصغير */
+    .admin-login-btn {
+        width: 45px;
+        height: 45px;
         top: 15px;
         right: 15px;
     }
-    
+
+    .admin-login-btn i {
+        font-size: 1.2rem;
+    }
+
     .location-permission-modal {
         padding: 30px 20px;
     }
-    
+
     .location-icon-wrapper {
         width: 80px;
         height: 80px;
     }
-    
+
     .location-icon-wrapper i {
         font-size: 2.5rem;
     }
-    
+
     .location-permission-modal h2 {
         font-size: 1.5rem;
     }
-    
+
     .permission-text {
         font-size: 0.95rem;
     }
-    
+
     .feature-item {
         font-size: 0.9rem;
         padding: 8px 0;
     }
-    
+
     .btn-allow,
     .btn-deny {
         padding: 14px 20px;
         font-size: 1rem;
     }
-    
+
     .location-in-cart {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
     }
-    
+
     .btn-update-location {
         width: 100%;
         justify-content: center;
     }
 
-    /* 🆕 أيقونات الأسفل للشاشات المتوسطة */
     #scrollToTopBtn {
         width: 50px;
         height: 50px;
@@ -2069,13 +2137,12 @@ section.info-section p {
 }
 
 @media (max-width: 768px) {
-    /* زيادة منطقة اللمس للأزرار على الهاتف */
     .add-to-cart-btn {
         min-height: 50px;
         padding: 12px 20px;
         font-size: 1.1rem;
     }
-    
+
     .qty-decrease,
     .qty-increase,
     .qty-btn {
@@ -2085,42 +2152,42 @@ section.info-section p {
         height: 44px;
         font-size: 1.2rem;
     }
-    
+
     .cart-item-remove {
         min-width: 44px;
         min-height: 44px;
         width: 44px;
         height: 44px;
     }
-    
+
     .quantity-selector {
         padding: 10px;
         gap: 12px;
     }
-    
+
     .qty-input {
         width: 55px;
         height: 44px;
         font-size: 1.3rem;
         padding: 8px;
     }
-    
+
     .menu-item {
         padding: 1.2rem;
         margin-bottom: 1rem;
     }
-    
+
     .item-image {
         height: 160px;
     }
-    
+
     .menu-item,
     .menu-item h4,
     .menu-item .price,
     .menu-item .item-image {
         pointer-events: none;
     }
-    
+
     .menu-item .add-to-cart-btn,
     .menu-item .quantity-selector,
     .menu-item .quantity-selector * {
@@ -2145,7 +2212,6 @@ section.info-section p {
         justify-content: center;
     }
 
-    /* 🆕 شريط التنقل الأفقي للهاتف */
     nav.sections-nav {
         overflow-x: auto;
         justify-content: flex-start;
@@ -2215,11 +2281,36 @@ section.info-section p {
         text-align: center;
     }
 
+    /* 🆕 زر السلة في المنتصف السفلي */
     .cart-icon {
-        width: 50px;
-        height: 50px;
+        width: 55px;
+        height: 55px;
+        top: auto;
+        right: 50%;
+        bottom: 20px;
+        transform: translateX(50%);
+    }
+
+    .cart-icon:not(.empty) {
+        transform: translateX(50%) scale(1);
+    }
+
+    .cart-count {
+        width: 25px;
+        height: 25px;
+        font-size: 0.8rem;
+    }
+
+    /* 🆕 زر تسجيل الدخول الدائري */
+    .admin-login-btn {
+        width: 42px;
+        height: 42px;
         top: 10px;
         right: 10px;
+    }
+
+    .admin-login-btn i {
+        font-size: 1.1rem;
     }
 
     .admin-login-btn {
@@ -2229,7 +2320,6 @@ section.info-section p {
         font-size: 0.9rem;
     }
 
-    /* 🆕 أيقونات الأسفل للشاشات الصغيرة */
     #scrollToTopBtn {
         bottom: 20px;
         left: 20px;
@@ -2271,18 +2361,18 @@ section.info-section p {
     div.menu-item p.price {
         font-size: 1.2rem;
     }
-    
+
     .add-to-cart-btn {
         min-height: 48px;
         font-size: 1rem;
         padding: 10px 15px;
     }
-    
+
     .quantity-selector {
         padding: 6px;
         gap: 8px;
     }
-    
+
     .qty-decrease,
     .qty-increase {
         min-width: 40px;
@@ -2291,14 +2381,30 @@ section.info-section p {
         height: 40px;
         font-size: 1rem;
     }
-    
+
     .qty-input {
         width: 48px;
         height: 40px;
         font-size: 1.1rem;
     }
 
-    /* 🆕 أيقونات الأسفل للشاشات الصغيرة جداً */
+    /* 🆕 زر السلة في المنتصف السفلي */
+    .cart-icon {
+        width: 50px;
+        height: 50px;
+        bottom: 15px;
+    }
+
+    /* 🆕 زر تسجيل الدخول الدائري */
+    .admin-login-btn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .admin-login-btn i {
+        font-size: 1rem;
+    }
+
     #scrollToTopBtn {
         width: 45px;
         height: 45px;
@@ -2321,7 +2427,6 @@ section.info-section p {
     outline-offset: 2px;
 }
 
-/* تأثيرات خاصة */
 @keyframes bounce {
     0%, 100% {
         transform: translateY(0) scale(1);
@@ -2346,7 +2451,7 @@ section.info-section p {
         transform: scale(0.95) !important;
         opacity: 0.9;
     }
-    
+
     .menu-item:active {
         transform: scale(1.01) !important;
     }
@@ -2355,22 +2460,28 @@ section.info-section p {
     #scrollToTopBtn:active {
         transform: scale(0.9);
     }
+
+    .cart-icon:active {
+        transform: scale(0.95) !important;
+    }
+
+    .admin-login-btn:active {
+        transform: scale(0.9) !important;
+    }
 }
 
-/* تحسينات iOS Safari */
 @supports (-webkit-touch-callout: none) {
     .menu-item {
         -webkit-transform: translateZ(0);
         transform: translateZ(0);
     }
-    
+
     .add-to-cart-btn:active {
         -webkit-transform: scale(0.98);
         transform: scale(0.98);
     }
 }
 
-/* شريط التمرير المخصص */
 ::-webkit-scrollbar {
     width: 10px;
 }
@@ -2389,9 +2500,8 @@ section.info-section p {
 }
 
 /* ============================================ */
-/* 📝 قسم العنوان التفصيلي (جديد) */
+/* 📝 قسم العنوان التفصيلي */
 /* ============================================ */
-
 .location-description-section {
     background: linear-gradient(135deg, #fff8e1, #fff3c4);
     border: 2px solid var(--main-yellow);
@@ -2431,7 +2541,6 @@ section.info-section p {
     letter-spacing: 0.5px;
 }
 
-/* زر استخدام العنوان المحفوظ */
 .use-saved-address-btn {
     background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
@@ -2497,7 +2606,6 @@ section.info-section p {
     white-space: nowrap;
 }
 
-/* حقل كتابة العنوان */
 .location-textarea-wrapper {
     background: white;
     border: 2px solid #eee;
@@ -2568,7 +2676,6 @@ section.info-section p {
     color: #2196F3;
 }
 
-/* خيارات العنوان */
 .location-options {
     display: flex;
     flex-direction: column;
@@ -2633,7 +2740,6 @@ section.info-section p {
     font-size: 1.2rem;
 }
 
-/* معلومات GPS المدمجة */
 .gps-info-compact {
     background: rgba(255, 255, 255, 0.7);
     padding: 10px 15px;
@@ -2671,7 +2777,6 @@ section.info-section p {
     color: #dc3545;
 }
 
-/* عنوان القسم */
 .review-section-title {
     color: var(--main-red);
     font-size: 1.3rem;
@@ -2683,48 +2788,44 @@ section.info-section p {
     gap: 10px;
 }
 
-/* ============================================ */
-/* 📱 استجابة الهاتف للعنوان التفصيلي */
-/* ============================================ */
-
 @media (max-width: 768px) {
     .location-description-section {
         padding: 15px;
     }
-    
+
     .location-description-section .location-header h4 {
         font-size: 1.05rem;
     }
-    
+
     .location-textarea {
         font-size: 0.95rem;
         min-height: 100px;
         padding: 12px;
     }
-    
+
     .use-saved-address-btn {
         padding: 10px 15px;
         font-size: 0.9rem;
         flex-wrap: wrap;
     }
-    
+
     .use-saved-address-btn small {
         width: 100%;
         max-width: none;
         margin-top: 5px;
     }
-    
+
     .textarea-footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
     }
-    
+
     .checkbox-wrapper {
         font-size: 0.9rem;
         padding: 8px;
     }
-    
+
     .map-picker-link {
         font-size: 0.85rem;
         padding: 10px;
@@ -2736,7 +2837,7 @@ section.info-section p {
         min-height: 90px;
         font-size: 0.9rem;
     }
-    
+
     .required-badge {
         font-size: 0.7rem;
         padding: 2px 8px;
