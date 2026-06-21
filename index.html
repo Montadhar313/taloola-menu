@@ -63,8 +63,16 @@
     <p>07755666073 - 07755664566<br>بـغداد - مدينة الــصدر - قطـاع 70</p>
     <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
   </header>
-  
-  <nav class="sections-nav" role="navigation" aria-label="روابط الأقسام">
+    <!-- ============================================ -->
+  <!-- 🔄 زر تقليص/توسيع شريط التنقل (جديد) -->
+  <!-- ============================================ -->
+  <button type="button" id="toggleNavBtn" class="toggle-nav-btn" title="تصغير شريط الأصناف">
+    <i class="fas fa-chevron-up" id="toggleNavIcon"></i>
+    <span id="toggleNavText">تصغير القائمة</span>
+  </button>
+
+  <nav class="sections-nav" id="sectionsNav" role="navigation" aria-label="روابط الأقسام">
+    <button type="button" data-section="sec0">بركر</button>
     <button type="button" data-section="sec0">بركر</button>
     <button type="button" data-section="sec1">زنكر</button>
     <button type="button" data-section="sec2">ريزو</button>
@@ -79,6 +87,17 @@
     <button type="button" data-section="sec11">الصوصات</button>
     <button type="button" data-section="sec12">مشروبات غازية</button>
     <button type="button" data-section="sec13">مقبلات</button>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- 📌 زر استعادة شريط التنقل العائم (جديد) -->
+  <!-- ============================================ -->
+  <button type="button" id="restoreNavBtn" class="restore-nav-btn" title="إظهار قائمة الأصناف" style="display: none;">
+    <i class="fas fa-list"></i>
+    <span>القائمة</span>
+  </button>
+  
+    
   </nav>
 
   <main>
