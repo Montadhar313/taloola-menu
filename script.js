@@ -9,6 +9,12 @@ let locationPermissionGranted = false;
 // مفاتيح التخزين المحلي
 const LOCATION_STORAGE_KEY = 'taloola_user_location';
 const LOCATION_PERMISSION_KEY = 'taloola_location_permission';
+// ============================================
+// 📝 متغيرات العنوان التفصيلي (جديد)
+// ============================================
+
+const LOCATION_TEXT_STORAGE_KEY = 'taloola_saved_address';
+let savedAddressText = localStorage.getItem(LOCATION_TEXT_STORAGE_KEY) || '';
 
 // ============================================
 // دوال الموقع الجغرافي
@@ -600,6 +606,105 @@ function confirmAndSendOrder() {
         shoppingCart = [];
         saveCart();
     }, 500);
+}
+// ============================================
+// 📝 دوال العنوان التفصيلي (جديد)
+// ============================================
+
+/**
+ * حفظ العنوان النصي في التخزين المحلي
+ */
+function saveAddressText(text) {
+    try {
+        localStorage.setItem(LOCATION_TEXT_STORAGE_KEY, text);
+        savedAddressText = text;
+        console.log('✅ تم حفظ العنوان النصي');
+    } catch (error) {
+        console.error('خطأ في حفظ العنوان:', error);
+    }
+}
+
+/**
+ * استرجاع العنوان المحفوظ
+ */
+function getSavedAddressText() {
+    return localStorage.getItem(LOCATION_TEXT_STORAGE_KEY) || '';
+}
+
+/**
+ * تحديث عداد الأحرف في حقل العنوان
+ */
+function updateCharCounter() {
+    const textarea = document.getElementById('locationDescription');
+    const counter = document.getElementById('charCount');
+    
+    if (textarea && counter) {
+        counter.textContent = textarea.value.length;
+        
+        // تغيير اللون حسب الطول
+        const charCounter = counter.parentElement;
+        if (textarea.value.length > 450) {
+            charCounter.style.color = '#dc3545';
+        } else if (textarea.value.length > 300) {
+            charCounter.style.color = '#f39c12';
+        } else {
+            charCounter.style.color = '#666';
+        }
+    }
+}
+
+/**
+ * استخدام العنوان المحفوظ
+ */
+function useSavedAddress() {
+    const textarea = document.getElementById('locationDescription');
+    if (textarea && savedAddressText) {
+        textarea.value = savedAddressText;
+        updateCharCounter();
+        showNotification('✓ تم استخدام العنوان المحفوظ');
+        
+        // تأثير بصري
+        textarea.style.background = '#d4edda';
+        setTimeout(() => {
+            textarea.style.background = 'transparent';
+        }, 800);
+    }
+}
+
+/**
+ * إظهار زر العنوان المحفوظ إذا كان موجوداً
+ */
+function showSavedAddressButton() {
+    const btn = document.getElementById('useSavedAddressBtn');
+    const preview = document.getElementById('savedAddressPreview');
+    
+    if (btn && preview && savedAddressText) {
+        btn.style.display = 'flex';
+        preview.textContent = savedAddressText.substring(0, 50) + 
+            (savedAddressText.length > 50 ? '...' : '');
+    }
+}
+
+/**
+ * تحديث معلومات GPS في نافذة المراجعة
+ */
+function updateGPSInfoInReview() {
+    const gpsInfo = document.getElementById('gpsInfoInReview');
+    const gpsStatusText = document.getElementById('gpsStatusText');
+    
+    if (!gpsInfo || !gpsStatusText) return;
+    
+    const location = userLocation || getLocationFromStorage();
+    
+    gpsInfo.classList.remove('success', 'error');
+    
+    if (location) {
+        gpsInfo.classList.add('success');
+        gpsStatusText.textContent = `✓ الموقع الجغرافي متاح (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`;
+    } else {
+        gpsInfo.classList.add('error');
+        gpsStatusText.textContent = '⚠ الموقع الجغرافي غير متاح - يرجى كتابة عنوان تفصيلي';
+    }
 }
 
 // ============================================
