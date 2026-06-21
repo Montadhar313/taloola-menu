@@ -26,17 +26,35 @@
     <span id="cartCount" class="cart-count">0</span>
   </div>
 
+  
   <!-- ============================================ -->
-  <!-- 📍 شريط الموقع الجغرافي (جديد) -->
+  <!-- 📍 شريط الموقع الجغرافي القابل للسحب (محسّن) -->
   <!-- ============================================ -->
-  <div id="locationBar" class="location-bar">
+  <div id="locationBar" class="location-bar" draggable="false">
+    <!-- مؤشر السحب -->
+    <div class="drag-handle" title="اسحبني لتحريك النافذة">
+      <i class="fas fa-grip-vertical"></i>
+      <span>اسحب</span>
+    </div>
+    
+    <!-- حالة الموقع -->
     <div class="location-status" id="locationStatus">
       <i class="fas fa-map-marker-alt"></i>
       <span id="locationText">جاري تحديد موقعك...</span>
     </div>
+    
+    <!-- زر تحديث الموقع -->
     <button type="button" id="refreshLocationBtn" class="refresh-location-btn" title="تحديث الموقع">
       <i class="fas fa-sync-alt"></i>
     </button>
+    
+    <!-- زر إعادة الموقع الأصلي -->
+    <button type="button" id="resetPositionBtn" class="reset-position-btn" title="إعادة للموقع الأصلي">
+      <i class="fas fa-undo"></i>
+    </button>
+    
+    <!-- إرشاد السحب -->
+    <div class="drag-hint">💡 اسحبني لتحريك النافذة</div>
   </div>
 
   <header>
