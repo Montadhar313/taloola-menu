@@ -44,7 +44,7 @@ function requestLocationPermission() {
         // تحسينات خاصة لـ iOS
         const options = {
             enableHighAccuracy: true,
-            timeout: 20000, // زيادة المهلة لـ iOS
+            timeout: 20000,
             maximumAge: 0
         };
         
@@ -97,7 +97,7 @@ function requestLocationPermission() {
 }
 
 // ============================================
-// 📍 نظام أيقونة الموقع في الأسفل (جديد)
+// 📍 نظام أيقونة الموقع في الأسفل
 // ============================================
 function initLocationIcon() {
     const locationIconBtn = document.getElementById('locationIconBtn');
@@ -166,16 +166,22 @@ function updateLocationModalStatus() {
     }
 }
 
+// ============================================
+// 🆕 دالة طلب الموقع المحسّنة (مع إعادة المحاولة)
+// ============================================
 async function requestLocationAndUpdate() {
     const statusDiv = document.getElementById('locationModalStatus');
     const textSpan = document.getElementById('locationModalText');
     
     if (statusDiv && textSpan) {
         statusDiv.className = 'location-modal-status loading';
-        textSpan.textContent = 'جاري تحديد موقعك...';
+        textSpan.textContent = 'جاري تحديد موقعك... يرجى الموافقة على الإذن';
     }
     
     try {
+        // 🆕 إزالة حالة الرفض السابقة قبل المحاولة الجديدة
+        localStorage.removeItem(LOCATION_PERMISSION_KEY);
+        
         const location = await requestLocationPermission();
         const savedLocation = saveLocationToStorage(location);
         userLocation = savedLocation;
@@ -196,16 +202,27 @@ async function requestLocationAndUpdate() {
     } catch (error) {
         console.error('خطأ في تحديد الموقع:', error);
         
-        if (statusDiv && textSpan) {
-            statusDiv.className = 'location-modal-status error';
-            textSpan.textContent = '⚠ ' + error.message;
-        }
+        // 🆕 رسالة مخصصة حسب نوع الخطأ
+        let errorMessage = error.message;
+        let helpfulMessage = '';
         
         if (error.message.includes('رفض')) {
-            localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
+            // 🆕 في حالة الرفض - لا نحفظ الحالة كـ denied
+            helpfulMessage = '\n\n💡 يرجى الضغط على "السماح" أو تفعيل الموقع من إعدادات المتصفح';
+            // 🆕 لا نحفظ "denied" في localStorage - نسمح بالمحاولة مرة أخرى
+            localStorage.removeItem(LOCATION_PERMISSION_KEY);
+        } else if (error.message.includes('مهلة')) {
+            helpfulMessage = '\n\n💡 تأكد من تشغيل GPS وحاول مرة أخرى';
+        } else if (error.message.includes('غير متوفرة')) {
+            helpfulMessage = '\n\n💡 تأكد من تفعيل خدمات الموقع في جهازك';
         }
         
-        showNotification('⚠ ' + error.message);
+        if (statusDiv && textSpan) {
+            statusDiv.className = 'location-modal-status error';
+            textSpan.innerHTML = `⚠ ${errorMessage}${helpfulMessage}`;
+        }
+        
+        showNotification('⚠ ' + errorMessage);
         return null;
     }
 }
@@ -222,22 +239,32 @@ function updateLocationInCart() {
     }
 }
 
+// ============================================
+// 🆕 تهيئة نظام الموقع المحسّنة
+// ============================================
 async function initializeLocationSystem() {
-    const savedPermission = localStorage.getItem(LOCATION_PERMISSION_KEY);
+    console.log('🔍 بدء تهيئة نظام الموقع...');
+    
+    // 1. محاولة جلب الموقع من التخزين المحلي أولاً (الأسرع)
     const storedLocation = getLocationFromStorage();
     if (storedLocation) {
-        userLocation = storedLocation; locationPermissionGranted = true;
+        userLocation = storedLocation;
+        locationPermissionGranted = true;
         updateLocationIconStatus();
         updateLocationInCart();
+        console.log('✅ تم استخدام الموقع المحفوظ');
         return;
     }
-    if (savedPermission !== 'denied') {
-        const modal = document.getElementById('locationPermissionModal');
-        if (modal) modal.style.display = 'flex';
-    } else {
-        updateLocationIconStatus();
-        updateLocationInCart();
+    
+    // 🆕 2. عرض نافذة طلب الإذن دائماً (حتى لو رفض سابقاً)
+    // لأننا نريد إعطاء المستخدم فرصة أخرى للموافقة
+    const modal = document.getElementById('locationPermissionModal');
+    if (modal) {
+        modal.style.display = 'flex';
     }
+    
+    updateLocationIconStatus();
+    updateLocationInCart();
 }
 
 // ============================================
@@ -505,19 +532,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const denyLocationBtn = document.getElementById('denyLocationBtn');
     const getLocationBtn = document.getElementById('getLocationBtn');
 
+    // 🆕 زر السماح - يطلب الإذن مباشرة من المتصفح
     if (allowLocationBtn) allowLocationBtn.addEventListener('click', async function(e) {
         e.preventDefault();
         document.getElementById('locationPermissionModal').style.display = 'none';
         await requestLocationAndUpdate();
     });
+    
+    // 🆕 زر الرفض - يخفي النافذة فقط (لا يحفظ الرفض بشكل دائم)
     if (denyLocationBtn) denyLocationBtn.addEventListener('click', function(e) {
         e.preventDefault();
         document.getElementById('locationPermissionModal').style.display = 'none';
-        localStorage.setItem(LOCATION_PERMISSION_KEY, 'denied');
+        // 🆕 لا نحفظ "denied" - نسمح للمستخدم بفتح النافذة مرة أخرى
         updateLocationIconStatus();
         updateLocationInCart();
-        showNotification('⚠ تم رفض تحديد الموقع');
+        showNotification('⚠ يمكنك تحديد الموقع لاحقاً من أيقونة الموقع');
     });
+    
+    // 🆕 زر "تحديد الموقع الآن" في النافذة المنبثقة
     if (getLocationBtn) getLocationBtn.addEventListener('click', async function(e) {
         e.preventDefault();
         await requestLocationAndUpdate();
