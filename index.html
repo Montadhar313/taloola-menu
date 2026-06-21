@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>تعلولة - مطعم الوجبات السريعة</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
@@ -23,6 +24,19 @@
   <div id="cartIcon" class="cart-icon">
     <i class="fas fa-shopping-cart"></i>
     <span id="cartCount" class="cart-count">0</span>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 📍 شريط الموقع الجغرافي (جديد) -->
+  <!-- ============================================ -->
+  <div id="locationBar" class="location-bar">
+    <div class="location-status" id="locationStatus">
+      <i class="fas fa-map-marker-alt"></i>
+      <span id="locationText">جاري تحديد موقعك...</span>
+    </div>
+    <button type="button" id="refreshLocationBtn" class="refresh-location-btn" title="تحديث الموقع">
+      <i class="fas fa-sync-alt"></i>
+    </button>
   </div>
 
   <header>
@@ -657,11 +671,64 @@
   <!-- زر العودة لأعلى -->
   <button id="scrollToTopBtn" aria-label="العودة لأعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
 
+  <!-- ============================================ -->
+  <!-- 📍 نافذة طلب إذن الموقع (جديدة) -->
+  <!-- ============================================ -->
+  <div id="locationPermissionModal" class="modal">
+    <div class="modal-content location-permission-modal">
+      <div class="location-icon-wrapper">
+        <i class="fas fa-map-marker-alt"></i>
+      </div>
+      <h2>📍 تحديد الموقع للتوصيل</h2>
+      <p class="permission-text">
+        لتحسين خدمة التوصيل وضمان وصول طلبك بسرعة ودقة، نحتاج إلى تحديد موقعك الحالي.
+      </p>
+      <div class="permission-features">
+        <div class="feature-item">
+          <i class="fas fa-check-circle"></i>
+          <span>توصيل أسرع وأدق</span>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-check-circle"></i>
+          <span>حفظ الموقع للطلبات المستقبلية</span>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-check-circle"></i>
+          <span>سهولة الوصول من قبل سائق التوصيل</span>
+        </div>
+      </div>
+      <div class="permission-actions">
+        <button type="button" id="allowLocationBtn" class="btn-allow">
+          <i class="fas fa-map-marked-alt"></i> السماح بتحديد الموقع
+        </button>
+        <button type="button" id="denyLocationBtn" class="btn-deny">
+          <i class="fas fa-times"></i> ليس الآن
+        </button>
+      </div>
+      <p class="privacy-note">
+        <i class="fas fa-lock"></i>
+        موقعك آمن ولن يُستخدم إلا لتوصيل طلبك
+      </p>
+    </div>
+  </div>
+
   <!-- نافذة سلة المشتريات -->
   <div id="cartModal" class="modal">
     <div class="modal-content cart-modal">
       <span class="close" onclick="closeCartModal()">&times;</span>
       <h2><i class="fas fa-shopping-cart"></i> سلة المشتريات</h2>
+      
+      <!-- حالة الموقع في السلة -->
+      <div id="locationInCart" class="location-in-cart">
+        <div class="location-status-badge" id="locationStatusBadge">
+          <i class="fas fa-map-marker-alt"></i>
+          <span id="locationStatusText">الموقع غير محدد</span>
+        </div>
+        <button type="button" id="updateLocationFromCartBtn" class="btn-update-location">
+          <i class="fas fa-sync-alt"></i> تحديث الموقع
+        </button>
+      </div>
+      
       <div id="cartItems" class="cart-items"></div>
       <div class="cart-total">
         <h3>المجموع النهائي: <span id="cartTotal">0</span> د.ع</h3>
@@ -678,7 +745,18 @@
     <div class="modal-content review-modal">
       <span class="close" onclick="closeOrderReview()">&times;</span>
       <h2><i class="fas fa-clipboard-check"></i> مراجعة طلبك</h2>
-      <p class="review-subtitle">تأكد من تفاصيل طلبك قبل الإرسال</p>
+      <p class="review-subtitle">تأكد من تفاصيل طلبك وموقعك قبل الإرسال</p>
+      
+      <!-- معلومات الموقع في المراجعة -->
+      <div class="review-location-info">
+        <div class="location-header">
+          <i class="fas fa-map-marker-alt"></i>
+          <h4>موقع التوصيل</h4>
+        </div>
+        <div id="reviewLocationDetails" class="location-details">
+          <p>جاري تحميل الموقع...</p>
+        </div>
+      </div>
       
       <div id="orderReviewItems" class="order-review-items"></div>
       
@@ -699,7 +777,7 @@
       
       <div class="review-note">
         <i class="fas fa-info-circle"></i>
-        <span>سيتم إرسال طلبك عبر واتساب للتأكيد</span>
+        <span>سيتم إرسال طلبك مع موقعك عبر واتساب للتأكيد</span>
       </div>
       
       <div class="review-actions">
