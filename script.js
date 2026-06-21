@@ -391,13 +391,32 @@ let shoppingCart = JSON.parse(localStorage.getItem('taloola_cart')) || [];
 function saveCart() { localStorage.setItem('taloola_cart', JSON.stringify(shoppingCart)); updateCartUI(); }
 function updateCartUI() {
     const cartCount = document.getElementById('cartCount');
+    const cartIcon = document.getElementById('cartIcon');
     const totalItems = shoppingCart.reduce((sum, item) => sum + item.quantity, 0);
+    
     if (cartCount) {
         cartCount.textContent = totalItems;
         if (totalItems > 0) {
             cartCount.style.animation = 'none';
             setTimeout(() => { cartCount.style.animation = 'pulse 2s infinite'; }, 10);
         }
+    }
+    
+    // 🆕 إخفاء/إظهار زر السلة حسب محتوى السلة
+    updateCartVisibility();
+}
+
+// 🆕 دالة جديدة للتحكم في ظهور/اختفاء زر السلة
+function updateCartVisibility() {
+    const cartIcon = document.getElementById('cartIcon');
+    if (!cartIcon) return;
+    
+    if (shoppingCart.length === 0) {
+        // السلة فارغة - إخفاء الزر
+        cartIcon.classList.add('empty');
+    } else {
+        // السلة تحتوي على عناصر - إظهار الزر
+        cartIcon.classList.remove('empty');
     }
 }
 function addToCart(name, price, quantity = 1) {
