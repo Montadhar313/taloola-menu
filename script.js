@@ -568,27 +568,40 @@ function confirmAndSendOrder() {
         return;
     }
     
-    // التحقق من وجود الموقع
-    const location = userLocation || getLocationFromStorage();
+    // 🆕 جلب العنوان النصي
+    const locationTextarea = document.getElementById('locationDescription');
+    const addressText = locationTextarea ? locationTextarea.value.trim() : '';
+    const saveForFuture = document.getElementById('saveLocationForFuture')?.checked ?? true;
     
-    if (!location) {
-        const confirmWithoutLocation = confirm(
-            '⚠ لم يتم تحديد موقعك بعد!\n\n' +
-            'هل تريد إرسال الطلب بدون موقع؟\n' +
-            '(قد يواجه سائق التوصيل صعوبة في الوصول إليك)'
-        );
+    // جلب الموقع الجغرافي
+    const gpsLocation = userLocation || getLocationFromStorage();
+    
+    // 🆕 التحقق: يجب أن يكون إما عنوان نصي أو GPS
+    if (!addressText && !gpsLocation) {
+        alert('⚠ يجب عليك إما:\n• كتابة عنوانك التفصيلي\n• أو السماح بتحديد موقعك الجغرافي\n\nالرجاء إضافة أحدهما للمتابعة');
         
-        if (!confirmWithoutLocation) {
-            // إغلاق نافذة المراجعة وطلب الموقع
-            closeOrderReview();
-            requestLocationAndUpdate();
-            return;
+        // التركيز على حقل العنوان
+        if (locationTextarea) {
+            locationTextarea.focus();
+            locationTextarea.style.borderColor = '#dc3545';
+            setTimeout(() => {
+                locationTextarea.style.borderColor = '';
+            }, 2000);
         }
+        return;
     }
+    
+    // 🆕 حفظ العنوان للنصوص القادمة إذا اختار المستخدم ذلك
+    if (addressText && saveForFuture) {
+        saveAddressText(addressText);
+    }
+    
+    // 🆕 حفظ العنوان للجلسة الحالية (في حالة العودة للتعديل)
+    sessionStorage.setItem('current_order_address', addressText);
     
     const phoneNumber = '9647755666073';
     
-    // بناء رسالة الطلب مع الموقع
+    // بناء رسالة الطلب
     let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
     message += 'الطلب :\n';
     
@@ -607,14 +620,17 @@ function confirmAndSendOrder() {
     message += `\nالاجمالي : ${totalAmount}`;
     message += `\nالمجموع النهائي ${totalAmount}`;
     
-    // إضافة الموقع إذا كان متاحاً
-    if (location) {
-        const mapUrl = location.googleMapsUrl || generateGoogleMapsUrl(location.latitude, location.longitude);
-        message += `\n\n📍 موقع التوصيل:`;
+    // 🆕 إضافة العنوان التفصيلي (الأهم!)
+    if (addressText) {
+        message += `\n\n🏠 العنوان التفصيلي:`;
+        message += `\n${addressText}`;
+    }
+    
+    // إضافة رابط GPS إذا كان متاحاً
+    if (gpsLocation) {
+        const mapUrl = gpsLocation.googleMapsUrl || generateGoogleMapsUrl(gpsLocation.latitude, gpsLocation.longitude);
+        message += `\n\n📍 الموقع على الخريطة:`;
         message += `\n${mapUrl}`;
-        message += `\n\nالإحداثيات: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
-    } else {
-        message += `\n\n⚠ ملاحظة: الموقع غير محدد - يرجى التواصل مع الزبون`;
     }
     
     // فتح واتساب مع الرسالة
@@ -622,14 +638,16 @@ function confirmAndSendOrder() {
     window.open(whatsappURL, '_blank');
     
     closeOrderReview();
-    showNotification('✅ تم إرسال طلبك مع الموقع عبر واتساب!');
+    showNotification('✅ تم إرسال طلبك مع العنوان التفصيلي!');
     
-    // تفريغ السلة بعد الإرسال
+    // تفريغ السلة والعنوان المؤقت
     setTimeout(() => {
         shoppingCart = [];
         saveCart();
+        sessionStorage.removeItem('current_order_address');
     }, 500);
 }
+
 // ============================================
 // 📝 دوال العنوان التفصيلي (جديد)
 // ============================================
