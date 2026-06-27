@@ -1,42 +1,116 @@
 // ============================================
-// ⚡ نظام تحميل الصور الذكي (جديد)
+// 🚀 نظام تحميل الصور الذكي المتسلسل (الأحدث)
 // ============================================
-class SmartImageLoader {
+
+/**
+ * SmartSequentialImageLoader
+ * نظام ذكي يرتب الصور حسب الأولوية ويحملها بالتسلسل
+ * مميزات:
+ * - Priority Queue (طابور أولويات)
+ * - Concurrency Limit (حد أقصى للتحميل المتوازي)
+ * - Image Deduplication (عدم تكرار التحميل)
+ * - Connection-Aware (التكيف مع سرعة الإنترنت)
+ * - Multi-level Cache (كاش متعدد المستويات)
+ */
+class SmartSequentialImageLoader {
     constructor() {
-        this.imageCache = new Map();
-        this.observer = null;
+        // طابور الصور حسب الأولوية
+        this.queue = [];
+        // الصور قيد التحميل حالياً
+        this.currentlyLoading = new Set();
+        // الكاش الذكي (src -> Image src)
+        this.cache = new Map();
+        // العناصر المنتظرة لكل صورة (deduplication)
+        this.waitingElements = new Map();
+        // Observers
+        this.visibilityObserver = null;
         this.preloadObserver = null;
+        // الإعدادات الذكية
+        this.config = {
+            maxConcurrent: this.detectOptimalConcurrency(),
+            preloadDistance: 300,
+            highPriorityDistance: 100,
+            useIdleCallback: 'requestIdleCallback' in window
+        };
+        
+        console.log(`⚡ Smart Loader جاهز - Concurrent: ${this.config.maxConcurrent}`);
         this.init();
     }
     
-    init() {
-        if (!('IntersectionObserver' in window)) {
-            this.loadAllImages();
-            return;
+    /**
+     * 🎯 كشف السرعة المثلى للتحميل المتوازي
+     * يتكيف مع سرعة اتصال المستخدم
+     */
+    detectOptimalConcurrency() {
+        const connection = navigator.connection || 
+                          navigator.mozConnection || 
+                          navigator.webkitConnection;
+        
+        if (connection) {
+            const type = connection.effectiveType;
+            const saveData = connection.saveData;
+            
+            // إذا كان المستخدم في وضع توفير البيانات
+            if (saveData) return 1;
+            
+            switch(type) {
+                case '4g': return 3;      // سريع: 3 صور متزامنة
+                case '3g': return 2;      // متوسط: صورتان
+                case '2g': 
+                case 'slow-2g': return 1; // بطيء: صورة واحدة
+                default: return 2;
+            }
         }
         
-        // Observer لتحميل الصور عند اقترابها من الشاشة (قبل 200px)
-        this.observer = new IntersectionObserver(
+        // افتراضي: حسب عدد أنوية المعالج (بحد أقصى 3)
+        return Math.min(navigator.hardwareConcurrency || 2, 3);
+    }
+    
+    /**
+     * 🚀 تهيئة النظام
+     */
+    init() {
+        // تحميل الصور المحفوظة مسبقاً من SessionStorage
+        this.loadFromSessionCache();
+        
+        // إعداد Observers
+        this.setupObservers();
+        
+        // بدء المراقبة
+        this.observeAllImages();
+        
+        // مراقبة تغييرات الاتصال
+        this.monitorConnectionChanges();
+    }
+    
+    /**
+     * 👁️ إعداد مراقبي الرؤية
+     */
+    setupObservers() {
+        // مراقب الرؤية الأساسي (Priority-based)
+        this.visibilityObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        this.loadImage(entry.target);
-                        this.observer.unobserve(entry.target);
+                        const img = entry.target;
+                        const priority = this.calculatePriority(img);
+                        this.enqueue(img, priority);
+                        this.visibilityObserver.unobserve(img);
                     }
                 });
             },
             {
-                rootMargin: '200px 0px',
+                rootMargin: `${this.config.preloadDistance}px 0px`,
                 threshold: 0.01
             }
         );
         
-        // Observer للتحميل المسبق للأقسام القادمة (قبل 500px)
+        // مراقب التحميل المسبق للأقسام (500px قبل الوصول)
         this.preloadObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        this.preloadNearbyImages(entry.target);
+                        this.preloadSectionImages(entry.target);
                         this.preloadObserver.unobserve(entry.target);
                     }
                 });
@@ -46,18 +120,54 @@ class SmartImageLoader {
                 threshold: 0
             }
         );
-        
-        this.observeAllImages();
-        this.preloadFromCache();
     }
     
+    /**
+     * 🎯 حساب أولوية الصورة (الرقم الأقل = الأولوية الأعلى)
+     */
+    calculatePriority(img) {
+        const rect = img.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        
+        // المسافة من مركز الشاشة
+        const centerX = viewportWidth / 2;
+        const centerY = viewportHeight / 2;
+        const imgCenterX = rect.left + rect.width / 2;
+        const imgCenterY = rect.top + rect.height / 2;
+        
+        const distance = Math.sqrt(
+            Math.pow(imgCenterX - centerX, 2) + 
+            Math.pow(imgCenterY - centerY, 2)
+        );
+        
+        // الصور المرئية حالياً: أولوية عالية جداً (1-10)
+        if (rect.top < viewportHeight && rect.bottom > 0) {
+            return 1 + (distance / 1000);
+        }
+        
+        // الصور القريبة جداً: أولوية عالية (10-20)
+        if (rect.top < viewportHeight + this.config.highPriorityDistance) {
+            return 10 + (distance / 500);
+        }
+        
+        // الصور البعيدة: أولوية منخفضة (100+)
+        return 100 + (distance / 200);
+    }
+    
+    /**
+     * 🔍 مراقبة جميع الصور في الصفحة
+     */
     observeAllImages() {
         const lazyImages = document.querySelectorAll('.lazy-image');
+        
         lazyImages.forEach(img => {
-            if (this.observer) {
-                this.observer.observe(img);
+            // إضافة للـ visibility observer
+            if (this.visibilityObserver) {
+                this.visibilityObserver.observe(img);
             }
             
+            // إضافة القسم الأب للـ preload observer
             const section = img.closest('.menu-section');
             if (section && this.preloadObserver) {
                 this.preloadObserver.observe(section);
@@ -67,99 +177,276 @@ class SmartImageLoader {
         console.log(`🖼️ مراقبة ${lazyImages.length} صورة للتحميل الذكي`);
     }
     
-    loadImage(img) {
+    /**
+     * 📥 إضافة صورة للطابور الذكي
+     */
+    enqueue(img, priority = 50) {
         const src = img.getAttribute('data-src');
-        if (!src || img.classList.contains('loaded')) return;
+        if (!src) return;
         
-        img.classList.add('loading');
-        
-        // التحقق من الكاش أولاً
-        if (this.imageCache.has(src)) {
+        // التحقق من الكاش أولاً (فوري!)
+        if (this.cache.has(src)) {
             this.applyImage(img, src);
             return;
         }
         
-        const image = new Image();
+        // تسجيل العنصر في قائمة الانتظار (deduplication)
+        if (!this.waitingElements.has(src)) {
+            this.waitingElements.set(src, []);
+            // إضافة للطابور فقط مرة واحدة
+            this.queue.push({ src, priority });
+            // إعادة ترتيب الطابور حسب الأولوية
+            this.sortQueue();
+        }
         
-        image.onload = () => {
-            this.imageCache.set(src, src);
-            this.applyImage(img, src);
-            this.saveToSessionCache(src);
-        };
+        this.waitingElements.get(src).push(img);
         
-        image.onerror = () => {
-            console.warn(`❌ فشل تحميل الصورة: ${src}`);
-            img.classList.remove('loading');
-            img.classList.add('error');
-        };
+        // إضافة تأثير التحميل
+        img.classList.add('loading');
         
-        image.src = src;
+        // بدء المعالجة
+        this.processQueue();
     }
     
+    /**
+     * 🔄 ترتيب الطابور حسب الأولوية (الأقل = الأعلى أولوية)
+     */
+    sortQueue() {
+        this.queue.sort((a, b) => a.priority - b.priority);
+    }
+    
+    /**
+     * ⚙️ معالجة الطابور (التحميل المتسلسل الذكي)
+     */
+    processQueue() {
+        // تحميل حتى الوصول للحد الأقصى المتوازي
+        while (
+            this.currentlyLoading.size < this.config.maxConcurrent && 
+            this.queue.length > 0
+        ) {
+            const next = this.queue.shift();
+            if (next) {
+                this.loadImage(next.src);
+            }
+        }
+    }
+    
+    /**
+     * 🖼️ تحميل صورة واحدة
+     */
+    loadImage(src) {
+        this.currentlyLoading.add(src);
+        
+        const img = new Image();
+        img.decoding = 'async';
+        
+        img.onload = () => {
+            this.handleImageLoad(src, img);
+        };
+        
+        img.onerror = () => {
+            this.handleImageError(src);
+        };
+        
+        // بدء التحميل
+        img.src = src;
+    }
+    
+    /**
+     * ✅ معالجة نجاح التحميل
+     */
+    handleImageLoad(src, img) {
+        // إزالة من قائمة التحميل
+        this.currentlyLoading.delete(src);
+        
+        // حفظ في الكاش الذكي
+        this.cache.set(src, src);
+        
+        // تطبيق على جميع العناصر المنتظرة (deduplication)
+        const waitingElements = this.waitingElements.get(src) || [];
+        waitingElements.forEach(element => {
+            this.applyImage(element, src);
+        });
+        
+        // تنظيف قائمة الانتظار
+        this.waitingElements.delete(src);
+        
+        // حفظ في SessionStorage
+        this.saveToSessionCache(src);
+        
+        // معالجة الصورة التالية في الطابور
+        this.processQueue();
+        
+        console.log(`✅ تم تحميل: ${src.split('/').pop()}`);
+    }
+    
+    /**
+     * ❌ معالجة فشل التحميل
+     */
+    handleImageError(src) {
+        console.warn(`❌ فشل تحميل: ${src}`);
+        this.currentlyLoading.delete(src);
+        
+        // إزالة العناصر المنتظرة
+        const waitingElements = this.waitingElements.get(src) || [];
+        waitingElements.forEach(element => {
+            element.classList.remove('loading');
+            element.classList.add('error');
+        });
+        this.waitingElements.delete(src);
+        
+        // متابعة المعالجة
+        this.processQueue();
+    }
+    
+    /**
+     * 🎨 تطبيق الصورة على عنصر DOM
+     */
     applyImage(img, src) {
         img.src = src;
         img.classList.remove('loading');
         img.classList.add('loaded');
         
+        // إخفاء الـ skeleton بتأثير سلس
         const skeleton = img.parentElement?.querySelector('.image-skeleton');
         if (skeleton) {
+            skeleton.style.transition = 'opacity 0.4s ease';
+            skeleton.style.opacity = '0';
             setTimeout(() => {
-                skeleton.style.opacity = '0';
-            }, 100);
+                if (skeleton.parentElement) {
+                    skeleton.remove();
+                }
+            }, 400);
         }
     }
     
-    preloadNearbyImages(section) {
+    /**
+     * 🚀 تحميل مسبق لجميع صور القسم
+     */
+    preloadSectionImages(section) {
         const images = section.querySelectorAll('.lazy-image[data-src]');
+        
         images.forEach((img, index) => {
-            if (index < 6) {
-                const src = img.getAttribute('data-src');
-                if (src && !this.imageCache.has(src)) {
-                    const preloadImg = new Image();
-                    preloadImg.src = src;
-                    this.imageCache.set(src, src);
+            const src = img.getAttribute('data-src');
+            if (src && !this.cache.has(src) && !this.currentlyLoading.has(src)) {
+                // إضافة بأولوية متوسطة حسب الموقع
+                this.queue.push({ 
+                    src, 
+                    priority: 20 + index
+                });
+                
+                if (!this.waitingElements.has(src)) {
+                    this.waitingElements.set(src, []);
                 }
+                this.waitingElements.get(src).push(img);
             }
         });
+        
+        // إعادة ترتيب الطابور
+        this.sortQueue();
+        this.processQueue();
     }
     
+    /**
+     * 💾 حفظ في SessionStorage
+     */
     saveToSessionCache(src) {
         try {
             const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
             if (!cached.includes(src)) {
                 cached.push(src);
+                // الاحتفاظ بآخر 50 صورة فقط
                 if (cached.length > 50) cached.shift();
                 sessionStorage.setItem('taloola_image_cache', JSON.stringify(cached));
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('⚠️ فشل حفظ الكاش');
+        }
     }
     
-    preloadFromCache() {
+    /**
+     * 📂 تحميل من SessionStorage عند بدء التشغيل
+     */
+    loadFromSessionCache() {
         try {
             const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
-            cached.slice(0, 10).forEach(src => {
+            
+            // تحميل أول 15 صورة مسبقاً
+            cached.slice(0, 15).forEach(src => {
                 const img = new Image();
+                img.onload = () => {
+                    this.cache.set(src, src);
+                };
                 img.src = src;
-                this.imageCache.set(src, src);
             });
+            
             if (cached.length > 0) {
-                console.log(`⚡ تم تحميل ${Math.min(cached.length, 10)} صورة من الكاش`);
+                console.log(`⚡ تم استرجاع ${Math.min(cached.length, 15)} صورة من الكاش`);
             }
         } catch (e) {}
     }
     
-    loadAllImages() {
-        document.querySelectorAll('.lazy-image[data-src]').forEach(img => {
-            this.loadImage(img);
-        });
+    /**
+     * 📶 مراقبة تغييرات الاتصال
+     */
+    monitorConnectionChanges() {
+        const connection = navigator.connection || 
+                          navigator.mozConnection || 
+                          navigator.webkitConnection;
+        
+        if (connection) {
+            connection.addEventListener('change', () => {
+                const newConcurrency = this.detectOptimalConcurrency();
+                if (newConcurrency !== this.config.maxConcurrent) {
+                    this.config.maxConcurrent = newConcurrency;
+                    console.log(`📶 تغيير السرعة - Concurrent: ${newConcurrency}`);
+                    this.processQueue();
+                }
+            });
+        }
+    }
+    
+    /**
+     * 📊 إحصائيات الأداء
+     */
+    getStats() {
+        return {
+            cached: this.cache.size,
+            loading: this.currentlyLoading.size,
+            queued: this.queue.length,
+            waiting: this.waitingElements.size,
+            maxConcurrent: this.config.maxConcurrent
+        };
     }
 }
 
+// متغير عام للنظام
 let smartImageLoader = null;
 
+/**
+ * 🚀 تهيئة نظام تحميل الصور الذكي
+ */
 function initSmartImageLoading() {
-    smartImageLoader = new SmartImageLoader();
-    console.log('✅ نظام تحميل الصور الذكي جاهز');
+    // انتظار تحميل DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            smartImageLoader = new SmartSequentialImageLoader();
+            console.log('✅ نظام تحميل الصور الذكي المتسلسل جاهز');
+        });
+    } else {
+        smartImageLoader = new SmartSequentialImageLoader();
+        console.log('✅ نظام تحميل الصور الذكي المتسلسل جاهز');
+    }
+    
+    // إحصائيات دورية (في وضع التطوير فقط)
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io')) {
+        setInterval(() => {
+            if (smartImageLoader) {
+                const stats = smartImageLoader.getStats();
+                console.log('📊 إحصائيات الصور:', stats);
+            }
+        }, 10000);
+    }
 }
 
 // ============================================
@@ -897,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(firebaseStorageScript);
 
     // ============================================
-    // ⚡ تهيئة نظام تحميل الصور الذكي
+    // ⚡ تهيئة نظام تحميل الصور الذكي المتسلسل
     // ============================================
     initSmartImageLoading();
 
@@ -1181,7 +1468,9 @@ function clearAdForm() {
     if (imagePreview) imagePreview.innerHTML = '<span>معاينة الصورة</span>';
 }
 
-// تصدير الدوال العامة
+// ============================================
+// 📤 تصدير الدوال العامة
+// ============================================
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.changeQuantity = changeQuantity;
@@ -1204,3 +1493,4 @@ window.openProductModal = openProductModal;
 window.closeProductModal = closeProductModal;
 window.changeModalQuantity = changeModalQuantity;
 window.addCurrentProductToCart = addCurrentProductToCart;
+window.smartImageLoader = smartImageLoader;
