@@ -46,14 +46,13 @@
 <!-- ============================================ -->
 <header id="mainHeader">
     <img src="assets/images/Logo.gif" alt="شعار تعلولة" class="logo" fetchpriority="high" width="250" height="250">
-
-<img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
+    <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
     <p>07755666073 - 07755664566<br>بـغداد - مدينة الــصدر - قطـاع 70</p>
     <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
 </header>
 
 <!-- ============================================ -->
-<!-- 📌 الشريط العلوي الثابت (يظهر عند التمرير) -->
+<!-- 📌 الشريط العلوي الثابت (بدون زر السلة) -->
 <!-- ============================================ -->
 <div id="topStickyBar" class="top-sticky-bar">
     <div class="top-bar-logo">
@@ -65,12 +64,6 @@
         <button id="adminLoginBtn" class="top-bar-btn admin-top-btn" title="تسجيل الدخول">
             <i class="fas fa-user-shield"></i>
             <span class="btn-label">المسؤول</span>
-        </button>
-        
-        <button id="cartIcon" class="top-bar-btn cart-top-btn" title="سلة المشتريات">
-            <i class="fas fa-shopping-cart"></i>
-            <span id="cartCount" class="cart-count-top">0</span>
-            <span class="btn-label">السلة</span>
         </button>
     </div>
 </div>
@@ -613,12 +606,21 @@
 </main>
 
 <!-- ============================================ -->
-<!-- 🎯 أزرار المساعدة السفلية -->
+<!-- 🎯 أزرار المساعدة السفلية (مع السلة الديناميكية) -->
 <!-- ============================================ -->
 <div class="bottom-action-buttons">
+    <!-- زر الموقع (يمين في RTL) -->
     <button id="locationIconBtn" class="action-btn-bottom location-btn-bottom" title="تحديد الموقع">
         <i class="fas fa-map-marker-alt"></i>
     </button>
+    
+    <!-- 🛒 زر السلة العائم (الوسط - يظهر عند إضافة عناصر) -->
+    <button id="floatingCartBtn" class="action-btn-bottom cart-btn-bottom" title="سلة المشتريات">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="floatingCartCount" class="cart-count-bottom">0</span>
+    </button>
+    
+    <!-- زر العودة للأعلى (يسار في RTL) -->
     <button id="scrollToTopBtn" class="action-btn-bottom scroll-top-btn-bottom" aria-label="العودة لأعلى الصفحة" title="العودة لأعلى">
         <i class="fas fa-arrow-up"></i>
     </button>
@@ -635,7 +637,6 @@
         </div>
 
         <div class="customer-info-section">
-            <!-- رقم الهاتف -->
             <div class="input-group-new">
                 <label for="customerPhone">
                     <i class="fas fa-phone"></i> رقم الهاتف
@@ -647,7 +648,6 @@
                 </div>
             </div>
 
-            <!-- منطقة التوصيل -->
             <div class="input-group-new">
                 <label for="deliveryArea">
                     <i class="fas fa-map-marker-alt"></i> منطقة التوصيل
@@ -739,7 +739,6 @@
                 </div>
             </div>
 
-            <!-- العنوان التفصيلي -->
             <div class="input-group-new">
                 <label for="detailedAddress">
                     <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
@@ -748,7 +747,6 @@
             </div>
         </div>
 
-        <!-- عناصر السلة -->
         <div class="cart-items-section">
             <h3 class="cart-section-title">
                 <i class="fas fa-box"></i> منتجاتك
@@ -757,7 +755,6 @@
             <div id="cartItems" class="cart-items-new"></div>
         </div>
 
-        <!-- المجموع والإجراءات -->
         <div class="cart-footer-new">
             <div class="cart-total-new">
                 <span class="total-label">المجموع النهائي:</span>
@@ -936,9 +933,6 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 📜 السكريبت -->
-<!-- ============================================ -->
 <script src="script.js"></script>
 </body>
 </html>
