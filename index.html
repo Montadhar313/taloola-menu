@@ -23,7 +23,15 @@
     <i class="fas fa-user-shield"></i> تسجيل الدخول
 </button>
 
-<!-- نافذة سلة المشتريات (مُحسّنة) -->
+<!-- أيقونة السلة -->
+<div id="cartIcon" class="cart-icon">
+    <i class="fas fa-shopping-cart"></i>
+    <span id="cartCount" class="cart-count">0</span>
+</div>
+
+<!-- ============================================ -->
+<!-- 🛒 نافذة سلة المشتريات الجديدة (المحسّنة) -->
+<!-- ============================================ -->
 <div id="cartModal" class="modal">
     <div class="modal-content cart-modal-new">
         <!-- الهيدر -->
@@ -192,6 +200,9 @@
     </div>
 </div>
 
+<!-- ============================================ -->
+<!-- 🏠 الهيدر -->
+<!-- ============================================ -->
 <header>
     <img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
     <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
@@ -199,6 +210,9 @@
     <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
 </header>
 
+<!-- ============================================ -->
+<!-- 🧭 شريط التنقل القابل للتمرير -->
+<!-- ============================================ -->
 <nav class="sections-nav" id="sectionsNav" role="navigation" aria-label="روابط الأقسام">
     <button type="button" data-section="sec0">بركر</button>
     <button type="button" data-section="sec1">زنكر</button>
@@ -216,6 +230,9 @@
     <button type="button" data-section="sec13">مقبلات</button>
 </nav>
 
+<!-- ============================================ -->
+<!-- 🍽️ المحتوى الرئيسي -->
+<!-- ============================================ -->
 <main>
     <!-- قسم الإعلانات -->
     <section class="info-section" id="ads">
@@ -563,16 +580,20 @@
     </section>
 </main>
 
-<!-- أيقونة الموقع الثابتة -->
-<div id="locationIconBtn" class="location-icon-btn" title="تحديد الموقع">
-    <i class="fas fa-map-marker-alt"></i>
+<!-- ============================================ -->
+<!-- 🎯 أزرار المساعدة السفلية (متساوية ومتجاورة) -->
+<!-- ============================================ -->
+<div class="bottom-action-buttons">
+    <button id="locationIconBtn" class="action-btn-bottom location-btn-bottom" title="تحديد الموقع">
+        <i class="fas fa-map-marker-alt"></i>
+    </button>
+    <button id="scrollToTopBtn" class="action-btn-bottom scroll-top-btn-bottom" aria-label="العودة لأعلى الصفحة" title="العودة لأعلى">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 </div>
 
-<!-- زر العودة لأعلى -->
-<button id="scrollToTopBtn" aria-label="العودة لأعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
-
 <!-- ============================================ -->
-<!-- 🛍️ نافذة تفاصيل المنتج (جديدة) -->
+<!-- 🛍️ نافذة تفاصيل المنتج -->
 <!-- ============================================ -->
 <div id="productModal" class="modal product-modal">
     <div class="modal-content product-modal-content">
@@ -621,7 +642,9 @@
     </div>
 </div>
 
-<!-- نافذة طلب إذن الموقع -->
+<!-- ============================================ -->
+<!-- 📍 نافذة طلب إذن الموقع -->
+<!-- ============================================ -->
 <div id="locationPermissionModal" class="modal">
     <div class="modal-content location-permission-modal">
         <div class="location-icon-wrapper">
@@ -660,7 +683,9 @@
     </div>
 </div>
 
-<!-- نافذة تحديد الموقع المنبثقة -->
+<!-- ============================================ -->
+<!-- 📍 نافذة تحديد الموقع المنبثقة -->
+<!-- ============================================ -->
 <div id="locationModal" class="modal">
     <div class="modal-content location-modal-content">
         <span class="close" onclick="closeLocationModal()">&times;</span>
@@ -691,104 +716,9 @@
     </div>
 </div>
 
-<!-- نافذة سلة المشتريات -->
-<div id="cartModal" class="modal">
-    <div class="modal-content cart-modal">
-        <span class="close" onclick="closeCartModal()">&times;</span>
-        <h2><i class="fas fa-shopping-cart"></i> سلة المشتريات</h2>
-        <div id="locationInCart" class="location-in-cart">
-            <div class="location-status-badge" id="locationStatusBadge">
-                <i class="fas fa-map-marker-alt"></i>
-                <span id="locationStatusText">الموقع غير محدد</span>
-            </div>
-            <button type="button" id="updateLocationFromCartBtn" class="btn-update-location" onclick="requestLocationAndUpdate()">
-                <i class="fas fa-sync-alt"></i> تحديث الموقع
-            </button>
-        </div>
-        <div id="cartItems" class="cart-items"></div>
-        <div class="cart-total">
-            <h3>المجموع النهائي: <span id="cartTotal">0</span> د.ع</h3>
-        </div>
-        <div class="cart-actions">
-            <button onclick="clearCart()" class="btn-clear"><i class="fas fa-trash"></i> تفريغ السلة</button>
-            <button onclick="showOrderReview()" class="btn-review"><i class="fas fa-eye"></i> مراجعة الطلب</button>
-        </div>
-    </div>
-</div>
-
-<!-- نافذة مراجعة الطلب -->
-<div id="orderReviewModal" class="modal">
-    <div class="modal-content review-modal">
-        <span class="close" onclick="closeOrderReview()">&times;</span>
-        <h2><i class="fas fa-clipboard-check"></i> مراجعة طلبك</h2>
-        <p class="review-subtitle">تأكد من تفاصيل طلبك وأضف منطقتك للتوصيل</p>
-
-        <div class="location-description-section">
-            <div class="location-header">
-                <i class="fas fa-map-marked-alt"></i>
-                <h4>🏠 رقم القطاع أو اسم الحي</h4>
-                <span class="required-badge">مطلوب</span>
-            </div>
-            
-            <button type="button" id="useSavedAddressBtn" class="use-saved-address-btn" style="display: none;">
-                <i class="fas fa-history"></i>
-                <span>استخدام الموقع المحفوظ</span>
-                <small id="savedAddressPreview"></small>
-            </button>
-
-            <div class="location-input-wrapper">
-                <input type="text" id="locationDescription" class="location-input" placeholder="مثال: قطاع 70، حي الزهراء..." maxlength="100">
-            </div>
-
-            <div class="location-options">
-                <label class="checkbox-wrapper">
-                    <input type="checkbox" id="saveLocationForFuture" checked>
-                    <span class="checkmark"></span>
-                    <span>💾 حفظ الموقع للطلبات القادمة</span>
-                </label>
-            </div>
-
-            <div id="gpsInfoInReview" class="gps-info-compact">
-                <i class="fas fa-satellite-dish"></i>
-                <span id="gpsStatusText">جاري التحقق من الموقع الجغرافي...</span>
-            </div>
-        </div>
-
-        <h3 class="review-section-title">🛒 تفاصيل المنتجات</h3>
-        <div id="orderReviewItems" class="order-review-items"></div>
-
-        <div class="review-summary">
-            <div class="summary-row">
-                <span>عدد المنتجات:</span>
-                <span id="reviewItemCount">0</span>
-            </div>
-            <div class="summary-row">
-                <span>إجمالي الكمية:</span>
-                <span id="reviewTotalQuantity">0</span>
-            </div>
-            <div class="summary-row total-row">
-                <span>المجموع النهائي:</span>
-                <span id="reviewTotalAmount">0 د.ع</span>
-            </div>
-        </div>
-
-        <div class="review-note">
-            <i class="fas fa-info-circle"></i>
-            <span>سيتم إرسال طلبك مع الموقع عبر واتساب</span>
-        </div>
-
-        <div class="review-actions">
-            <button onclick="closeOrderReview()" class="btn-back">
-                <i class="fas fa-arrow-right"></i> العودة للسلة
-            </button>
-            <button onclick="confirmAndSendOrder()" class="btn-confirm">
-                <i class="fab fa-whatsapp"></i> تأكيد وإرسال الطلب
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- نافذة تسجيل دخول المسؤول -->
+<!-- ============================================ -->
+<!-- 🔐 نافذة تسجيل دخول المسؤول -->
+<!-- ============================================ -->
 <div id="adminAuthModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeAuthModal()">&times;</span>
@@ -799,7 +729,9 @@
     </div>
 </div>
 
-<!-- لوحة تحكم المسؤول -->
+<!-- ============================================ -->
+<!-- ⚙️ لوحة تحكم المسؤول -->
+<!-- ============================================ -->
 <div id="adminPanel" class="admin-panel">
     <div class="admin-panel-content">
         <span class="close-admin-panel" id="closeAdminPanel">&times;</span>
