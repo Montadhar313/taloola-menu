@@ -18,197 +18,42 @@
 </video>
 <div class="video-overlay"></div>
 
-<!-- زر تسجيل الدخول للمسؤول -->
-<button id="adminLoginBtn" class="admin-login-btn">
-    <i class="fas fa-user-shield"></i> تسجيل الدخول
-</button>
-
-<!-- أيقونة السلة -->
-<div id="cartIcon" class="cart-icon">
-    <i class="fas fa-shopping-cart"></i>
-    <span id="cartCount" class="cart-count">0</span>
-</div>
-
 <!-- ============================================ -->
-<!-- 🛒 نافذة سلة المشتريات الجديدة (المحسّنة) -->
+<!-- 🏠 الهيدر الرئيسي -->
 <!-- ============================================ -->
-<div id="cartModal" class="modal">
-    <div class="modal-content cart-modal-new">
-        <!-- الهيدر -->
-        <div class="cart-header-new">
-            <h2><i class="fas fa-shopping-cart"></i> إتمام الطلب</h2>
-            <span class="close" onclick="closeCartModal()">&times;</span>
-        </div>
-
-        <!-- قسم معلومات الزبون -->
-        <div class="customer-info-section">
-            <!-- رقم الهاتف -->
-            <div class="input-group-new">
-                <label for="customerPhone">
-                    <i class="fas fa-phone"></i> رقم الهاتف
-                    <span class="required-star">*</span>
-                </label>
-                <div class="input-wrapper-new">
-                    <input 
-                        type="tel" 
-                        id="customerPhone" 
-                        class="input-field-new" 
-                        placeholder="07XX XXX XXXX"
-                        maxlength="11"
-                        inputmode="numeric">
-                    <span class="phone-prefix">+964</span>
-                </div>
-            </div>
-
-            <!-- عنوان التوصيل -->
-            <div class="input-group-new">
-                <label for="deliveryArea">
-                    <i class="fas fa-map-marker-alt"></i> منطقة التوصيل
-                    <span class="required-star">*</span>
-                </label>
-                <div class="select-wrapper-new">
-                    <select id="deliveryArea" class="select-field-new">
-                        <option value="">-- اختر المنطقة --</option>
-                        
-                        <optgroup label="📍 التقاطعات">
-                            <option value="تقاطع العورة">تقاطع العورة</option>
-                            <option value="تقاطع كسرة وعطش">تقاطع كسرة وعطش</option>
-                            <option value="تقاطع السفارة">تقاطع السفارة</option>
-                        </optgroup>
-                        
-                        <optgroup label="🏘️ القطاعات">
-                            <option value="قطاع 14">قطاع 14</option>
-                            <option value="قطاع 15">قطاع 15</option>
-                            <option value="قطاع 16">قطاع 16</option>
-                            <option value="قطاع 17">قطاع 17</option>
-                            <option value="قطاع 18">قطاع 18</option>
-                            <option value="قطاع 19">قطاع 19</option>
-                            <option value="قطاع 20">قطاع 20</option>
-                            <option value="قطاع 21">قطاع 21</option>
-                            <option value="قطاع 22">قطاع 22</option>
-                            <option value="قطاع 23">قطاع 23</option>
-                            <option value="قطاع 24">قطاع 24</option>
-                            <option value="قطاع 25">قطاع 25</option>
-                            <option value="قطاع 26">قطاع 26</option>
-                            <option value="قطاع 27">قطاع 27</option>
-                            <option value="قطاع 28">قطاع 28</option>
-                            <option value="قطاع 29">قطاع 29</option>
-                            <option value="قطاع 30">قطاع 30</option>
-                            <option value="قطاع 31">قطاع 31</option>
-                            <option value="قطاع 32">قطاع 32</option>
-                            <option value="قطاع 33">قطاع 33</option>
-                            <option value="قطاع 34">قطاع 34</option>
-                            <option value="قطاع 35">قطاع 35</option>
-                            <option value="قطاع 36">قطاع 36</option>
-                            <option value="قطاع 37">قطاع 37</option>
-                            <option value="قطاع 38">قطاع 38</option>
-                            <option value="قطاع 39">قطاع 39</option>
-                            <option value="قطاع 40">قطاع 40</option>
-                            <option value="قطاع 41">قطاع 41</option>
-                            <option value="قطاع 42">قطاع 42</option>
-                            <option value="قطاع 43">قطاع 43</option>
-                            <option value="قطاع 44">قطاع 44</option>
-                            <option value="قطاع 45">قطاع 45</option>
-                            <option value="قطاع 46">قطاع 46</option>
-                            <option value="قطاع 47">قطاع 47</option>
-                            <option value="قطاع 48">قطاع 48</option>
-                            <option value="قطاع 49">قطاع 49</option>
-                            <option value="قطاع 70">قطاع 70</option>
-                            <option value="قطاع 71">قطاع 71</option>
-                            <option value="قطاع 72">قطاع 72</option>
-                            <option value="قطاع 73">قطاع 73</option>
-                            <option value="قطاع 74">قطاع 74</option>
-                            <option value="قطاع 75">قطاع 75</option>
-                            <option value="قطاع 76">قطاع 76</option>
-                            <option value="قطاع 77">قطاع 77</option>
-                        </optgroup>
-                        
-                        <optgroup label="🛒 الأسواق">
-                            <option value="سوق العورة">سوق العورة</option>
-                            <option value="سوق سويري">سوق سويري</option>
-                            <option value="سوق مريدي">سوق مريدي</option>
-                            <option value="سوق الكيارة">سوق الكيارة</option>
-                        </optgroup>
-                        
-                        <optgroup label="🏡 المناطق">
-                            <option value="الاورزدي">الاورزدي</option>
-                            <option value="الفلاح">الفلاح</option>
-                            <option value="كسرة وعطش">كسرة وعطش</option>
-                            <option value="السدة">السدة</option>
-                        </optgroup>
-                        
-                        <optgroup label="🏘️ الأحياء">
-                            <option value="الحي الدسيم">الحي الدسيم</option>
-                            <option value="الحي ام الكبر">الحي ام الكبر</option>
-                            <option value="الحي الكوفة">الحي الكوفة</option>
-                            <option value="الحي حميدية">الحي حميدية</option>
-                        </optgroup>
-                        
-                        <optgroup label="🏥 معالم">
-                            <option value="مستشفى الجوادر">مستشفى الجوادر</option>
-                        </optgroup>
-                        
-                        <optgroup label="☕ الكوفيات">
-                            <option value="كوفي الشابندر">كوفي الشابندر</option>
-                            <option value="كوفي المضايف">كوفي المضايف</option>
-                            <option value="كوفي شاشات">كوفي شاشات</option>
-                            <option value="كوفي تعلولة">كوفي تعلولة</option>
-                        </optgroup>
-                    </select>
-                    <i class="fas fa-chevron-down select-icon"></i>
-                </div>
-            </div>
-
-            <!-- عنوان تفصيلي اختياري -->
-            <div class="input-group-new">
-                <label for="detailedAddress">
-                    <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
-                </label>
-                <input 
-                    type="text" 
-                    id="detailedAddress" 
-                    class="input-field-new" 
-                    placeholder="قرب... بجانب... رقم الدار..."
-                    maxlength="150">
-            </div>
-        </div>
-
-        <!-- قسم عناصر السلة (قابل للتمرير) -->
-        <div class="cart-items-section">
-            <h3 class="cart-section-title">
-                <i class="fas fa-box"></i> منتجاتك
-                <span id="cartItemsCount" class="items-count-badge">0</span>
-            </h3>
-            <div id="cartItems" class="cart-items-new"></div>
-        </div>
-
-        <!-- المجموع والإجراءات (ثابت في الأسفل) -->
-        <div class="cart-footer-new">
-            <div class="cart-total-new">
-                <span class="total-label">المجموع النهائي:</span>
-                <span class="total-amount" id="cartTotal">0 د.ع</span>
-            </div>
-            <div class="cart-actions-new">
-                <button onclick="closeCartModal()" class="btn-back-new">
-                    <i class="fas fa-arrow-right"></i> رجوع
-                </button>
-                <button onclick="confirmAndSendOrder()" class="btn-confirm-new">
-                    <i class="fab fa-whatsapp"></i> تأكيد الطلب
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================ -->
-<!-- 🏠 الهيدر -->
-<!-- ============================================ -->
-<header>
+<header id="mainHeader">
     <img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
     <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
     <p>07755666073 - 07755664566<br>بـغداد - مدينة الــصدر - قطـاع 70</p>
     <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
 </header>
+
+<!-- ============================================ -->
+<!-- 📌 الشريط العلوي الثابت (يظهر عند التمرير) -->
+<!-- ============================================ -->
+<div id="topStickyBar" class="top-sticky-bar">
+    <!-- الشعار المصغر -->
+    <div class="top-bar-logo">
+        <img src="assets/images/Logo.gif" alt="تعلولة" loading="lazy">
+        <span class="top-bar-title">تعلولة</span>
+    </div>
+    
+    <!-- أزرار الإجراءات -->
+    <div class="top-bar-actions">
+        <!-- زر تسجيل الدخول -->
+        <button id="adminLoginBtn" class="top-bar-btn admin-top-btn" title="تسجيل الدخول">
+            <i class="fas fa-user-shield"></i>
+            <span class="btn-label">المسؤول</span>
+        </button>
+        
+        <!-- زر السلة -->
+        <button id="cartIcon" class="top-bar-btn cart-top-btn" title="سلة المشتريات">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cartCount" class="cart-count-top">0</span>
+            <span class="btn-label">السلة</span>
+        </button>
+    </div>
+</div>
 
 <!-- ============================================ -->
 <!-- 🧭 شريط التنقل القابل للتمرير -->
@@ -581,7 +426,7 @@
 </main>
 
 <!-- ============================================ -->
-<!-- 🎯 أزرار المساعدة السفلية (متساوية ومتجاورة) -->
+<!-- 🎯 أزرار المساعدة السفلية -->
 <!-- ============================================ -->
 <div class="bottom-action-buttons">
     <button id="locationIconBtn" class="action-btn-bottom location-btn-bottom" title="تحديد الموقع">
@@ -593,6 +438,152 @@
 </div>
 
 <!-- ============================================ -->
+<!-- 🛒 نافذة سلة المشتريات الجديدة -->
+<!-- ============================================ -->
+<div id="cartModal" class="modal">
+    <div class="modal-content cart-modal-new">
+        <div class="cart-header-new">
+            <h2><i class="fas fa-shopping-cart"></i> إتمام الطلب</h2>
+            <span class="close" onclick="closeCartModal()">&times;</span>
+        </div>
+
+        <div class="customer-info-section">
+            <div class="input-group-new">
+                <label for="customerPhone">
+                    <i class="fas fa-phone"></i> رقم الهاتف
+                    <span class="required-star">*</span>
+                </label>
+                <div class="input-wrapper-new">
+                    <input type="tel" id="customerPhone" class="input-field-new" placeholder="07XX XXX XXXX" maxlength="11" inputmode="numeric">
+                    <span class="phone-prefix">+964</span>
+                </div>
+            </div>
+
+            <div class="input-group-new">
+                <label for="deliveryArea">
+                    <i class="fas fa-map-marker-alt"></i> منطقة التوصيل
+                    <span class="required-star">*</span>
+                </label>
+                <div class="select-wrapper-new">
+                    <select id="deliveryArea" class="select-field-new">
+                        <option value="">-- اختر المنطقة --</option>
+                        <optgroup label="📍 التقاطعات">
+                            <option value="تقاطع العورة">تقاطع العورة</option>
+                            <option value="تقاطع كسرة وعطش">تقاطع كسرة وعطش</option>
+                            <option value="تقاطع السفارة">تقاطع السفارة</option>
+                        </optgroup>
+                        <optgroup label="🏘️ القطاعات">
+                            <option value="قطاع 14">قطاع 14</option>
+                            <option value="قطاع 15">قطاع 15</option>
+                            <option value="قطاع 16">قطاع 16</option>
+                            <option value="قطاع 17">قطاع 17</option>
+                            <option value="قطاع 18">قطاع 18</option>
+                            <option value="قطاع 19">قطاع 19</option>
+                            <option value="قطاع 20">قطاع 20</option>
+                            <option value="قطاع 21">قطاع 21</option>
+                            <option value="قطاع 22">قطاع 22</option>
+                            <option value="قطاع 23">قطاع 23</option>
+                            <option value="قطاع 24">قطاع 24</option>
+                            <option value="قطاع 25">قطاع 25</option>
+                            <option value="قطاع 26">قطاع 26</option>
+                            <option value="قطاع 27">قطاع 27</option>
+                            <option value="قطاع 28">قطاع 28</option>
+                            <option value="قطاع 29">قطاع 29</option>
+                            <option value="قطاع 30">قطاع 30</option>
+                            <option value="قطاع 31">قطاع 31</option>
+                            <option value="قطاع 32">قطاع 32</option>
+                            <option value="قطاع 33">قطاع 33</option>
+                            <option value="قطاع 34">قطاع 34</option>
+                            <option value="قطاع 35">قطاع 35</option>
+                            <option value="قطاع 36">قطاع 36</option>
+                            <option value="قطاع 37">قطاع 37</option>
+                            <option value="قطاع 38">قطاع 38</option>
+                            <option value="قطاع 39">قطاع 39</option>
+                            <option value="قطاع 40">قطاع 40</option>
+                            <option value="قطاع 41">قطاع 41</option>
+                            <option value="قطاع 42">قطاع 42</option>
+                            <option value="قطاع 43">قطاع 43</option>
+                            <option value="قطاع 44">قطاع 44</option>
+                            <option value="قطاع 45">قطاع 45</option>
+                            <option value="قطاع 46">قطاع 46</option>
+                            <option value="قطاع 47">قطاع 47</option>
+                            <option value="قطاع 48">قطاع 48</option>
+                            <option value="قطاع 49">قطاع 49</option>
+                            <option value="قطاع 70">قطاع 70</option>
+                            <option value="قطاع 71">قطاع 71</option>
+                            <option value="قطاع 72">قطاع 72</option>
+                            <option value="قطاع 73">قطاع 73</option>
+                            <option value="قطاع 74">قطاع 74</option>
+                            <option value="قطاع 75">قطاع 75</option>
+                            <option value="قطاع 76">قطاع 76</option>
+                            <option value="قطاع 77">قطاع 77</option>
+                        </optgroup>
+                        <optgroup label="🛒 الأسواق">
+                            <option value="سوق العورة">سوق العورة</option>
+                            <option value="سوق سويري">سوق سويري</option>
+                            <option value="سوق مريدي">سوق مريدي</option>
+                            <option value="سوق الكيارة">سوق الكيارة</option>
+                        </optgroup>
+                        <optgroup label="🏡 المناطق">
+                            <option value="الاورزدي">الاورزدي</option>
+                            <option value="الفلاح">الفلاح</option>
+                            <option value="كسرة وعطش">كسرة وعطش</option>
+                            <option value="السدة">السدة</option>
+                        </optgroup>
+                        <optgroup label="🏘️ الأحياء">
+                            <option value="الحي الدسيم">الحي الدسيم</option>
+                            <option value="الحي ام الكبر">الحي ام الكبر</option>
+                            <option value="الحي الكوفة">الحي الكوفة</option>
+                            <option value="الحي حميدية">الحي حميدية</option>
+                        </optgroup>
+                        <optgroup label="🏥 معالم">
+                            <option value="مستشفى الجوادر">مستشفى الجوادر</option>
+                        </optgroup>
+                        <optgroup label="☕ الكوفيات">
+                            <option value="كوفي الشابندر">كوفي الشابندر</option>
+                            <option value="كوفي المضايف">كوفي المضايف</option>
+                            <option value="كوفي شاشات">كوفي شاشات</option>
+                            <option value="كوفي تعلولة">كوفي تعلولة</option>
+                        </optgroup>
+                    </select>
+                    <i class="fas fa-chevron-down select-icon"></i>
+                </div>
+            </div>
+
+            <div class="input-group-new">
+                <label for="detailedAddress">
+                    <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
+                </label>
+                <input type="text" id="detailedAddress" class="input-field-new" placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
+            </div>
+        </div>
+
+        <div class="cart-items-section">
+            <h3 class="cart-section-title">
+                <i class="fas fa-box"></i> منتجاتك
+                <span id="cartItemsCount" class="items-count-badge">0</span>
+            </h3>
+            <div id="cartItems" class="cart-items-new"></div>
+        </div>
+
+        <div class="cart-footer-new">
+            <div class="cart-total-new">
+                <span class="total-label">المجموع النهائي:</span>
+                <span class="total-amount" id="cartTotal">0 د.ع</span>
+            </div>
+            <div class="cart-actions-new">
+                <button onclick="closeCartModal()" class="btn-back-new">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </button>
+                <button onclick="confirmAndSendOrder()" class="btn-confirm-new">
+                    <i class="fab fa-whatsapp"></i> تأكيد الطلب
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
 <!-- 🛍️ نافذة تفاصيل المنتج -->
 <!-- ============================================ -->
 <div id="productModal" class="modal product-modal">
@@ -600,11 +591,9 @@
         <button type="button" class="close-product-modal" onclick="closeProductModal()">
             <i class="fas fa-times"></i>
         </button>
-        
         <div class="product-image-wrapper">
             <img id="productModalImage" src="" alt="" loading="lazy">
         </div>
-        
         <div class="product-details">
             <h2 id="productModalName"></h2>
             <p id="productModalDescription" class="product-description"></p>
@@ -612,8 +601,6 @@
                 <span class="product-price" id="productModalPrice"></span>
                 <span class="currency">د.ع</span>
             </div>
-            
-            <!-- محدد الكمية -->
             <div class="quantity-control">
                 <span class="quantity-label">الكمية:</span>
                 <div class="quantity-buttons">
@@ -626,14 +613,10 @@
                     </button>
                 </div>
             </div>
-            
-            <!-- الإجمالي -->
             <div class="total-price-wrapper">
                 <span>الإجمالي:</span>
                 <span class="total-price" id="modalTotalPrice">0 د.ع</span>
             </div>
-            
-            <!-- زر الإضافة -->
             <button type="button" class="add-to-cart-modal-btn" id="modalAddToCartBtn">
                 <i class="fas fa-cart-plus"></i>
                 <span>إضافة للسلة</span>
@@ -651,9 +634,7 @@
             <i class="fas fa-map-marker-alt"></i>
         </div>
         <h2>📍 تحديد الموقع للتوصيل</h2>
-        <p class="permission-text">
-            لتحسين خدمة التوصيل وضمان وصول طلبك بسرعة ودقة، نحتاج إلى تحديد موقعك الحالي.
-        </p>
+        <p class="permission-text">لتحسين خدمة التوصيل وضمان وصول طلبك بسرعة ودقة، نحتاج إلى تحديد موقعك الحالي.</p>
         <div class="permission-features">
             <div class="feature-item">
                 <i class="fas fa-check-circle"></i>
@@ -694,12 +675,10 @@
         </div>
         <h2>📍 تحديد موقعك</h2>
         <p class="location-modal-text">لتحسين خدمة التوصيل، نحتاج إلى تحديد موقعك الحالي</p>
-        
         <div id="locationModalStatus" class="location-modal-status">
             <i class="fas fa-info-circle"></i>
             <span id="locationModalText">اضغط على الزر لتحديد موقعك</span>
         </div>
-        
         <div class="location-modal-actions">
             <button type="button" id="getLocationBtn" class="btn-get-location">
                 <i class="fas fa-crosshairs"></i> تحديد الموقع الآن
@@ -708,7 +687,6 @@
                 <i class="fas fa-times"></i> إغلاق
             </button>
         </div>
-        
         <div id="locationModalInfo" class="location-modal-info" style="display: none;">
             <p><i class="fas fa-check-circle"></i> تم تحديد موقعك بنجاح</p>
             <p class="location-coords" id="locationCoords"></p>
