@@ -1,4 +1,168 @@
 // ============================================
+// ⚡ نظام تحميل الصور الذكي (جديد)
+// ============================================
+class SmartImageLoader {
+    constructor() {
+        this.imageCache = new Map();
+        this.observer = null;
+        this.preloadObserver = null;
+        this.init();
+    }
+    
+    init() {
+        if (!('IntersectionObserver' in window)) {
+            this.loadAllImages();
+            return;
+        }
+        
+        // Observer لتحميل الصور عند اقترابها من الشاشة (قبل 200px)
+        this.observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        this.loadImage(entry.target);
+                        this.observer.unobserve(entry.target);
+                    }
+                });
+            },
+            {
+                rootMargin: '200px 0px',
+                threshold: 0.01
+            }
+        );
+        
+        // Observer للتحميل المسبق للأقسام القادمة (قبل 500px)
+        this.preloadObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        this.preloadNearbyImages(entry.target);
+                        this.preloadObserver.unobserve(entry.target);
+                    }
+                });
+            },
+            {
+                rootMargin: '500px 0px',
+                threshold: 0
+            }
+        );
+        
+        this.observeAllImages();
+        this.preloadFromCache();
+    }
+    
+    observeAllImages() {
+        const lazyImages = document.querySelectorAll('.lazy-image');
+        lazyImages.forEach(img => {
+            if (this.observer) {
+                this.observer.observe(img);
+            }
+            
+            const section = img.closest('.menu-section');
+            if (section && this.preloadObserver) {
+                this.preloadObserver.observe(section);
+            }
+        });
+        
+        console.log(`🖼️ مراقبة ${lazyImages.length} صورة للتحميل الذكي`);
+    }
+    
+    loadImage(img) {
+        const src = img.getAttribute('data-src');
+        if (!src || img.classList.contains('loaded')) return;
+        
+        img.classList.add('loading');
+        
+        // التحقق من الكاش أولاً
+        if (this.imageCache.has(src)) {
+            this.applyImage(img, src);
+            return;
+        }
+        
+        const image = new Image();
+        
+        image.onload = () => {
+            this.imageCache.set(src, src);
+            this.applyImage(img, src);
+            this.saveToSessionCache(src);
+        };
+        
+        image.onerror = () => {
+            console.warn(`❌ فشل تحميل الصورة: ${src}`);
+            img.classList.remove('loading');
+            img.classList.add('error');
+        };
+        
+        image.src = src;
+    }
+    
+    applyImage(img, src) {
+        img.src = src;
+        img.classList.remove('loading');
+        img.classList.add('loaded');
+        
+        const skeleton = img.parentElement?.querySelector('.image-skeleton');
+        if (skeleton) {
+            setTimeout(() => {
+                skeleton.style.opacity = '0';
+            }, 100);
+        }
+    }
+    
+    preloadNearbyImages(section) {
+        const images = section.querySelectorAll('.lazy-image[data-src]');
+        images.forEach((img, index) => {
+            if (index < 6) {
+                const src = img.getAttribute('data-src');
+                if (src && !this.imageCache.has(src)) {
+                    const preloadImg = new Image();
+                    preloadImg.src = src;
+                    this.imageCache.set(src, src);
+                }
+            }
+        });
+    }
+    
+    saveToSessionCache(src) {
+        try {
+            const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
+            if (!cached.includes(src)) {
+                cached.push(src);
+                if (cached.length > 50) cached.shift();
+                sessionStorage.setItem('taloola_image_cache', JSON.stringify(cached));
+            }
+        } catch (e) {}
+    }
+    
+    preloadFromCache() {
+        try {
+            const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
+            cached.slice(0, 10).forEach(src => {
+                const img = new Image();
+                img.src = src;
+                this.imageCache.set(src, src);
+            });
+            if (cached.length > 0) {
+                console.log(`⚡ تم تحميل ${Math.min(cached.length, 10)} صورة من الكاش`);
+            }
+        } catch (e) {}
+    }
+    
+    loadAllImages() {
+        document.querySelectorAll('.lazy-image[data-src]').forEach(img => {
+            this.loadImage(img);
+        });
+    }
+}
+
+let smartImageLoader = null;
+
+function initSmartImageLoading() {
+    smartImageLoader = new SmartImageLoader();
+    console.log('✅ نظام تحميل الصور الذكي جاهز');
+}
+
+// ============================================
 // 📍 كشف نظام التشغيل
 // ============================================
 function detectOS() {
@@ -292,7 +456,6 @@ function saveCart() {
 }
 
 function updateCartUI() {
-    // تحديث العداد في الشريط العلوي الجديد
     const cartCountTop = document.getElementById('cartCount');
     const totalItems = shoppingCart.reduce((sum, item) => sum + item.quantity, 0);
     
@@ -443,8 +606,13 @@ function openProductModal(element) {
     document.getElementById('productModalName').textContent = name;
     document.getElementById('productModalPrice').textContent = price.toLocaleString('ar-EG');
     document.getElementById('productModalDescription').textContent = description;
-    document.getElementById('productModalImage').src = image;
-    document.getElementById('productModalImage').alt = name;
+    
+    const modalImg = document.getElementById('productModalImage');
+    modalImg.classList.remove('loaded');
+    modalImg.src = image;
+    modalImg.alt = name;
+    modalImg.onload = () => modalImg.classList.add('loaded');
+    
     document.getElementById('modalQtyDisplay').textContent = modalQuantity;
     updateModalTotal();
     
@@ -729,17 +897,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(firebaseStorageScript);
 
     // ============================================
-    // 📌 الشريط العلوي الثابت (جديد)
+    // ⚡ تهيئة نظام تحميل الصور الذكي
+    // ============================================
+    initSmartImageLoading();
+
+    // ============================================
+    // 📌 الشريط العلوي الثابت
     // ============================================
     const topStickyBar = document.getElementById('topStickyBar');
     const mainHeader = document.getElementById('mainHeader');
     
-    // حساب ارتفاع الهيدر لتحديد متى يظهر الشريط
     function getHeaderOffset() {
         return mainHeader ? mainHeader.offsetHeight - 50 : 200;
     }
     
-    // التحكم في ظهور/إخفاء الشريط العلوي
     function handleScroll() {
         if (!topStickyBar) return;
         
@@ -754,7 +925,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // استدعاء أولي
+    handleScroll();
 
     // ============================================
     // 🎯 العناصر الأخرى
@@ -763,11 +934,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
     const menuItems = document.querySelectorAll('.menu-item');
-    const cartIcon = document.getElementById('cartIcon'); // الآن في الشريط العلوي
-    const adminLoginBtn = document.getElementById('adminLoginBtn'); // الآن في الشريط العلوي
+    const cartIcon = document.getElementById('cartIcon');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
     const getLocationBtn = document.getElementById('getLocationBtn');
 
-    // ربط زر السلة في الشريط العلوي
     if (cartIcon) {
         cartIcon.addEventListener('click', function(e) {
             e.preventDefault();
@@ -775,7 +945,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ربط زر تسجيل الدخول في الشريط العلوي
     if (adminLoginBtn) {
         adminLoginBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -784,7 +953,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ربط النقر على بطاقات المنتجات
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
@@ -792,7 +960,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ربط أزرار نافذة المنتج
     const modalQtyDecrease = document.getElementById('modalQtyDecrease');
     const modalQtyIncrease = document.getElementById('modalQtyIncrease');
     const modalAddToCartBtn = document.getElementById('modalAddToCartBtn');
@@ -828,7 +995,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // زر الرجوع لأعلى
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) {
             if (window.pageYOffset > 300) {
@@ -845,7 +1011,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // التنقل بين الأقسام
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const targetSection = document.getElementById(this.getAttribute('data-section'));
@@ -859,14 +1024,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // تأثيرات التمرير
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('animate-in'); });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     menuSections.forEach(s => observer.observe(s));
     document.querySelectorAll('section.info-section').forEach(s => observer.observe(s));
 
-    // إغلاق النوافذ عند النقر خارجها
     window.addEventListener('click', function(event) {
         if (event.target === document.getElementById('cartModal')) closeCartModal();
         if (event.target === document.getElementById('orderReviewModal')) closeOrderReview();
@@ -880,7 +1043,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initLocationIcon();
     initializeLocationSystem();
 
-    // ربط لوحة التحكم
     const adminLoginSubmit = document.getElementById('adminLoginSubmit');
     const adminPanel = document.getElementById('adminPanel');
     const closeAdminPanel = document.getElementById('closeAdminPanel');
@@ -931,7 +1093,7 @@ function loadCurrentAds() {
             const adElement = document.createElement('div');
             adElement.className = 'ad-card';
             adElement.innerHTML = `
-                ${ad.imageUrl ? `<div class="ad-image"><img src="${ad.imageUrl}" alt="${ad.title}"></div>` : ''}
+                ${ad.imageUrl ? `<div class="ad-image"><img src="${ad.imageUrl}" alt="${ad.title}" loading="lazy" class="lazy-image">` : ''}
                 <h4>${ad.title}</h4><p>${ad.description}</p>
                 ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
                 <div class="ad-actions"><button onclick="deleteAd('${key}', '${ad.imageUrl}')"><i class="fas fa-trash"></i> حذف</button></div>
@@ -955,7 +1117,7 @@ function displayAds() {
             const adElement = document.createElement('div');
             adElement.className = `ad-card ${ad.template || 'red'}`;
             adElement.innerHTML = `
-                ${ad.imageUrl ? `<div class="ad-image"><img src="${ad.imageUrl}" alt="${ad.title}"></div>` : ''}
+                ${ad.imageUrl ? `<div class="ad-image"><img src="${ad.imageUrl}" alt="${ad.title}" loading="lazy">` : ''}
                 <h4>${ad.title}</h4><p>${ad.description}</p>
                 ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
             `;
