@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,655 +11,396 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <!-- فيديو الخلفية -->
 <video id="background-video" autoplay loop muted playsinline>
-<source src="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4" type="video/mp4">
+    <source src="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4" type="video/mp4">
 </video>
 <div class="video-overlay"></div>
 
 <!-- زر تسجيل الدخول للمسؤول -->
 <button id="adminLoginBtn" class="admin-login-btn">
-<i class="fas fa-user-shield"></i> تسجيل الدخول
+    <i class="fas fa-user-shield"></i> تسجيل الدخول
 </button>
 
 <!-- سلة المشتريات -->
 <div id="cartIcon" class="cart-icon">
-<i class="fas fa-shopping-cart"></i>
-<span id="cartCount" class="cart-count">0</span>
+    <i class="fas fa-shopping-cart"></i>
+    <span id="cartCount" class="cart-count">0</span>
 </div>
 
 <header>
-<img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
-<img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
-<p>07755666073 - 07755664566<br>بـغداد - مدينة الــصدر - قطـاع 70</p>
-<p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
+    <img src="assets/images/Logo.gif" alt="شعار تعلولة" loading="lazy" class="logo">
+    <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
+    <p>07755666073 - 07755664566<br>بـغداد - مدينة الــصدر - قطـاع 70</p>
+    <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
 </header>
 
 <nav class="sections-nav" id="sectionsNav" role="navigation" aria-label="روابط الأقسام">
-<button type="button" data-section="sec0">بركر</button>
-<button type="button" data-section="sec1">زنكر</button>
-<button type="button" data-section="sec2">ريزو</button>
-<button type="button" data-section="sec3">صاج</button>
-<button type="button" data-section="sec4">كنتاكي</button>
-<button type="button" data-section="sec5">ستربس</button>
-<button type="button" data-section="sec6">سندويتشات</button>
-<button type="button" data-section="sec7">اطباق</button>
-<button type="button" data-section="sec8">دايت</button>
-<button type="button" data-section="sec9">الفنكر</button>
-<button type="button" data-section="sec10">الجكن فرايز</button>
-<button type="button" data-section="sec11">الصوصات</button>
-<button type="button" data-section="sec12">مشروبات غازية</button>
-<button type="button" data-section="sec13">مقبلات</button>
+    <button type="button" data-section="sec0">بركر</button>
+    <button type="button" data-section="sec1">زنكر</button>
+    <button type="button" data-section="sec2">ريزو</button>
+    <button type="button" data-section="sec3">صاج</button>
+    <button type="button" data-section="sec4">كنتاكي</button>
+    <button type="button" data-section="sec5">ستربس</button>
+    <button type="button" data-section="sec6">سندويتشات</button>
+    <button type="button" data-section="sec7">اطباق</button>
+    <button type="button" data-section="sec8">دايت</button>
+    <button type="button" data-section="sec9">الفنكر</button>
+    <button type="button" data-section="sec10">الجكن فرايز</button>
+    <button type="button" data-section="sec11">الصوصات</button>
+    <button type="button" data-section="sec12">مشروبات غازية</button>
+    <button type="button" data-section="sec13">مقبلات</button>
 </nav>
 
 <main>
-<!-- قسم الإعلانات -->
-<section class="info-section" id="ads">
-<h3>العروض الخاصة</h3>
-<div id="adsContainer"></div>
-</section>
+    <!-- قسم الإعلانات -->
+    <section class="info-section" id="ads">
+        <h3>العروض الخاصة</h3>
+        <div id="adsContainer"></div>
+    </section>
 
-<!-- قسم البركر -->
-<section class="menu-section" id="sec0">
-<h3>بركر</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="بركر كلاسك" data-price="3000">
-<div class="item-image"><img src="assets/images/BRGER.png" alt="بركر كلاسك" loading="lazy"></div>
-<h4>بركر كلاسك</h4>
-<p class="price">3000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="بركر مدخن" data-price="3500">
-<div class="item-image"><img src="assets/images/BRGER.png" alt="بركر مدخن" loading="lazy"></div>
-<h4>بركر مدخن</h4>
-<p class="price">3500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="بركر بالجبن" data-price="3500">
-<div class="item-image"><img src="assets/images/BRGER.png" alt="بركر بالجبن" loading="lazy"></div>
-<h4>بركر بالجبن</h4>
-<p class="price">3500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="بركر سبايسي" data-price="3500">
-<div class="item-image"><img src="assets/images/BRGER.png" alt="بركر سبايسي" loading="lazy"></div>
-<h4>بركر سبايسي</h4>
-<p class="price">3500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم البركر -->
+    <section class="menu-section" id="sec0">
+        <h3>بركر</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="بركر كلاسك" data-price="3000" data-image="assets/images/BRGER.png" data-description="برغر لحم طازج مع خس وطماطم وصوص خاص">
+                <div class="item-image"><img src="assets/images/BRGER.png" alt="بركر كلاسك" loading="lazy"></div>
+                <h4>بركر كلاسك</h4>
+                <p class="price">3000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="بركر مدخن" data-price="3500" data-image="assets/images/BRGER.png" data-description="برغر مدخن بنكهة مميزة">
+                <div class="item-image"><img src="assets/images/BRGER.png" alt="بركر مدخن" loading="lazy"></div>
+                <h4>بركر مدخن</h4>
+                <p class="price">3500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="بركر بالجبن" data-price="3500" data-image="assets/images/BRGER.png" data-description="برغر مع جبنة ذائبة">
+                <div class="item-image"><img src="assets/images/BRGER.png" alt="بركر بالجبن" loading="lazy"></div>
+                <h4>بركر بالجبن</h4>
+                <p class="price">3500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="بركر سبايسي" data-price="3500" data-image="assets/images/BRGER.png" data-description="برغر حار مع صلصة سبايسي">
+                <div class="item-image"><img src="assets/images/BRGER.png" alt="بركر سبايسي" loading="lazy"></div>
+                <h4>بركر سبايسي</h4>
+                <p class="price">3500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الزنكر -->
-<section class="menu-section" id="sec1">
-<h3>زنكر</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="زنكر كلاسك" data-price="2500">
-<div class="item-image"><img src="assets/images/ZENGER.png" alt="زنكر كلاسك" loading="lazy"></div>
-<h4>زنكر كلاسك</h4>
-<p class="price">2500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="زنكر مكسيكانو" data-price="3000">
-<div class="item-image"><img src="assets/images/ZENGER.png" alt="زنكر مكسيكانو" loading="lazy"></div>
-<h4>زنكر مكسيكانو</h4>
-<p class="price">3000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="زنكر مدخن" data-price="3000">
-<div class="item-image"><img src="assets/images/ZENGER.png" alt="زنكر مدخن" loading="lazy"></div>
-<h4>زنكر مدخن</h4>
-<p class="price">3000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الزنكر -->
+    <section class="menu-section" id="sec1">
+        <h3>زنكر</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="زنكر كلاسك" data-price="2500" data-image="assets/images/ZENGER.png" data-description="زنكر دجاج مقرمش">
+                <div class="item-image"><img src="assets/images/ZENGER.png" alt="زنكر كلاسك" loading="lazy"></div>
+                <h4>زنكر كلاسك</h4>
+                <p class="price">2500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="زنكر مكسيكانو" data-price="3000" data-image="assets/images/ZENGER.png" data-description="زنكر بنكهة مكسيكية حارة">
+                <div class="item-image"><img src="assets/images/ZENGER.png" alt="زنكر مكسيكانو" loading="lazy"></div>
+                <h4>زنكر مكسيكانو</h4>
+                <p class="price">3000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="زنكر مدخن" data-price="3000" data-image="assets/images/ZENGER.png" data-description="زنكر مدخن بنكهة فريدة">
+                <div class="item-image"><img src="assets/images/ZENGER.png" alt="زنكر مدخن" loading="lazy"></div>
+                <h4>زنكر مدخن</h4>
+                <p class="price">3000 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الريزو -->
-<section class="menu-section" id="sec2">
-<h3>ريزو</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="ريزو كلاسك" data-price="4000">
-<div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو كلاسك" loading="lazy"></div>
-<h4>ريزو كلاسك</h4>
-<p class="price">4000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ريزو بالجبن" data-price="4500">
-<div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو بالجبن" loading="lazy"></div>
-<h4>ريزو بالجبن</h4>
-<p class="price">4500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ريزو سبايسي" data-price="4500">
-<div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو سبايسي" loading="lazy"></div>
-<h4>ريزو سبايسي</h4>
-<p class="price">4500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ريزو مدخن" data-price="4500">
-<div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو مدخن" loading="lazy"></div>
-<h4>ريزو مدخن</h4>
-<p class="price">4500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الريزو -->
+    <section class="menu-section" id="sec2">
+        <h3>ريزو</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="ريزو كلاسك" data-price="4000" data-image="assets/images/RIZO.png" data-description="شاورما دجاج مع صوص خاص">
+                <div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو كلاسك" loading="lazy"></div>
+                <h4>ريزو كلاسك</h4>
+                <p class="price">4000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ريزو بالجبن" data-price="4500" data-image="assets/images/RIZO.png" data-description="ريزو مع جبنة ذائبة">
+                <div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو بالجبن" loading="lazy"></div>
+                <h4>ريزو بالجبن</h4>
+                <p class="price">4500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ريزو سبايسي" data-price="4500" data-image="assets/images/RIZO.png" data-description="ريزو حار">
+                <div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو سبايسي" loading="lazy"></div>
+                <h4>ريزو سبايسي</h4>
+                <p class="price">4500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ريزو مدخن" data-price="4500" data-image="assets/images/RIZO.png" data-description="ريزو مدخن">
+                <div class="item-image"><img src="assets/images/RIZO.png" alt="ريزو مدخن" loading="lazy"></div>
+                <h4>ريزو مدخن</h4>
+                <p class="price">4500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الصاج -->
-<section class="menu-section" id="sec3">
-<h3>صاج</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="صاج كنتاكي" data-price="2000">
-<div class="item-image"><img src="assets/images/SAJ_K.png" alt="صاج كنتاكي" loading="lazy"></div>
-<h4>صاج كنتاكي</h4>
-<p class="price">2000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="صاج كريل" data-price="1500">
-<div class="item-image"><img src="assets/images/SAJ_G.png" alt="صاج كريل" loading="lazy"></div>
-<h4>صاج كريل</h4>
-<p class="price">1500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الصاج -->
+    <section class="menu-section" id="sec3">
+        <h3>صاج</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="صاج كنتاكي" data-price="2000" data-image="assets/images/SAJ_K.png" data-description="صاج دجاج كنتاكي">
+                <div class="item-image"><img src="assets/images/SAJ_K.png" alt="صاج كنتاكي" loading="lazy"></div>
+                <h4>صاج كنتاكي</h4>
+                <p class="price">2000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="صاج كريل" data-price="1500" data-image="assets/images/SAJ_G.png" data-description="صاج كريل طازج">
+                <div class="item-image"><img src="assets/images/SAJ_G.png" alt="صاج كريل" loading="lazy"></div>
+                <h4>صاج كريل</h4>
+                <p class="price">1500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الكنتاكي -->
-<section class="menu-section" id="sec4">
-<h3>كنتاكي</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="كنتاكي 3 قطع" data-price="6500">
-<div class="item-image"><img src="assets/images/KNTAKE.png" alt="3 قطع" loading="lazy"></div>
-<h4>3 قطع</h4>
-<p class="price">6500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="كنتاكي 5 قطع" data-price="10000">
-<div class="item-image"><img src="assets/images/KNTAKE.png" alt="5 قطع" loading="lazy"></div>
-<h4>5 قطع</h4>
-<p class="price">10000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="كنتاكي 10 قطع" data-price="18000">
-<div class="item-image"><img src="assets/images/KNTAKE.png" alt="10 قطع" loading="lazy"></div>
-<h4>10 قطع</h4>
-<p class="price">18000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الكنتاكي -->
+    <section class="menu-section" id="sec4">
+        <h3>كنتاكي</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="كنتاكي 3 قطع" data-price="6500" data-image="assets/images/KNTAKE.png" data-description="3 قطع دجاج مقرمش">
+                <div class="item-image"><img src="assets/images/KNTAKE.png" alt="3 قطع" loading="lazy"></div>
+                <h4>3 قطع</h4>
+                <p class="price">6500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="كنتاكي 5 قطع" data-price="10000" data-image="assets/images/KNTAKE.png" data-description="5 قطع دجاج مقرمش">
+                <div class="item-image"><img src="assets/images/KNTAKE.png" alt="5 قطع" loading="lazy"></div>
+                <h4>5 قطع</h4>
+                <p class="price">10000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="كنتاكي 10 قطع" data-price="18000" data-image="assets/images/KNTAKE.png" data-description="10 قطع دجاج مقرمش">
+                <div class="item-image"><img src="assets/images/KNTAKE.png" alt="10 قطع" loading="lazy"></div>
+                <h4>10 قطع</h4>
+                <p class="price">18000 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الستربس -->
-<section class="menu-section" id="sec5">
-<h3>ستربس</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="ستربس 4 قطع" data-price="6000">
-<div class="item-image"><img src="assets/images/STRIPS.png" alt="4 قطع" loading="lazy"></div>
-<h4>4 قطع</h4>
-<p class="price">6000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ستربس 6 قطع" data-price="8500">
-<div class="item-image"><img src="assets/images/STRIPS.png" alt="6 قطع" loading="lazy"></div>
-<h4>6 قطع</h4>
-<p class="price">8500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ستربس 12 قطعة" data-price="14500">
-<div class="item-image"><img src="assets/images/STRIPS.png" alt="12 قطعة" loading="lazy"></div>
-<h4>12 قطعة</h4>
-<p class="price">14500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الستربس -->
+    <section class="menu-section" id="sec5">
+        <h3>ستربس</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="ستربس 4 قطع" data-price="6000" data-image="assets/images/STRIPS.png" data-description="4 قطع ستربس دجاج">
+                <div class="item-image"><img src="assets/images/STRIPS.png" alt="4 قطع" loading="lazy"></div>
+                <h4>4 قطع</h4>
+                <p class="price">6000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ستربس 6 قطع" data-price="8500" data-image="assets/images/STRIPS.png" data-description="6 قطع ستربس دجاج">
+                <div class="item-image"><img src="assets/images/STRIPS.png" alt="6 قطع" loading="lazy"></div>
+                <h4>6 قطع</h4>
+                <p class="price">8500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ستربس 12 قطعة" data-price="14500" data-image="assets/images/STRIPS.png" data-description="12 قطعة ستربس دجاج">
+                <div class="item-image"><img src="assets/images/STRIPS.png" alt="12 قطعة" loading="lazy"></div>
+                <h4>12 قطعة</h4>
+                <p class="price">14500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم السندويتشات -->
-<section class="menu-section" id="sec6">
-<h3>سندويتشات</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="سندويتش تعلولة" data-price="2000">
-<div class="item-image"><img src="assets/images/S_TALOLA.png" alt="سندويتش تعلولة" loading="lazy"></div>
-<h4>سندويتش تعلولة</h4>
-<p class="price">2000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فلر" data-price="2500">
-<div class="item-image"><img src="assets/images/FALAR.png" alt="فلر" loading="lazy"></div>
-<h4>فلر</h4>
-<p class="price">2500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم السندويتشات -->
+    <section class="menu-section" id="sec6">
+        <h3>سندويتشات</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="سندويتش تعلولة" data-price="2000" data-image="assets/images/S_TALOLA.png" data-description="سندويتش خاص من مطعم تعلولة">
+                <div class="item-image"><img src="assets/images/S_TALOLA.png" alt="سندويتش تعلولة" loading="lazy"></div>
+                <h4>سندويتش تعلولة</h4>
+                <p class="price">2000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فلر" data-price="2500" data-image="assets/images/FALAR.png" data-description="سندويتش فلر المميز">
+                <div class="item-image"><img src="assets/images/FALAR.png" alt="فلر" loading="lazy"></div>
+                <h4>فلر</h4>
+                <p class="price">2500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الأطباق -->
-<section class="menu-section" id="sec7">
-<h3>اطباق</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="طبق تعلولة" data-price="2500">
-<div class="item-image"><img src="assets/images/T_TALOLA.png" alt="طبق تعلولة" loading="lazy"></div>
-<h4>طبق تعلولة</h4>
-<p class="price">2500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الأطباق -->
+    <section class="menu-section" id="sec7">
+        <h3>اطباق</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="طبق تعلولة" data-price="2500" data-image="assets/images/T_TALOLA.png" data-description="طبق تعلولة الخاص">
+                <div class="item-image"><img src="assets/images/T_TALOLA.png" alt="طبق تعلولة" loading="lazy"></div>
+                <h4>طبق تعلولة</h4>
+                <p class="price">2500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الدايت -->
-<section class="menu-section" id="sec8">
-<h3>دايت</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="وجبة دايت" data-price="4500">
-<div class="item-image"><img src="assets/images/DAET.png" alt="وجبة دايت" loading="lazy"></div>
-<h4>وجبة دايت</h4>
-<p class="price">4500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الدايت -->
+    <section class="menu-section" id="sec8">
+        <h3>دايت</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="وجبة دايت" data-price="4500" data-image="assets/images/DAET.png" data-description="وجبة صحية خفيفة">
+                <div class="item-image"><img src="assets/images/DAET.png" alt="وجبة دايت" loading="lazy"></div>
+                <h4>وجبة دايت</h4>
+                <p class="price">4500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الفنكر -->
-<section class="menu-section" id="sec9">
-<h3>الفنكر</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="فنكر كلاسك صغير" data-price="1500">
-<div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر كلاسك صغير" loading="lazy"></div>
-<h4>فنكر كلاسك صغير</h4>
-<p class="price">1500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فنكر بالجبن صغير" data-price="2000">
-<div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر بالجبن صغير" loading="lazy"></div>
-<h4>فنكر بالجبن صغير</h4>
-<p class="price">2000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فنكر سبايسي صغير" data-price="2000">
-<div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر سبايسي صغير" loading="lazy"></div>
-<h4>فنكر سبايسي صغير</h4>
-<p class="price">2000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فنكر كلاسك كبير" data-price="2500">
-<div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر كلاسك كبير" loading="lazy"></div>
-<h4>فنكر كلاسك كبير</h4>
-<p class="price">2500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فنكر بالجبن كبير" data-price="3000">
-<div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر بالجبن كبير" loading="lazy"></div>
-<h4>فنكر بالجبن كبير</h4>
-<p class="price">3000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فنكر سبايسي كبير" data-price="3000">
-<div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر سبايسي كبير" loading="lazy"></div>
-<h4>فنكر سبايسي كبير</h4>
-<p class="price">3000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الفنكر -->
+    <section class="menu-section" id="sec9">
+        <h3>الفنكر</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="فنكر كلاسك صغير" data-price="1500" data-image="assets/images/FINGR.png" data-description="فنكر دجاج صغير">
+                <div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر كلاسك صغير" loading="lazy"></div>
+                <h4>فنكر كلاسك صغير</h4>
+                <p class="price">1500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فنكر بالجبن صغير" data-price="2000" data-image="assets/images/FINGR.png" data-description="فنكر بالجبن صغير">
+                <div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر بالجبن صغير" loading="lazy"></div>
+                <h4>فنكر بالجبن صغير</h4>
+                <p class="price">2000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فنكر سبايسي صغير" data-price="2000" data-image="assets/images/FINGR.png" data-description="فنكر حار صغير">
+                <div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر سبايسي صغير" loading="lazy"></div>
+                <h4>فنكر سبايسي صغير</h4>
+                <p class="price">2000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فنكر كلاسك كبير" data-price="2500" data-image="assets/images/FINGR.png" data-description="فنكر دجاج كبير">
+                <div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر كلاسك كبير" loading="lazy"></div>
+                <h4>فنكر كلاسك كبير</h4>
+                <p class="price">2500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فنكر بالجبن كبير" data-price="3000" data-image="assets/images/FINGR.png" data-description="فنكر بالجبن كبير">
+                <div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر بالجبن كبير" loading="lazy"></div>
+                <h4>فنكر بالجبن كبير</h4>
+                <p class="price">3000 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فنكر سبايسي كبير" data-price="3000" data-image="assets/images/FINGR.png" data-description="فنكر حار كبير">
+                <div class="item-image"><img src="assets/images/FINGR.png" alt="فنكر سبايسي كبير" loading="lazy"></div>
+                <h4>فنكر سبايسي كبير</h4>
+                <p class="price">3000 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الجكن فرايز -->
-<section class="menu-section" id="sec10">
-<h3>الجكن فرايز</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="جكن فرايز صغير" data-price="2500">
-<div class="item-image"><img src="assets/images/CHEKEN.png" alt="جكن فرايز صغير" loading="lazy"></div>
-<h4>جكن فرايز صغير</h4>
-<p class="price">2500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="جكن فرايز كبير" data-price="4000">
-<div class="item-image"><img src="assets/images/CHEKEN.png" alt="جكن فرايز كبير" loading="lazy"></div>
-<h4>جكن فرايز كبير</h4>
-<p class="price">4000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الجكن فرايز -->
+    <section class="menu-section" id="sec10">
+        <h3>الجكن فرايز</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="جكن فرايز صغير" data-price="2500" data-image="assets/images/CHEKEN.png" data-description="بطاطس مقلية مع دجاج صغير">
+                <div class="item-image"><img src="assets/images/CHEKEN.png" alt="جكن فرايز صغير" loading="lazy"></div>
+                <h4>جكن فرايز صغير</h4>
+                <p class="price">2500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="جكن فرايز كبير" data-price="4000" data-image="assets/images/CHEKEN.png" data-description="بطاطس مقلية مع دجاج كبير">
+                <div class="item-image"><img src="assets/images/CHEKEN.png" alt="جكن فرايز كبير" loading="lazy"></div>
+                <h4>جكن فرايز كبير</h4>
+                <p class="price">4000 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم الصوصات -->
-<section class="menu-section" id="sec11">
-<h3>الصوصات</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="باربيكيو" data-price="250">
-<div class="item-image"><img src="assets/images/BARBQ.png" alt="صوص باربيكيو" loading="lazy"></div>
-<h4>باربيكيو</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ثومية" data-price="250">
-<div class="item-image"><img src="assets/images/THOM.png" alt="صوص ثومية" loading="lazy"></div>
-<h4>ثومية</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="بافلو" data-price="250">
-<div class="item-image"><img src="assets/images/SPAYSY.png" alt="صوص بافلو" loading="lazy"></div>
-<h4>بافلو</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="هاني ماستر" data-price="250">
-<div class="item-image"><img src="assets/images/HANE.png" alt="صوص هاني ماستر" loading="lazy"></div>
-<h4>هاني ماستر</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="كوكتيل" data-price="250">
-<div class="item-image"><img src="assets/images/KOKTEL.png" alt="صوص كوكتيل" loading="lazy"></div>
-<h4>كوكتيل</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="شيدر" data-price="250">
-<div class="item-image"><img src="assets/images/SHADER.png" alt="صوص شيدر" loading="lazy"></div>
-<h4>شيدر</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="روستر" data-price="250">
-<div class="item-image"><img src="assets/images/ROSTER.png" alt="صوص روستر" loading="lazy"></div>
-<h4>روستر</h4>
-<p class="price">250 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم الصوصات -->
+    <section class="menu-section" id="sec11">
+        <h3>الصوصات</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="باربيكيو" data-price="250" data-image="assets/images/BARBQ.png" data-description="صوص باربيكيو">
+                <div class="item-image"><img src="assets/images/BARBQ.png" alt="صوص باربيكيو" loading="lazy"></div>
+                <h4>باربيكيو</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ثومية" data-price="250" data-image="assets/images/THOM.png" data-description="صوص ثومية">
+                <div class="item-image"><img src="assets/images/THOM.png" alt="صوص ثومية" loading="lazy"></div>
+                <h4>ثومية</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="بافلو" data-price="250" data-image="assets/images/SPAYSY.png" data-description="صوص بافلو حار">
+                <div class="item-image"><img src="assets/images/SPAYSY.png" alt="صوص بافلو" loading="lazy"></div>
+                <h4>بافلو</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="هاني ماستر" data-price="250" data-image="assets/images/HANE.png" data-description="صوص هاني ماستر">
+                <div class="item-image"><img src="assets/images/HANE.png" alt="صوص هاني ماستر" loading="lazy"></div>
+                <h4>هاني ماستر</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="كوكتيل" data-price="250" data-image="assets/images/KOKTEL.png" data-description="صوص كوكتيل">
+                <div class="item-image"><img src="assets/images/KOKTEL.png" alt="صوص كوكتيل" loading="lazy"></div>
+                <h4>كوكتيل</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="شيدر" data-price="250" data-image="assets/images/SHADER.png" data-description="صوص شيدر">
+                <div class="item-image"><img src="assets/images/SHADER.png" alt="صوص شيدر" loading="lazy"></div>
+                <h4>شيدر</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="روستر" data-price="250" data-image="assets/images/ROSTER.png" data-description="صوص روستر">
+                <div class="item-image"><img src="assets/images/ROSTER.png" alt="صوص روستر" loading="lazy"></div>
+                <h4>روستر</h4>
+                <p class="price">250 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم المشروبات الغازية -->
-<section class="menu-section" id="sec12">
-<h3>مشروبات غازية</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="كولا" data-price="500">
-<div class="item-image"><img src="assets/images/COLA.png" alt="كولا" loading="lazy"></div>
-<h4>كولا</h4>
-<p class="price">500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="فانتا" data-price="500">
-<div class="item-image"><img src="assets/images/FANTA.png" alt="فانتا" loading="lazy"></div>
-<h4>فانتا</h4>
-<p class="price">500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="سبرايت" data-price="500">
-<div class="item-image"><img src="assets/images/SPRITE.png" alt="سبرايت" loading="lazy"></div>
-<h4>سبرايت</h4>
-<p class="price">500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم المشروبات الغازية -->
+    <section class="menu-section" id="sec12">
+        <h3>مشروبات غازية</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="كولا" data-price="500" data-image="assets/images/COLA.png" data-description="كولا منعشة">
+                <div class="item-image"><img src="assets/images/COLA.png" alt="كولا" loading="lazy"></div>
+                <h4>كولا</h4>
+                <p class="price">500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="فانتا" data-price="500" data-image="assets/images/FANTA.png" data-description="فانتا برتقال">
+                <div class="item-image"><img src="assets/images/FANTA.png" alt="فانتا" loading="lazy"></div>
+                <h4>فانتا</h4>
+                <p class="price">500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="سبرايت" data-price="500" data-image="assets/images/SPRITE.png" data-description="سبرايت ليمون">
+                <div class="item-image"><img src="assets/images/SPRITE.png" alt="سبرايت" loading="lazy"></div>
+                <h4>سبرايت</h4>
+                <p class="price">500 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم المقبلات -->
-<section class="menu-section" id="sec13">
-<h3>مقبلات</h3>
-<div class="menu-items">
-<div class="menu-item" data-name="ماعون مقبلات صغير" data-price="1500">
-<div class="item-image"><img src="assets/images/MO_1.png" alt="ماعون مقبلات صغير" loading="lazy"></div>
-<h4>ماعون مقبلات صغير</h4>
-<p class="price">1500 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-<div class="menu-item" data-name="ماعون مقبلات كبير" data-price="2000">
-<div class="item-image"><img src="assets/images/MO_1.png" alt="ماعون مقبلات كبير" loading="lazy"></div>
-<h4>ماعون مقبلات كبير</h4>
-<p class="price">2000 د.ع</p>
-<div class="quantity-selector">
-<button type="button" class="qty-decrease"><i class="fas fa-minus"></i></button>
-<input type="number" class="qty-input" value="0" min="0" max="99" readonly>
-<button type="button" class="qty-increase"><i class="fas fa-plus"></i></button>
-</div>
-<button type="button" class="add-to-cart-btn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
-</div>
-</div>
-</section>
+    <!-- قسم المقبلات -->
+    <section class="menu-section" id="sec13">
+        <h3>مقبلات</h3>
+        <div class="menu-items">
+            <div class="menu-item" data-name="ماعون مقبلات صغير" data-price="1500" data-image="assets/images/MO_1.png" data-description="ماعون مقبلات صغير">
+                <div class="item-image"><img src="assets/images/MO_1.png" alt="ماعون مقبلات صغير" loading="lazy"></div>
+                <h4>ماعون مقبلات صغير</h4>
+                <p class="price">1500 د.ع</p>
+            </div>
+            <div class="menu-item" data-name="ماعون مقبلات كبير" data-price="2000" data-image="assets/images/MO_1.png" data-description="ماعون مقبلات كبير">
+                <div class="item-image"><img src="assets/images/MO_1.png" alt="ماعون مقبلات كبير" loading="lazy"></div>
+                <h4>ماعون مقبلات كبير</h4>
+                <p class="price">2000 د.ع</p>
+            </div>
+        </div>
+    </section>
 
-<!-- قسم فريق تعلولة -->
-<section class="info-section" id="team">
-<h3>فريق تعلولة</h3>
-<div class="team-content">
-<p>فريق تعلولة هو مجموعة من المحترفين المتفانين في عملهم، يجمعنا حب الطهي وإرضاء الزبائن. بخبرة تزيد عن 10 سنوات في مجال المطاعم والوجبات السريعة، نعمل بجد لتقديم أفضل تجربة طعام لعملائنا الكرام.</p>
-<p>نفخر بكوننا عائلة واحدة نعمل بتناغم لضمان جودة كل وجبة تقدم من مطعمنا، بدءاً من اختيار المكونات الطازجة وصولاً إلى التقديم بأناقة.</p>
-</div>
-</section>
+    <!-- قسم فريق تعلولة -->
+    <section class="info-section" id="team">
+        <h3>فريق تعلولة</h3>
+        <div class="team-content">
+            <p>فريق تعلولة هو مجموعة من المحترفين المتفانين في عملهم، يجمعنا حب الطهي وإرضاء الزبائن. بخبرة تزيد عن 10 سنوات في مجال المطاعم والوجبات السريعة، نعمل بجد لتقديم أفضل تجربة طعام لعملائنا الكرام.</p>
+            <p>نفخر بكوننا عائلة واحدة نعمل بتناغم لضمان جودة كل وجبة تقدم من مطعمنا، بدءاً من اختيار المكونات الطازجة وصولاً إلى التقديم بأناقة.</p>
+        </div>
+    </section>
 
-<!-- قسم الدعم -->
-<section class="info-section" id="support">
-<h3>الدعم والمساعدة</h3>
-<p>نحن هنا لمساعدتك! إذا كان لديك أي استفسار أو شكوى، لا تتردد في التواصل معنا.</p>
-<button class="support-btn" onclick="openSupport()">تقديم شكوى أو استفسار</button>
-</section>
+    <!-- قسم الدعم -->
+    <section class="info-section" id="support">
+        <h3>الدعم والمساعدة</h3>
+        <p>نحن هنا لمساعدتك! إذا كان لديك أي استفسار أو شكوى، لا تتردد في التواصل معنا.</p>
+        <button class="support-btn" onclick="openSupport()">تقديم شكوى أو استفسار</button>
+    </section>
 
-<!-- قسم مواقع التواصل الاجتماعي -->
-<section class="info-section" id="social">
-<h3>تواصل معنا</h3>
-<p>تابعنا على منصات التواصل الاجتماعي لمعرفة آخر العروض والأخبار</p>
-<div class="social-links">
-<a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank"><i class="fab fa-tiktok"></i> تيك توك</a>
-<a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> واتساب</a>
-</div>
-</section>
+    <!-- قسم مواقع التواصل الاجتماعي -->
+    <section class="info-section" id="social">
+        <h3>تواصل معنا</h3>
+        <p>تابعنا على منصات التواصل الاجتماعي لمعرفة آخر العروض والأخبار</p>
+        <div class="social-links">
+            <a href="https://www.tiktok.com/@t3_lola" class="social-btn tiktok" target="_blank"><i class="fab fa-tiktok"></i> تيك توك</a>
+            <a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> واتساب</a>
+        </div>
+    </section>
 </main>
 
-<!-- ============================================ -->
-<!-- 📍 أيقونة الموقع الثابتة في الأسفل -->
-<!-- ============================================ -->
+<!-- أيقونة الموقع الثابتة -->
 <div id="locationIconBtn" class="location-icon-btn" title="تحديد الموقع">
     <i class="fas fa-map-marker-alt"></i>
 </div>
@@ -669,49 +409,95 @@
 <button id="scrollToTopBtn" aria-label="العودة لأعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
 
 <!-- ============================================ -->
-<!-- 📍 نافذة طلب إذن الموقع -->
+<!-- 🛍️ نافذة تفاصيل المنتج (جديدة) -->
 <!-- ============================================ -->
-<div id="locationPermissionModal" class="modal">
-<div class="modal-content location-permission-modal">
-<div class="location-icon-wrapper">
-<i class="fas fa-map-marker-alt"></i>
-</div>
-<h2>📍 تحديد الموقع للتوصيل</h2>
-<p class="permission-text">
-لتحسين خدمة التوصيل وضمان وصول طلبك بسرعة ودقة، نحتاج إلى تحديد موقعك الحالي.
-</p>
-<div class="permission-features">
-<div class="feature-item">
-<i class="fas fa-check-circle"></i>
-<span>توصيل أسرع وأدق</span>
-</div>
-<div class="feature-item">
-<i class="fas fa-check-circle"></i>
-<span>حفظ الموقع للطلبات المستقبلية</span>
-</div>
-<div class="feature-item">
-<i class="fas fa-check-circle"></i>
-<span>سهولة الوصول من قبل سائق التوصيل</span>
-</div>
-</div>
-<div class="permission-actions">
-<button type="button" id="allowLocationBtn" class="btn-allow">
-<i class="fas fa-map-marked-alt"></i> السماح بتحديد الموقع
-</button>
-<button type="button" id="denyLocationBtn" class="btn-deny">
-<i class="fas fa-times"></i> ليس الآن
-</button>
-</div>
-<p class="privacy-note">
-<i class="fas fa-lock"></i>
-موقعك آمن ولن يُستخدم إلا لتوصيل طلبك
-</p>
-</div>
+<div id="productModal" class="modal product-modal">
+    <div class="modal-content product-modal-content">
+        <button type="button" class="close-product-modal" onclick="closeProductModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="product-image-wrapper">
+            <img id="productModalImage" src="" alt="" loading="lazy">
+        </div>
+        
+        <div class="product-details">
+            <h2 id="productModalName"></h2>
+            <p id="productModalDescription" class="product-description"></p>
+            <div class="product-price-wrapper">
+                <span class="product-price" id="productModalPrice"></span>
+                <span class="currency">د.ع</span>
+            </div>
+            
+            <!-- محدد الكمية -->
+            <div class="quantity-control">
+                <span class="quantity-label">الكمية:</span>
+                <div class="quantity-buttons">
+                    <button type="button" class="qty-btn-modal" id="modalQtyDecrease">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <span class="qty-display-modal" id="modalQtyDisplay">1</span>
+                    <button type="button" class="qty-btn-modal" id="modalQtyIncrease">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- الإجمالي -->
+            <div class="total-price-wrapper">
+                <span>الإجمالي:</span>
+                <span class="total-price" id="modalTotalPrice">0 د.ع</span>
+            </div>
+            
+            <!-- زر الإضافة -->
+            <button type="button" class="add-to-cart-modal-btn" id="modalAddToCartBtn">
+                <i class="fas fa-cart-plus"></i>
+                <span>إضافة للسلة</span>
+            </button>
+        </div>
+    </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 📍 نافذة تحديد الموقع المنبثقة -->
-<!-- ============================================ -->
+<!-- نافذة طلب إذن الموقع -->
+<div id="locationPermissionModal" class="modal">
+    <div class="modal-content location-permission-modal">
+        <div class="location-icon-wrapper">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <h2>📍 تحديد الموقع للتوصيل</h2>
+        <p class="permission-text">
+            لتحسين خدمة التوصيل وضمان وصول طلبك بسرعة ودقة، نحتاج إلى تحديد موقعك الحالي.
+        </p>
+        <div class="permission-features">
+            <div class="feature-item">
+                <i class="fas fa-check-circle"></i>
+                <span>توصيل أسرع وأدق</span>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-check-circle"></i>
+                <span>حفظ الموقع للطلبات المستقبلية</span>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-check-circle"></i>
+                <span>سهولة الوصول من قبل سائق التوصيل</span>
+            </div>
+        </div>
+        <div class="permission-actions">
+            <button type="button" id="allowLocationBtn" class="btn-allow">
+                <i class="fas fa-map-marked-alt"></i> السماح بتحديد الموقع
+            </button>
+            <button type="button" id="denyLocationBtn" class="btn-deny">
+                <i class="fas fa-times"></i> ليس الآن
+            </button>
+        </div>
+        <p class="privacy-note">
+            <i class="fas fa-lock"></i>
+            موقعك آمن ولن يُستخدم إلا لتوصيل طلبك
+        </p>
+    </div>
+</div>
+
+<!-- نافذة تحديد الموقع المنبثقة -->
 <div id="locationModal" class="modal">
     <div class="modal-content location-modal-content">
         <span class="close" onclick="closeLocationModal()">&times;</span>
@@ -719,9 +505,7 @@
             <i class="fas fa-map-marker-alt"></i>
         </div>
         <h2>📍 تحديد موقعك</h2>
-        <p class="location-modal-text">
-            لتحسين خدمة التوصيل، نحتاج إلى تحديد موقعك الحالي
-        </p>
+        <p class="location-modal-text">لتحسين خدمة التوصيل، نحتاج إلى تحديد موقعك الحالي</p>
         
         <div id="locationModalStatus" class="location-modal-status">
             <i class="fas fa-info-circle"></i>
@@ -746,158 +530,139 @@
 
 <!-- نافذة سلة المشتريات -->
 <div id="cartModal" class="modal">
-<div class="modal-content cart-modal">
-<span class="close" onclick="closeCartModal()">&times;</span>
-<h2><i class="fas fa-shopping-cart"></i> سلة المشتريات</h2>
-<!-- حالة الموقع في السلة -->
-<div id="locationInCart" class="location-in-cart">
-<div class="location-status-badge" id="locationStatusBadge">
-<i class="fas fa-map-marker-alt"></i>
-<span id="locationStatusText">الموقع غير محدد</span>
-</div>
-<button type="button" id="updateLocationFromCartBtn" class="btn-update-location" onclick="requestLocationAndUpdate()">
-<i class="fas fa-sync-alt"></i> تحديث الموقع
-</button>
-</div>
-<div id="cartItems" class="cart-items"></div>
-<div class="cart-total">
-<h3>المجموع النهائي: <span id="cartTotal">0</span> د.ع</h3>
-</div>
-<div class="cart-actions">
-<button onclick="clearCart()" class="btn-clear"><i class="fas fa-trash"></i> تفريغ السلة</button>
-<button onclick="showOrderReview()" class="btn-review"><i class="fas fa-eye"></i> مراجعة الطلب</button>
-</div>
-</div>
+    <div class="modal-content cart-modal">
+        <span class="close" onclick="closeCartModal()">&times;</span>
+        <h2><i class="fas fa-shopping-cart"></i> سلة المشتريات</h2>
+        <div id="locationInCart" class="location-in-cart">
+            <div class="location-status-badge" id="locationStatusBadge">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="locationStatusText">الموقع غير محدد</span>
+            </div>
+            <button type="button" id="updateLocationFromCartBtn" class="btn-update-location" onclick="requestLocationAndUpdate()">
+                <i class="fas fa-sync-alt"></i> تحديث الموقع
+            </button>
+        </div>
+        <div id="cartItems" class="cart-items"></div>
+        <div class="cart-total">
+            <h3>المجموع النهائي: <span id="cartTotal">0</span> د.ع</h3>
+        </div>
+        <div class="cart-actions">
+            <button onclick="clearCart()" class="btn-clear"><i class="fas fa-trash"></i> تفريغ السلة</button>
+            <button onclick="showOrderReview()" class="btn-review"><i class="fas fa-eye"></i> مراجعة الطلب</button>
+        </div>
+    </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 📋 نافذة مراجعة الطلب -->
-<!-- ============================================ -->
+<!-- نافذة مراجعة الطلب -->
 <div id="orderReviewModal" class="modal">
-<div class="modal-content review-modal">
-<span class="close" onclick="closeOrderReview()">&times;</span>
-<h2><i class="fas fa-clipboard-check"></i> مراجعة طلبك</h2>
-<p class="review-subtitle">تأكد من تفاصيل طلبك وأضف منطقتك للتوصيل</p>
+    <div class="modal-content review-modal">
+        <span class="close" onclick="closeOrderReview()">&times;</span>
+        <h2><i class="fas fa-clipboard-check"></i> مراجعة طلبك</h2>
+        <p class="review-subtitle">تأكد من تفاصيل طلبك وأضف منطقتك للتوصيل</p>
 
-<!-- ============================================ -->
-<!-- 📍 قسم منطقة التوصيل -->
-<!-- ============================================ -->
-<div class="location-description-section">
-    <div class="location-header">
-        <i class="fas fa-map-marked-alt"></i>
-        <h4>🏠 رقم القطاع أو اسم الحي</h4>
-        <span class="required-badge">مطلوب</span>
+        <div class="location-description-section">
+            <div class="location-header">
+                <i class="fas fa-map-marked-alt"></i>
+                <h4>🏠 رقم القطاع أو اسم الحي</h4>
+                <span class="required-badge">مطلوب</span>
+            </div>
+            
+            <button type="button" id="useSavedAddressBtn" class="use-saved-address-btn" style="display: none;">
+                <i class="fas fa-history"></i>
+                <span>استخدام الموقع المحفوظ</span>
+                <small id="savedAddressPreview"></small>
+            </button>
+
+            <div class="location-input-wrapper">
+                <input type="text" id="locationDescription" class="location-input" placeholder="مثال: قطاع 70، حي الزهراء..." maxlength="100">
+            </div>
+
+            <div class="location-options">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="saveLocationForFuture" checked>
+                    <span class="checkmark"></span>
+                    <span>💾 حفظ الموقع للطلبات القادمة</span>
+                </label>
+            </div>
+
+            <div id="gpsInfoInReview" class="gps-info-compact">
+                <i class="fas fa-satellite-dish"></i>
+                <span id="gpsStatusText">جاري التحقق من الموقع الجغرافي...</span>
+            </div>
+        </div>
+
+        <h3 class="review-section-title">🛒 تفاصيل المنتجات</h3>
+        <div id="orderReviewItems" class="order-review-items"></div>
+
+        <div class="review-summary">
+            <div class="summary-row">
+                <span>عدد المنتجات:</span>
+                <span id="reviewItemCount">0</span>
+            </div>
+            <div class="summary-row">
+                <span>إجمالي الكمية:</span>
+                <span id="reviewTotalQuantity">0</span>
+            </div>
+            <div class="summary-row total-row">
+                <span>المجموع النهائي:</span>
+                <span id="reviewTotalAmount">0 د.ع</span>
+            </div>
+        </div>
+
+        <div class="review-note">
+            <i class="fas fa-info-circle"></i>
+            <span>سيتم إرسال طلبك مع الموقع عبر واتساب</span>
+        </div>
+
+        <div class="review-actions">
+            <button onclick="closeOrderReview()" class="btn-back">
+                <i class="fas fa-arrow-right"></i> العودة للسلة
+            </button>
+            <button onclick="confirmAndSendOrder()" class="btn-confirm">
+                <i class="fab fa-whatsapp"></i> تأكيد وإرسال الطلب
+            </button>
+        </div>
     </div>
-    
-    <!-- زر استخدام الموقع المحفوظ -->
-    <button type="button" id="useSavedAddressBtn" class="use-saved-address-btn" style="display: none;">
-        <i class="fas fa-history"></i>
-        <span>استخدام الموقع المحفوظ</span>
-        <small id="savedAddressPreview"></small>
-    </button>
-
-    <!-- حقل كتابة الموقع -->
-    <div class="location-input-wrapper">
-        <input 
-            type="text" 
-            id="locationDescription" 
-            class="location-input" 
-            placeholder="مثال: قطاع 70، حي الزهراء..." 
-            maxlength="100">
-    </div>
-
-    <!-- خيارات إضافية -->
-    <div class="location-options">
-        <label class="checkbox-wrapper">
-            <input type="checkbox" id="saveLocationForFuture" checked>
-            <span class="checkmark"></span>
-            <span>💾 حفظ الموقع للطلبات القادمة</span>
-        </label>
-    </div>
-
-    <!-- معلومات GPS المحفوظة -->
-    <div id="gpsInfoInReview" class="gps-info-compact">
-        <i class="fas fa-satellite-dish"></i>
-        <span id="gpsStatusText">جاري التحقق من الموقع الجغرافي...</span>
-    </div>
-</div>
-
-<!-- تفاصيل المنتجات -->
-<h3 class="review-section-title">🛒 تفاصيل المنتجات</h3>
-<div id="orderReviewItems" class="order-review-items"></div>
-
-<!-- ملخص الطلب -->
-<div class="review-summary">
-<div class="summary-row">
-<span>عدد المنتجات:</span>
-<span id="reviewItemCount">0</span>
-</div>
-<div class="summary-row">
-<span>إجمالي الكمية:</span>
-<span id="reviewTotalQuantity">0</span>
-</div>
-<div class="summary-row total-row">
-<span>المجموع النهائي:</span>
-<span id="reviewTotalAmount">0 د.ع</span>
-</div>
-</div>
-
-<!-- ملاحظة الإرسال -->
-<div class="review-note">
-<i class="fas fa-info-circle"></i>
-<span>سيتم إرسال طلبك مع الموقع عبر واتساب</span>
-</div>
-
-<!-- أزرار الإجراءات -->
-<div class="review-actions">
-<button onclick="closeOrderReview()" class="btn-back">
-<i class="fas fa-arrow-right"></i> العودة للسلة
-</button>
-<button onclick="confirmAndSendOrder()" class="btn-confirm">
-<i class="fab fa-whatsapp"></i> تأكيد وإرسال الطلب
-</button>
-</div>
-</div>
 </div>
 
 <!-- نافذة تسجيل دخول المسؤول -->
 <div id="adminAuthModal" class="modal">
-<div class="modal-content">
-<span class="close" onclick="closeAuthModal()">&times;</span>
-<h2>تسجيل دخول المسؤول</h2>
-<input type="text" id="adminUsername" placeholder="اسم المستخدم">
-<input type="password" id="adminPassword" placeholder="كلمة المرور">
-<button id="adminLoginSubmit">دخول</button>
-</div>
+    <div class="modal-content">
+        <span class="close" onclick="closeAuthModal()">&times;</span>
+        <h2>تسجيل دخول المسؤول</h2>
+        <input type="text" id="adminUsername" placeholder="اسم المستخدم">
+        <input type="password" id="adminPassword" placeholder="كلمة المرور">
+        <button id="adminLoginSubmit">دخول</button>
+    </div>
 </div>
 
 <!-- لوحة تحكم المسؤول -->
 <div id="adminPanel" class="admin-panel">
-<div class="admin-panel-content">
-<span class="close-admin-panel" id="closeAdminPanel">&times;</span>
-<h2>لوحة تحكم المسؤول</h2>
-<div class="admin-section">
-<h3>إنشاء إعلان جديد</h3>
-<input type="text" id="adTitle" placeholder="عنوان الإعلان">
-<textarea id="adDescription" placeholder="وصف الإعلان"></textarea>
-<input type="text" id="adPrice" placeholder="السعر (اختياري)">
-<input type="text" id="adDuration" placeholder="المدة (اختياري)">
-<select id="adTemplate">
-<option value="red">النموذج الأحمر</option>
-<option value="yellow">النموذج الأصفر</option>
-</select>
-<div class="file-upload">
-<label for="adImage" class="file-upload-label"><i class="fas fa-upload"></i> اختر صورة للإعلان</label>
-<input type="file" id="adImage" accept="image/*" style="display: none;" onchange="previewImage(this)">
-<div class="file-upload-preview" id="imagePreview"><span>معاينة الصورة</span></div>
-</div>
-<button onclick="createAd()">إنشاء الإعلان</button>
-</div>
-<div class="admin-section">
-<h3>الإعلانات الحالية</h3>
-<div id="currentAds"></div>
-</div>
-</div>
+    <div class="admin-panel-content">
+        <span class="close-admin-panel" id="closeAdminPanel">&times;</span>
+        <h2>لوحة تحكم المسؤول</h2>
+        <div class="admin-section">
+            <h3>إنشاء إعلان جديد</h3>
+            <input type="text" id="adTitle" placeholder="عنوان الإعلان">
+            <textarea id="adDescription" placeholder="وصف الإعلان"></textarea>
+            <input type="text" id="adPrice" placeholder="السعر (اختياري)">
+            <input type="text" id="adDuration" placeholder="المدة (اختياري)">
+            <select id="adTemplate">
+                <option value="red">النموذج الأحمر</option>
+                <option value="yellow">النموذج الأصفر</option>
+            </select>
+            <div class="file-upload">
+                <label for="adImage" class="file-upload-label"><i class="fas fa-upload"></i> اختر صورة للإعلان</label>
+                <input type="file" id="adImage" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                <div class="file-upload-preview" id="imagePreview"><span>معاينة الصورة</span></div>
+            </div>
+            <button onclick="createAd()">إنشاء الإعلان</button>
+        </div>
+        <div class="admin-section">
+            <h3>الإعلانات الحالية</h3>
+            <div id="currentAds"></div>
+        </div>
+    </div>
 </div>
 
 <script src="script.js"></script>
