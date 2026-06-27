@@ -91,7 +91,10 @@ header .logo {
 }
 
 header .team-under-logo {
-    max-width: 300px;
+    max-width: 350px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     border-radius: 20px;
     margin: 1rem auto;
     display: block;
@@ -207,30 +210,6 @@ header p.hours {
 
 .btn-label {
     font-size: 0.9rem;
-}
-
-.cart-count-top {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--main-red);
-    color: white;
-    min-width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-    border: 2px solid white;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    padding: 0 5px;
-    animation: pulse 2s infinite;
-}
-
-.cart-top-btn {
-    position: relative;
 }
 
 /* ============================================ */
@@ -908,7 +887,7 @@ section.info-section p {
 }
 
 /* ============================================ */
-/* 🎯 أزرار المساعدة السفلية */
+/* 🎯 أزرار المساعدة السفلية (مع السلة العائمة) */
 /* ============================================ */
 .bottom-action-buttons {
     position: fixed;
@@ -919,8 +898,10 @@ section.info-section p {
     gap: 15px;
     z-index: 999;
     align-items: center;
+    justify-content: center;
 }
 
+/* الأزرار العادية (الموقع والسهم) */
 .action-btn-bottom {
     width: 55px;
     height: 55px;
@@ -935,12 +916,14 @@ section.info-section p {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    position: relative;
 }
 
 .action-btn-bottom:active {
     transform: scale(0.9);
 }
 
+/* زر الموقع */
 .location-btn-bottom {
     background: var(--main-red);
     color: white;
@@ -963,20 +946,110 @@ section.info-section p {
     50% { box-shadow: 0 4px 25px rgba(40, 167, 69, 0.6); }
 }
 
+/* زر العودة للأعلى */
 .scroll-top-btn-bottom {
     background: var(--main-red);
     color: #ffffff;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.8);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .scroll-top-btn-bottom.visible {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
 }
 
 .scroll-top-btn-bottom:hover {
     background: var(--main-yellow);
     color: var(--main-red);
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1);
+}
+
+/* ============================================ */
+/* 🛒 زر السلة العائم (الوسط - أكبر) */
+/* ============================================ */
+.cart-btn-bottom {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--main-yellow), #f39c12);
+    color: var(--main-red);
+    border: 4px solid var(--main-red);
+    font-size: 1.6rem;
+    box-shadow: 0 6px 25px rgba(254, 219, 23, 0.5);
+    
+    /* مخفي في البداية */
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0) translateY(30px);
+    pointer-events: none;
+    
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* الحالة الظاهرة (عند وجود عناصر) */
+.cart-btn-bottom.has-items {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+    animation: cartBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes cartBounce {
+    0% {
+        transform: scale(0) translateY(30px);
+    }
+    50% {
+        transform: scale(1.2) translateY(-10px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+    }
+}
+
+.cart-btn-bottom:hover {
+    transform: scale(1.1) translateY(-3px);
+    box-shadow: 0 8px 30px rgba(254, 219, 23, 0.7);
+}
+
+.cart-btn-bottom:active {
+    transform: scale(0.95);
+}
+
+/* عداد السلة في الزر السفلي */
+.cart-count-bottom {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--main-red);
+    color: white;
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    padding: 0 6px;
+    animation: pulse 2s infinite;
+}
+
+/* تأثير عند إضافة عنصر جديد */
+.cart-btn-bottom.item-added {
+    animation: cartPulse 0.5s ease;
+}
+
+@keyframes cartPulse {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.15) rotate(-5deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    75% { transform: scale(1.1) rotate(-3deg); }
 }
 
 /* ============================================ */
@@ -1880,12 +1953,6 @@ section.info-section p {
         font-size: 1.15rem;
     }
     
-    .cart-count-top {
-        min-width: 22px;
-        height: 22px;
-        font-size: 0.75rem;
-    }
-    
     nav.sections-nav {
         top: calc(70px + 5px);
         margin: 0 0.5rem 1rem;
@@ -1921,6 +1988,7 @@ section.info-section p {
         font-size: 1.4rem;
     }
 
+    /* 🛒 أزرار المساعدة السفلية - تابلت */
     .bottom-action-buttons {
         bottom: 20px;
         gap: 12px;
@@ -1930,6 +1998,20 @@ section.info-section p {
         width: 50px;
         height: 50px;
         font-size: 1.2rem;
+    }
+    
+    .cart-btn-bottom {
+        width: 65px;
+        height: 65px;
+        font-size: 1.5rem;
+    }
+    
+    .cart-count-bottom {
+        min-width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        top: -4px;
+        right: -4px;
     }
 
     .cart-modal-new {
@@ -1988,6 +2070,10 @@ section.info-section p {
     .cart-actions-new button {
         padding: 12px 10px;
         font-size: 0.95rem;
+    }
+    
+    header .team-under-logo {
+        max-width: 280px;
     }
 }
 
@@ -2070,18 +2156,53 @@ section.info-section p {
         width: 50px;
         height: 50px;
     }
+    
+    /* 🛒 أزرار المساعدة السفلية - هاتف متوسط */
+    .bottom-action-buttons {
+        bottom: 18px;
+        gap: 10px;
+    }
+
+    .action-btn-bottom {
+        width: 48px;
+        height: 48px;
+        font-size: 1.15rem;
+    }
+    
+    .cart-btn-bottom {
+        width: 60px;
+        height: 60px;
+        font-size: 1.4rem;
+    }
+    
+    .cart-count-bottom {
+        min-width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
+    }
+    
+    header .team-under-logo {
+        max-width: 240px;
+    }
 }
 
 @media (max-width: 400px) {
+    /* 🛒 أزرار المساعدة السفلية - هاتف صغير */
     .bottom-action-buttons {
         bottom: 15px;
-        gap: 10px;
+        gap: 8px;
     }
 
     .action-btn-bottom {
         width: 45px;
         height: 45px;
         font-size: 1.1rem;
+    }
+    
+    .cart-btn-bottom {
+        width: 58px;
+        height: 58px;
+        font-size: 1.3rem;
     }
 
     .cart-item-new {
@@ -2112,6 +2233,10 @@ section.info-section p {
     .top-bar-btn {
         padding: 6px 10px;
     }
+    
+    header .team-under-logo {
+        max-width: 200px;
+    }
 }
 
 /* تحسينات اللمس */
@@ -2125,7 +2250,8 @@ section.info-section p {
     .qty-btn-modal:active,
     .add-to-cart-modal-btn:active,
     .qty-btn-new:active,
-    .top-bar-btn:active {
+    .top-bar-btn:active,
+    .cart-btn-bottom:active {
         transform: scale(0.95);
     }
 }
