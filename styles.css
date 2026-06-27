@@ -9,6 +9,7 @@
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     --shadow-hover: 0 8px 25px rgba(254, 219, 23, 0.5);
     --main-font: 'Cairo', sans-serif;
+    --top-bar-height: 65px;
 }
 
 * {
@@ -41,7 +42,7 @@ h4, p, .price, .cart-item-name, .review-item-name, .product-description,
     user-select: text;
 }
 
-button, .menu-item, .cart-icon, .action-btn-bottom {
+button, .menu-item, .top-bar-btn, .action-btn-bottom {
     -webkit-appearance: none;
     appearance: none;
     touch-action: manipulation;
@@ -72,7 +73,7 @@ button, .menu-item, .cart-icon, .action-btn-bottom {
 }
 
 /* ============================================ */
-/* الهيدر */
+/* 🏠 الهيدر الرئيسي */
 /* ============================================ */
 header {
     position: relative;
@@ -111,7 +112,135 @@ header p.hours {
 }
 
 /* ============================================ */
-/* 🔄 شريط التنقل (قابل للتمرير أفقياً) */
+/* 📌 الشريط العلوي الثابت (يظهر عند التمرير) */
+/* ============================================ */
+.top-sticky-bar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--top-bar-height);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(199, 3, 1, 0.95));
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 3px solid var(--main-yellow);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(-100%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.top-sticky-bar.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* الشعار المصغر */
+.top-bar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.top-bar-logo img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid var(--main-yellow);
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.top-bar-title {
+    color: var(--main-yellow);
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: var(--main-font);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* أزرار الإجراءات */
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.top-bar-btn {
+    position: relative;
+    background: var(--main-yellow);
+    color: var(--main-red);
+    border: 2px solid transparent;
+    padding: 8px 14px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    font-family: var(--main-font);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.top-bar-btn:hover,
+.top-bar-btn:active {
+    background: #ffffff;
+    color: var(--main-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(254, 219, 23, 0.5);
+}
+
+.top-bar-btn i {
+    font-size: 1rem;
+}
+
+.btn-label {
+    font-size: 0.85rem;
+}
+
+/* عداد السلة في الشريط العلوي */
+.cart-count-top {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--main-red);
+    color: white;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    padding: 0 4px;
+    animation: pulse 2s infinite;
+}
+
+.cart-top-btn {
+    position: relative;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ============================================ */
+/* 🧭 شريط التنقل القابل للتمرير */
 /* ============================================ */
 nav.sections-nav {
     display: flex;
@@ -124,7 +253,7 @@ nav.sections-nav {
     margin: 0 1rem 1.5rem;
     box-shadow: var(--shadow);
     position: sticky;
-    top: 10px;
+    top: calc(var(--top-bar-height) + 10px);
     z-index: 100;
     backdrop-filter: blur(10px);
     overflow-x: auto;
@@ -136,17 +265,19 @@ nav.sections-nav {
 }
 
 nav.sections-nav::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
 }
 
 nav.sections-nav::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
+    margin: 0 5px;
 }
 
 nav.sections-nav::-webkit-scrollbar-thumb {
     background: var(--main-yellow);
     border-radius: 10px;
+    border: 2px solid var(--main-red);
 }
 
 nav.sections-nav::-webkit-scrollbar-thumb:hover {
@@ -561,63 +692,6 @@ div.menu-item p.price {
 }
 
 /* ============================================ */
-/* 🛒 أيقونة السلة */
-/* ============================================ */
-.cart-icon {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--main-yellow);
-    color: #000000;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 1001;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-    border: 3px solid var(--main-red);
-}
-
-.cart-icon.empty {
-    opacity: 0.4;
-    transform: scale(0.9);
-    pointer-events: none;
-}
-
-.cart-icon:active {
-    transform: scale(0.9);
-}
-
-.cart-count {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--main-red);
-    color: white;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    font-weight: bold;
-    border: 2px solid white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-/* ============================================ */
 /* أقسام المعلومات */
 /* ============================================ */
 section.info-section {
@@ -715,7 +789,7 @@ section.info-section p {
 }
 
 /* ============================================ */
-/* 🎯 أزرار المساعدة السفلية (متساوية) */
+/* 🎯 أزرار المساعدة السفلية */
 /* ============================================ */
 .bottom-action-buttons {
     position: fixed;
@@ -748,7 +822,6 @@ section.info-section p {
     transform: scale(0.9);
 }
 
-/* زر الموقع */
 .location-btn-bottom {
     background: var(--main-red);
     color: white;
@@ -771,7 +844,6 @@ section.info-section p {
     50% { box-shadow: 0 4px 25px rgba(40, 167, 69, 0.6); }
 }
 
-/* زر الرجوع لأعلى */
 .scroll-top-btn-bottom {
     background: var(--main-red);
     color: #ffffff;
@@ -872,7 +944,6 @@ section.info-section p {
     animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* الهيدر */
 .cart-header-new {
     background: linear-gradient(135deg, var(--main-red), #a50301);
     color: white;
@@ -915,7 +986,6 @@ section.info-section p {
     color: white;
 }
 
-/* قسم معلومات الزبون */
 .customer-info-section {
     padding: 20px;
     background: linear-gradient(135deg, #fff8e1, #fff3c4);
@@ -1010,7 +1080,6 @@ section.info-section p {
     text-align: right;
 }
 
-/* Select مخصص */
 .select-wrapper-new {
     position: relative;
 }
@@ -1048,7 +1117,6 @@ section.info-section p {
     transform: translateY(-50%) rotate(180deg);
 }
 
-/* قسم عناصر السلة */
 .cart-items-section {
     flex: 1;
     overflow-y: auto;
@@ -1211,7 +1279,6 @@ section.info-section p {
     margin-bottom: 5px;
 }
 
-/* الفوتر */
 .cart-footer-new {
     background: white;
     border-top: 2px solid var(--main-yellow);
@@ -1293,26 +1360,6 @@ section.info-section p {
 /* ============================================ */
 /* لوحة التحكم */
 /* ============================================ */
-.admin-login-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-    background: var(--main-yellow);
-    color: #000;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-    transition: all 0.3s ease;
-    font-family: var(--main-font);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
 .admin-panel {
     display: none;
     position: fixed;
@@ -1677,9 +1724,42 @@ section.info-section p {
 }
 
 /* ============================================ */
-/* التجاوب */
+/* 📱 التجاوب */
 /* ============================================ */
 @media (max-width: 768px) {
+    .top-sticky-bar {
+        height: 60px;
+        padding: 0 10px;
+    }
+    
+    .top-bar-logo img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .top-bar-title {
+        font-size: 1.1rem;
+    }
+    
+    .top-bar-btn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-label {
+        display: none;
+    }
+    
+    .top-bar-btn i {
+        font-size: 1rem;
+    }
+    
+    nav.sections-nav {
+        top: calc(60px + 5px);
+        margin: 0 0.5rem 1rem;
+        padding: 0.8rem;
+    }
+    
     div.menu-items {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 1rem;
@@ -1707,13 +1787,6 @@ section.info-section p {
 
     .product-price {
         font-size: 1.4rem;
-    }
-
-    .cart-icon {
-        width: 55px;
-        height: 55px;
-        top: 15px;
-        right: 15px;
     }
 
     .bottom-action-buttons {
@@ -1787,6 +1860,23 @@ section.info-section p {
 }
 
 @media (max-width: 480px) {
+    .top-sticky-bar {
+        height: 55px;
+    }
+    
+    .top-bar-logo img {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .top-bar-title {
+        font-size: 1rem;
+    }
+    
+    nav.sections-nav {
+        top: calc(55px + 5px);
+    }
+    
     div.menu-items {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.8rem;
@@ -1862,6 +1952,19 @@ section.info-section p {
         padding-top: 8px;
         border-top: 1px dashed #eee;
     }
+    
+    .top-bar-logo {
+        gap: 5px;
+    }
+    
+    .top-bar-logo img {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .top-bar-title {
+        font-size: 0.95rem;
+    }
 }
 
 /* تحسينات اللمس */
@@ -1874,7 +1977,8 @@ section.info-section p {
 
     .qty-btn-modal:active,
     .add-to-cart-modal-btn:active,
-    .qty-btn-new:active {
+    .qty-btn-new:active,
+    .top-bar-btn:active {
         transform: scale(0.95);
     }
 }
