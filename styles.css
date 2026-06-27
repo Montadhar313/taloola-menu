@@ -111,11 +111,13 @@ header p.hours {
     margin-top: 0.5rem;
 }
 
+
+
 /* ============================================ */
-/* 📌 الشريط العلوي الثابت (يظهر عند التمرير) */
+/* 📌 الشريط العلوي الثابت (يظهر عند التمرير) - محسّن */
 /* ============================================ */
 .top-sticky-bar {
-    position: sticky;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -130,16 +132,20 @@ header p.hours {
     justify-content: space-between;
     padding: 0 15px;
     z-index: 999;
+    
+    /* الحالة الأولية: مخفي */
     opacity: 0;
+    visibility: hidden;
     transform: translateY(-100%);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+    will-change: transform, opacity;
 }
 
+/* الحالة الظاهرة */
 .top-sticky-bar.visible {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0);
-    pointer-events: auto;
 }
 
 /* الشعار المصغر */
@@ -232,11 +238,6 @@ header p.hours {
 
 .cart-top-btn {
     position: relative;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
 }
 
 /* ============================================ */
