@@ -1,31 +1,15 @@
 // ============================================
-// 🚀 نظام تحميل الصور الذكي المتسلسل (الأحدث)
+// 🚀 نظام تحميل الصور الذكي المتسلسل
 // ============================================
 
-/**
- * SmartSequentialImageLoader
- * نظام ذكي يرتب الصور حسب الأولوية ويحملها بالتسلسل
- * مميزات:
- * - Priority Queue (طابور أولويات)
- * - Concurrency Limit (حد أقصى للتحميل المتوازي)
- * - Image Deduplication (عدم تكرار التحميل)
- * - Connection-Aware (التكيف مع سرعة الإنترنت)
- * - Multi-level Cache (كاش متعدد المستويات)
- */
 class SmartSequentialImageLoader {
     constructor() {
-        // طابور الصور حسب الأولوية
         this.queue = [];
-        // الصور قيد التحميل حالياً
         this.currentlyLoading = new Set();
-        // الكاش الذكي (src -> Image src)
         this.cache = new Map();
-        // العناصر المنتظرة لكل صورة (deduplication)
         this.waitingElements = new Map();
-        // Observers
         this.visibilityObserver = null;
         this.preloadObserver = null;
-        // الإعدادات الذكية
         this.config = {
             maxConcurrent: this.detectOptimalConcurrency(),
             preloadDistance: 300,
@@ -37,10 +21,6 @@ class SmartSequentialImageLoader {
         this.init();
     }
     
-    /**
-     * 🎯 كشف السرعة المثلى للتحميل المتوازي
-     * يتكيف مع سرعة اتصال المستخدم
-     */
     detectOptimalConcurrency() {
         const connection = navigator.connection || 
                           navigator.mozConnection || 
@@ -50,44 +30,28 @@ class SmartSequentialImageLoader {
             const type = connection.effectiveType;
             const saveData = connection.saveData;
             
-            // إذا كان المستخدم في وضع توفير البيانات
             if (saveData) return 1;
             
             switch(type) {
-                case '4g': return 3;      // سريع: 3 صور متزامنة
-                case '3g': return 2;      // متوسط: صورتان
+                case '4g': return 3;
+                case '3g': return 2;
                 case '2g': 
-                case 'slow-2g': return 1; // بطيء: صورة واحدة
+                case 'slow-2g': return 1;
                 default: return 2;
             }
         }
         
-        // افتراضي: حسب عدد أنوية المعالج (بحد أقصى 3)
         return Math.min(navigator.hardwareConcurrency || 2, 3);
     }
     
-    /**
-     * 🚀 تهيئة النظام
-     */
     init() {
-        // تحميل الصور المحفوظة مسبقاً من SessionStorage
         this.loadFromSessionCache();
-        
-        // إعداد Observers
         this.setupObservers();
-        
-        // بدء المراقبة
         this.observeAllImages();
-        
-        // مراقبة تغييرات الاتصال
         this.monitorConnectionChanges();
     }
     
-    /**
-     * 👁️ إعداد مراقبي الرؤية
-     */
     setupObservers() {
-        // مراقب الرؤية الأساسي (Priority-based)
         this.visibilityObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
@@ -105,7 +69,6 @@ class SmartSequentialImageLoader {
             }
         );
         
-        // مراقب التحميل المسبق للأقسام (500px قبل الوصول)
         this.preloadObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
@@ -122,15 +85,11 @@ class SmartSequentialImageLoader {
         );
     }
     
-    /**
-     * 🎯 حساب أولوية الصورة (الرقم الأقل = الأولوية الأعلى)
-     */
     calculatePriority(img) {
         const rect = img.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         const viewportWidth = window.innerWidth;
         
-        // المسافة من مركز الشاشة
         const centerX = viewportWidth / 2;
         const centerY = viewportHeight / 2;
         const imgCenterX = rect.left + rect.width / 2;
@@ -141,33 +100,25 @@ class SmartSequentialImageLoader {
             Math.pow(imgCenterY - centerY, 2)
         );
         
-        // الصور المرئية حالياً: أولوية عالية جداً (1-10)
         if (rect.top < viewportHeight && rect.bottom > 0) {
             return 1 + (distance / 1000);
         }
         
-        // الصور القريبة جداً: أولوية عالية (10-20)
         if (rect.top < viewportHeight + this.config.highPriorityDistance) {
             return 10 + (distance / 500);
         }
         
-        // الصور البعيدة: أولوية منخفضة (100+)
         return 100 + (distance / 200);
     }
     
-    /**
-     * 🔍 مراقبة جميع الصور في الصفحة
-     */
     observeAllImages() {
         const lazyImages = document.querySelectorAll('.lazy-image');
         
         lazyImages.forEach(img => {
-            // إضافة للـ visibility observer
             if (this.visibilityObserver) {
                 this.visibilityObserver.observe(img);
             }
             
-            // إضافة القسم الأب للـ preload observer
             const section = img.closest('.menu-section');
             if (section && this.preloadObserver) {
                 this.preloadObserver.observe(section);
@@ -177,49 +128,31 @@ class SmartSequentialImageLoader {
         console.log(`🖼️ مراقبة ${lazyImages.length} صورة للتحميل الذكي`);
     }
     
-    /**
-     * 📥 إضافة صورة للطابور الذكي
-     */
     enqueue(img, priority = 50) {
         const src = img.getAttribute('data-src');
         if (!src) return;
         
-        // التحقق من الكاش أولاً (فوري!)
         if (this.cache.has(src)) {
             this.applyImage(img, src);
             return;
         }
         
-        // تسجيل العنصر في قائمة الانتظار (deduplication)
         if (!this.waitingElements.has(src)) {
             this.waitingElements.set(src, []);
-            // إضافة للطابور فقط مرة واحدة
             this.queue.push({ src, priority });
-            // إعادة ترتيب الطابور حسب الأولوية
             this.sortQueue();
         }
         
         this.waitingElements.get(src).push(img);
-        
-        // إضافة تأثير التحميل
         img.classList.add('loading');
-        
-        // بدء المعالجة
         this.processQueue();
     }
     
-    /**
-     * 🔄 ترتيب الطابور حسب الأولوية (الأقل = الأعلى أولوية)
-     */
     sortQueue() {
         this.queue.sort((a, b) => a.priority - b.priority);
     }
     
-    /**
-     * ⚙️ معالجة الطابور (التحميل المتسلسل الذكي)
-     */
     processQueue() {
-        // تحميل حتى الوصول للحد الأقصى المتوازي
         while (
             this.currentlyLoading.size < this.config.maxConcurrent && 
             this.queue.length > 0
@@ -231,9 +164,6 @@ class SmartSequentialImageLoader {
         }
     }
     
-    /**
-     * 🖼️ تحميل صورة واحدة
-     */
     loadImage(src) {
         this.currentlyLoading.add(src);
         
@@ -248,66 +178,43 @@ class SmartSequentialImageLoader {
             this.handleImageError(src);
         };
         
-        // بدء التحميل
         img.src = src;
     }
     
-    /**
-     * ✅ معالجة نجاح التحميل
-     */
     handleImageLoad(src, img) {
-        // إزالة من قائمة التحميل
         this.currentlyLoading.delete(src);
-        
-        // حفظ في الكاش الذكي
         this.cache.set(src, src);
         
-        // تطبيق على جميع العناصر المنتظرة (deduplication)
         const waitingElements = this.waitingElements.get(src) || [];
         waitingElements.forEach(element => {
             this.applyImage(element, src);
         });
         
-        // تنظيف قائمة الانتظار
         this.waitingElements.delete(src);
-        
-        // حفظ في SessionStorage
         this.saveToSessionCache(src);
-        
-        // معالجة الصورة التالية في الطابور
         this.processQueue();
         
         console.log(`✅ تم تحميل: ${src.split('/').pop()}`);
     }
     
-    /**
-     * ❌ معالجة فشل التحميل
-     */
     handleImageError(src) {
         console.warn(`❌ فشل تحميل: ${src}`);
         this.currentlyLoading.delete(src);
         
-        // إزالة العناصر المنتظرة
         const waitingElements = this.waitingElements.get(src) || [];
         waitingElements.forEach(element => {
             element.classList.remove('loading');
             element.classList.add('error');
         });
         this.waitingElements.delete(src);
-        
-        // متابعة المعالجة
         this.processQueue();
     }
     
-    /**
-     * 🎨 تطبيق الصورة على عنصر DOM
-     */
     applyImage(img, src) {
         img.src = src;
         img.classList.remove('loading');
         img.classList.add('loaded');
         
-        // إخفاء الـ skeleton بتأثير سلس
         const skeleton = img.parentElement?.querySelector('.image-skeleton');
         if (skeleton) {
             skeleton.style.transition = 'opacity 0.4s ease';
@@ -320,16 +227,12 @@ class SmartSequentialImageLoader {
         }
     }
     
-    /**
-     * 🚀 تحميل مسبق لجميع صور القسم
-     */
     preloadSectionImages(section) {
         const images = section.querySelectorAll('.lazy-image[data-src]');
         
         images.forEach((img, index) => {
             const src = img.getAttribute('data-src');
             if (src && !this.cache.has(src) && !this.currentlyLoading.has(src)) {
-                // إضافة بأولوية متوسطة حسب الموقع
                 this.queue.push({ 
                     src, 
                     priority: 20 + index
@@ -342,20 +245,15 @@ class SmartSequentialImageLoader {
             }
         });
         
-        // إعادة ترتيب الطابور
         this.sortQueue();
         this.processQueue();
     }
     
-    /**
-     * 💾 حفظ في SessionStorage
-     */
     saveToSessionCache(src) {
         try {
             const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
             if (!cached.includes(src)) {
                 cached.push(src);
-                // الاحتفاظ بآخر 50 صورة فقط
                 if (cached.length > 50) cached.shift();
                 sessionStorage.setItem('taloola_image_cache', JSON.stringify(cached));
             }
@@ -364,14 +262,10 @@ class SmartSequentialImageLoader {
         }
     }
     
-    /**
-     * 📂 تحميل من SessionStorage عند بدء التشغيل
-     */
     loadFromSessionCache() {
         try {
             const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
             
-            // تحميل أول 15 صورة مسبقاً
             cached.slice(0, 15).forEach(src => {
                 const img = new Image();
                 img.onload = () => {
@@ -386,9 +280,6 @@ class SmartSequentialImageLoader {
         } catch (e) {}
     }
     
-    /**
-     * 📶 مراقبة تغييرات الاتصال
-     */
     monitorConnectionChanges() {
         const connection = navigator.connection || 
                           navigator.mozConnection || 
@@ -406,9 +297,6 @@ class SmartSequentialImageLoader {
         }
     }
     
-    /**
-     * 📊 إحصائيات الأداء
-     */
     getStats() {
         return {
             cached: this.cache.size,
@@ -420,14 +308,9 @@ class SmartSequentialImageLoader {
     }
 }
 
-// متغير عام للنظام
 let smartImageLoader = null;
 
-/**
- * 🚀 تهيئة نظام تحميل الصور الذكي
- */
 function initSmartImageLoading() {
-    // انتظار تحميل DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             smartImageLoader = new SmartSequentialImageLoader();
@@ -438,7 +321,6 @@ function initSmartImageLoading() {
         console.log('✅ نظام تحميل الصور الذكي المتسلسل جاهز');
     }
     
-    // إحصائيات دورية (في وضع التطوير فقط)
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io')) {
         setInterval(() => {
             if (smartImageLoader) {
@@ -448,7 +330,6 @@ function initSmartImageLoading() {
         }, 10000);
     }
 }
-
 
 // ============================================
 // 📍 كشف نظام التشغيل
@@ -734,7 +615,7 @@ async function initializeLocationSystem() {
 }
 
 // ============================================
-// 🛒 دوال السلة
+// 🛒 دوال السلة (مُحدّثة مع الزر العائم)
 // ============================================
 let shoppingCart = JSON.parse(localStorage.getItem('taloola_cart')) || [];
 
@@ -743,16 +624,42 @@ function saveCart() {
     updateCartUI();
 }
 
+/**
+ * 🛒 تحديث واجهة السلة - التحكم في ظهور الزر العائم
+ */
 function updateCartUI() {
-    const cartCountTop = document.getElementById('cartCount');
+    const floatingCartBtn = document.getElementById('floatingCartBtn');
+    const floatingCartCount = document.getElementById('floatingCartCount');
     const totalItems = shoppingCart.reduce((sum, item) => sum + item.quantity, 0);
     
-    if (cartCountTop) {
-        cartCountTop.textContent = totalItems;
+    if (floatingCartBtn && floatingCartCount) {
+        floatingCartCount.textContent = totalItems;
+        
         if (totalItems > 0) {
-            cartCountTop.style.animation = 'none';
-            setTimeout(() => { cartCountTop.style.animation = 'pulse 2s infinite'; }, 10);
+            // إظهار الزر إذا كان مخفياً
+            if (!floatingCartBtn.classList.contains('has-items')) {
+                floatingCartBtn.classList.add('has-items');
+            }
+        } else {
+            // إخفاء الزر إذا كانت السلة فارغة
+            floatingCartBtn.classList.remove('has-items');
         }
+    }
+}
+
+/**
+ * 🎯 إظهار تأثير إضافة عنصر للسلة
+ */
+function showCartAddEffect() {
+    const floatingCartBtn = document.getElementById('floatingCartBtn');
+    if (floatingCartBtn && floatingCartBtn.classList.contains('has-items')) {
+        floatingCartBtn.classList.remove('item-added');
+        void floatingCartBtn.offsetWidth; // إعادة تشغيل الأنيميشن
+        floatingCartBtn.classList.add('item-added');
+        
+        setTimeout(() => {
+            floatingCartBtn.classList.remove('item-added');
+        }, 500);
     }
 }
 
@@ -762,6 +669,14 @@ function addToCart(name, price, quantity = 1) {
     else shoppingCart.push({ name: name, price: parseInt(price), quantity: quantity });
     saveCart();
     showNotification(`✓ تم إضافة ${quantity} × ${name}`);
+    
+    // 🆕 إظهار تأثير إضافة عنصر للسلة
+    showCartAddEffect();
+    
+    // 🆕 اهتزاز خفيف على الهاتف
+    if (navigator.vibrate) {
+        navigator.vibrate([10, 30, 10]);
+    }
 }
 
 function removeFromCart(index) {
@@ -1184,14 +1099,8 @@ document.addEventListener('DOMContentLoaded', function() {
     firebaseStorageScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js';
     document.head.appendChild(firebaseStorageScript);
 
-    // ============================================
-    // ⚡ تهيئة نظام تحميل الصور الذكي المتسلسل
-    // ============================================
     initSmartImageLoading();
 
-    // ============================================
-    // 📌 الشريط العلوي الثابت
-    // ============================================
     const topStickyBar = document.getElementById('topStickyBar');
     const mainHeader = document.getElementById('mainHeader');
     
@@ -1215,23 +1124,22 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    // ============================================
-    // 🎯 العناصر الأخرى
-    // ============================================
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
     const menuItems = document.querySelectorAll('.menu-item');
-    const cartIcon = document.getElementById('cartIcon');
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const getLocationBtn = document.getElementById('getLocationBtn');
-
-    if (cartIcon) {
-        cartIcon.addEventListener('click', function(e) {
+    
+    // 🛒 ربط زر السلة العائم الجديد
+    const floatingCartBtn = document.getElementById('floatingCartBtn');
+    if (floatingCartBtn) {
+        floatingCartBtn.addEventListener('click', function(e) {
             e.preventDefault();
             openCartModal();
         });
     }
+    
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const getLocationBtn = document.getElementById('getLocationBtn');
     
     if (adminLoginBtn) {
         adminLoginBtn.addEventListener('click', function(e) {
@@ -1327,6 +1235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === document.getElementById('adminAuthModal')) closeAuthModal();
     });
 
+    // 🛒 التحقق من حالة السلة عند بدء التشغيل
     updateCartUI();
     initLocationIcon();
     initializeLocationSystem();
@@ -1494,4 +1403,5 @@ window.openProductModal = openProductModal;
 window.closeProductModal = closeProductModal;
 window.changeModalQuantity = changeModalQuantity;
 window.addCurrentProductToCart = addCurrentProductToCart;
+window.showCartAddEffect = showCartAddEffect;
 window.smartImageLoader = smartImageLoader;
