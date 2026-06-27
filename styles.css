@@ -9,7 +9,7 @@
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     --shadow-hover: 0 8px 25px rgba(254, 219, 23, 0.5);
     --main-font: 'Cairo', sans-serif;
-    --top-bar-height: 65px;
+    --top-bar-height: 75px; /* 🆕 زيادة من 65px إلى 75px */
 }
 
 * {
@@ -111,10 +111,8 @@ header p.hours {
     margin-top: 0.5rem;
 }
 
-
-
 /* ============================================ */
-/* 📌 الشريط العلوي الثابت (يظهر عند التمرير) - محسّن */
+/* 📌 الشريط العلوي الثابت (محسّن بحجم أكبر) */
 /* ============================================ */
 .top-sticky-bar {
     position: fixed;
@@ -130,7 +128,7 @@ header p.hours {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 15px;
+    padding: 0 20px; /* 🆕 زيادة من 15px */
     z-index: 999;
     
     /* الحالة الأولية: مخفي */
@@ -152,21 +150,21 @@ header p.hours {
 .top-bar-logo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px; /* 🆕 زيادة من 10px */
 }
 
 .top-bar-logo img {
-    width: 45px;
-    height: 45px;
+    width: 52px; /* 🆕 زيادة من 45px */
+    height: 52px;
     border-radius: 50%;
-    border: 2px solid var(--main-yellow);
+    border: 2.5px solid var(--main-yellow);
     object-fit: cover;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .top-bar-title {
     color: var(--main-yellow);
-    font-size: 1.3rem;
+    font-size: 1.4rem; /* 🆕 زيادة من 1.3rem */
     font-weight: 700;
     font-family: var(--main-font);
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
@@ -176,7 +174,7 @@ header p.hours {
 .top-bar-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px; /* 🆕 زيادة من 10px */
 }
 
 .top-bar-btn {
@@ -184,19 +182,20 @@ header p.hours {
     background: var(--main-yellow);
     color: var(--main-red);
     border: 2px solid transparent;
-    padding: 8px 14px;
+    padding: 10px 16px; /* 🆕 زيادة من 8px 14px */
     border-radius: 50px;
-    font-size: 0.9rem;
+    font-size: 0.95rem; /* 🆕 زيادة من 0.9rem */
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     transition: all 0.3s ease;
     font-family: var(--main-font);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    min-height: 44px; /* 🆕 حد أدنى لسهولة اللمس */
 }
 
 .top-bar-btn:hover,
@@ -208,11 +207,11 @@ header p.hours {
 }
 
 .top-bar-btn i {
-    font-size: 1rem;
+    font-size: 1.1rem; /* 🆕 زيادة من 1rem */
 }
 
 .btn-label {
-    font-size: 0.85rem;
+    font-size: 0.9rem; /* 🆕 زيادة من 0.85rem */
 }
 
 /* عداد السلة في الشريط العلوي */
@@ -222,17 +221,17 @@ header p.hours {
     right: -8px;
     background: var(--main-red);
     color: white;
-    min-width: 22px;
-    height: 22px;
+    min-width: 24px; /* 🆕 زيادة من 22px */
+    height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.8rem; /* 🆕 زيادة من 0.75rem */
     font-weight: bold;
     border: 2px solid white;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    padding: 0 4px;
+    padding: 0 5px;
     animation: pulse 2s infinite;
 }
 
@@ -1724,27 +1723,34 @@ section.info-section p {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
 /* ============================================ */
-/* 📱 التجاوب */
+/* 📱 التجاوب - محسّن للهاتف */
 /* ============================================ */
 @media (max-width: 768px) {
     .top-sticky-bar {
-        height: 60px;
-        padding: 0 10px;
+        height: 70px; /* 🆕 زيادة من 60px إلى 70px */
+        padding: 0 12px;
     }
     
     .top-bar-logo img {
-        width: 40px;
-        height: 40px;
+        width: 46px; /* 🆕 زيادة من 40px */
+        height: 46px;
     }
     
     .top-bar-title {
-        font-size: 1.1rem;
+        font-size: 1.2rem; /* 🆕 زيادة من 1.1rem */
     }
     
     .top-bar-btn {
-        padding: 6px 10px;
-        font-size: 0.85rem;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        min-height: 44px; /* 🆕 الحفاظ على حد أدنى للمس */
+        min-width: 44px;
     }
     
     .btn-label {
@@ -1752,11 +1758,17 @@ section.info-section p {
     }
     
     .top-bar-btn i {
-        font-size: 1rem;
+        font-size: 1.15rem; /* 🆕 زيادة من 1rem */
+    }
+    
+    .cart-count-top {
+        min-width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
     }
     
     nav.sections-nav {
-        top: calc(60px + 5px);
+        top: calc(70px + 5px); /* 🆕 تحديث */
         margin: 0 0.5rem 1rem;
         padding: 0.8rem;
     }
@@ -1862,20 +1874,31 @@ section.info-section p {
 
 @media (max-width: 480px) {
     .top-sticky-bar {
-        height: 55px;
+        height: 65px; /* 🆕 زيادة من 55px إلى 65px */
+        padding: 0 10px;
     }
     
     .top-bar-logo img {
-        width: 35px;
-        height: 35px;
+        width: 42px; /* 🆕 زيادة من 35px */
+        height: 42px;
     }
     
     .top-bar-title {
-        font-size: 1rem;
+        font-size: 1.1rem; /* 🆕 زيادة من 1rem */
+    }
+    
+    .top-bar-btn {
+        padding: 7px 11px;
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .top-bar-btn i {
+        font-size: 1.1rem;
     }
     
     nav.sections-nav {
-        top: calc(55px + 5px);
+        top: calc(65px + 5px); /* 🆕 تحديث */
     }
     
     div.menu-items {
@@ -1955,16 +1978,20 @@ section.info-section p {
     }
     
     .top-bar-logo {
-        gap: 5px;
+        gap: 8px;
     }
     
     .top-bar-logo img {
-        width: 32px;
-        height: 32px;
+        width: 38px; /* 🆕 زيادة من 32px */
+        height: 38px;
     }
     
     .top-bar-title {
-        font-size: 0.95rem;
+        font-size: 1rem; /* 🆕 زيادة من 0.95rem */
+    }
+    
+    .top-bar-btn {
+        padding: 6px 10px;
     }
 }
 
