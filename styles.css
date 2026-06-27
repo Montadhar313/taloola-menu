@@ -2171,6 +2171,54 @@ section.info-section p {
 .menu-item:hover .image-preload-indicator {
     opacity: 1;
 }
+.image-skeleton {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(199, 3, 1, 0.2) 0%,
+        rgba(254, 219, 23, 0.3) 50%,
+        rgba(199, 3, 1, 0.2) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    z-index: 1;
+    border-radius: 12px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.lazy-image {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    position: relative;
+    z-index: 2;
+}
+
+.lazy-image.loaded {
+    opacity: 1;
+}
+
+.item-image:has(.lazy-image.loaded) .image-skeleton {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.product-image-wrapper img {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.product-image-wrapper img.loaded {
+    opacity: 1;
+}
 
 /* شريط التمرير المخصص */
 ::-webkit-scrollbar { width: 10px; }
