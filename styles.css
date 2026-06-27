@@ -9,7 +9,7 @@
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     --shadow-hover: 0 8px 25px rgba(254, 219, 23, 0.5);
     --main-font: 'Cairo', sans-serif;
-    --top-bar-height: 75px; /* 🆕 زيادة من 65px إلى 75px */
+    --top-bar-height: 75px;
 }
 
 * {
@@ -112,7 +112,7 @@ header p.hours {
 }
 
 /* ============================================ */
-/* 📌 الشريط العلوي الثابت (محسّن بحجم أكبر) */
+/* 📌 الشريط العلوي الثابت */
 /* ============================================ */
 .top-sticky-bar {
     position: fixed;
@@ -128,10 +128,8 @@ header p.hours {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px; /* 🆕 زيادة من 15px */
+    padding: 0 20px;
     z-index: 999;
-    
-    /* الحالة الأولية: مخفي */
     opacity: 0;
     visibility: hidden;
     transform: translateY(-100%);
@@ -139,22 +137,20 @@ header p.hours {
     will-change: transform, opacity;
 }
 
-/* الحالة الظاهرة */
 .top-sticky-bar.visible {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
 
-/* الشعار المصغر */
 .top-bar-logo {
     display: flex;
     align-items: center;
-    gap: 12px; /* 🆕 زيادة من 10px */
+    gap: 12px;
 }
 
 .top-bar-logo img {
-    width: 52px; /* 🆕 زيادة من 45px */
+    width: 52px;
     height: 52px;
     border-radius: 50%;
     border: 2.5px solid var(--main-yellow);
@@ -164,17 +160,16 @@ header p.hours {
 
 .top-bar-title {
     color: var(--main-yellow);
-    font-size: 1.4rem; /* 🆕 زيادة من 1.3rem */
+    font-size: 1.4rem;
     font-weight: 700;
     font-family: var(--main-font);
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* أزرار الإجراءات */
 .top-bar-actions {
     display: flex;
     align-items: center;
-    gap: 12px; /* 🆕 زيادة من 10px */
+    gap: 12px;
 }
 
 .top-bar-btn {
@@ -182,9 +177,9 @@ header p.hours {
     background: var(--main-yellow);
     color: var(--main-red);
     border: 2px solid transparent;
-    padding: 10px 16px; /* 🆕 زيادة من 8px 14px */
+    padding: 10px 16px;
     border-radius: 50px;
-    font-size: 0.95rem; /* 🆕 زيادة من 0.9rem */
+    font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -195,7 +190,7 @@ header p.hours {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    min-height: 44px; /* 🆕 حد أدنى لسهولة اللمس */
+    min-height: 44px;
 }
 
 .top-bar-btn:hover,
@@ -207,27 +202,26 @@ header p.hours {
 }
 
 .top-bar-btn i {
-    font-size: 1.1rem; /* 🆕 زيادة من 1rem */
+    font-size: 1.1rem;
 }
 
 .btn-label {
-    font-size: 0.9rem; /* 🆕 زيادة من 0.85rem */
+    font-size: 0.9rem;
 }
 
-/* عداد السلة في الشريط العلوي */
 .cart-count-top {
     position: absolute;
     top: -8px;
     right: -8px;
     background: var(--main-red);
     color: white;
-    min-width: 24px; /* 🆕 زيادة من 22px */
+    min-width: 24px;
     height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem; /* 🆕 زيادة من 0.75rem */
+    font-size: 0.8rem;
     font-weight: bold;
     border: 2px solid white;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
@@ -361,6 +355,7 @@ div.menu-items {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1.5rem;
+    contain: layout style paint;
 }
 
 div.menu-item {
@@ -378,6 +373,7 @@ div.menu-item {
     overflow: hidden;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    contain: layout style;
 }
 
 div.menu-item:active {
@@ -402,6 +398,7 @@ div.menu-item:hover {
     align-items: center;
     justify-content: center;
     position: relative;
+    aspect-ratio: 1 / 1;
 }
 
 .item-image img {
@@ -411,6 +408,11 @@ div.menu-item:hover {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     transition: transform 0.3s ease;
     pointer-events: none;
+    will-change: opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 div.menu-item:hover .item-image img {
@@ -431,6 +433,90 @@ div.menu-item p.price {
     font-size: 1.2rem;
     letter-spacing: 1px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================ */
+/* ⚡ Skeleton Loading للصور */
+/* ============================================ */
+.image-skeleton {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(199, 3, 1, 0.2) 0%,
+        rgba(254, 219, 23, 0.3) 50%,
+        rgba(199, 3, 1, 0.2) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    z-index: 1;
+    border-radius: 12px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Lazy Image States */
+.lazy-image {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    position: relative;
+    z-index: 2;
+}
+
+.lazy-image.loaded {
+    opacity: 1;
+}
+
+.lazy-image.loading {
+    opacity: 0.5;
+}
+
+/* Blur-up Effect */
+.lazy-image.blur-up {
+    filter: blur(10px);
+    transform: scale(1.05);
+}
+
+.lazy-image.blur-up.loaded {
+    filter: blur(0);
+    transform: scale(1);
+    transition: filter 0.5s ease, transform 0.5s ease, opacity 0.4s ease;
+}
+
+/* إخفاء Skeleton بعد التحميل */
+.item-image:has(.lazy-image.loaded) .image-skeleton {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+/* Preload Indicator */
+.image-preload-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.menu-item:hover .image-preload-indicator {
+    opacity: 1;
 }
 
 /* ============================================ */
@@ -496,12 +582,45 @@ div.menu-item p.price {
     overflow: hidden;
 }
 
+.product-image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(199, 3, 1, 0.3) 0%,
+        rgba(254, 219, 23, 0.4) 50%,
+        rgba(199, 3, 1, 0.3) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
 .product-image-wrapper img {
     max-width: 80%;
     max-height: 80%;
     object-fit: contain;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
     animation: zoomIn 0.5s ease;
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.product-image-wrapper img.loaded {
+    opacity: 1;
+}
+
+.product-image-wrapper:has(img.loaded)::before {
+    opacity: 0;
 }
 
 @keyframes zoomIn {
@@ -1733,23 +1852,23 @@ section.info-section p {
 /* ============================================ */
 @media (max-width: 768px) {
     .top-sticky-bar {
-        height: 70px; /* 🆕 زيادة من 60px إلى 70px */
+        height: 70px;
         padding: 0 12px;
     }
     
     .top-bar-logo img {
-        width: 46px; /* 🆕 زيادة من 40px */
+        width: 46px;
         height: 46px;
     }
     
     .top-bar-title {
-        font-size: 1.2rem; /* 🆕 زيادة من 1.1rem */
+        font-size: 1.2rem;
     }
     
     .top-bar-btn {
         padding: 8px 12px;
         font-size: 0.9rem;
-        min-height: 44px; /* 🆕 الحفاظ على حد أدنى للمس */
+        min-height: 44px;
         min-width: 44px;
     }
     
@@ -1758,7 +1877,7 @@ section.info-section p {
     }
     
     .top-bar-btn i {
-        font-size: 1.15rem; /* 🆕 زيادة من 1rem */
+        font-size: 1.15rem;
     }
     
     .cart-count-top {
@@ -1768,7 +1887,7 @@ section.info-section p {
     }
     
     nav.sections-nav {
-        top: calc(70px + 5px); /* 🆕 تحديث */
+        top: calc(70px + 5px);
         margin: 0 0.5rem 1rem;
         padding: 0.8rem;
     }
@@ -1874,17 +1993,17 @@ section.info-section p {
 
 @media (max-width: 480px) {
     .top-sticky-bar {
-        height: 65px; /* 🆕 زيادة من 55px إلى 65px */
+        height: 65px;
         padding: 0 10px;
     }
     
     .top-bar-logo img {
-        width: 42px; /* 🆕 زيادة من 35px */
+        width: 42px;
         height: 42px;
     }
     
     .top-bar-title {
-        font-size: 1.1rem; /* 🆕 زيادة من 1rem */
+        font-size: 1.1rem;
     }
     
     .top-bar-btn {
@@ -1898,7 +2017,7 @@ section.info-section p {
     }
     
     nav.sections-nav {
-        top: calc(65px + 5px); /* 🆕 تحديث */
+        top: calc(65px + 5px);
     }
     
     div.menu-items {
@@ -1982,12 +2101,12 @@ section.info-section p {
     }
     
     .top-bar-logo img {
-        width: 38px; /* 🆕 زيادة من 32px */
+        width: 38px;
         height: 38px;
     }
     
     .top-bar-title {
-        font-size: 1rem; /* 🆕 زيادة من 0.95rem */
+        font-size: 1rem;
     }
     
     .top-bar-btn {
@@ -2015,209 +2134,6 @@ section.info-section p {
 *:focus {
     outline: 3px solid var(--main-yellow);
     outline-offset: 2px;
-}
-
-
-/* ============================================ */
-/* ⚡ تحسينات تحميل الصور */
-/* ============================================ */
-
-/* Skeleton Loading Effect */
-.image-skeleton {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        rgba(199, 3, 1, 0.2) 0%,
-        rgba(254, 219, 23, 0.3) 50%,
-        rgba(199, 3, 1, 0.2) 100%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-    z-index: 1;
-    border-radius: 12px;
-}
-
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Lazy Image - الحالة الأولية */
-.lazy-image {
-    opacity: 0;
-    transition: opacity 0.4s ease-in-out;
-    position: relative;
-    z-index: 2;
-}
-
-/* Lazy Image - بعد التحميل */
-.lazy-image.loaded {
-    opacity: 1;
-}
-
-/* Lazy Image - أثناء التحميل */
-.lazy-image.loading {
-    opacity: 0.5;
-}
-
-/* إخفاء Skeleton بعد التحميل */
-.item-image:has(.lazy-image.loaded) .image-skeleton {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-/* تأثير Blur-up (اختياري - أكثر احترافية) */
-.lazy-image.blur-up {
-    filter: blur(10px);
-    transform: scale(1.05);
-}
-
-.lazy-image.blur-up.loaded {
-    filter: blur(0);
-    transform: scale(1);
-    transition: filter 0.5s ease, transform 0.5s ease, opacity 0.4s ease;
-}
-
-/* تحسين أداء الصور */
-.item-image img {
-    will-change: opacity;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-}
-
-/* Container للصور مع aspect-ratio */
-.item-image {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    background: linear-gradient(135deg, var(--main-red), #8b0000);
-}
-
-/* تحسين الصور في النوافذ المنبثقة */
-.product-image-wrapper img {
-    will-change: transform;
-    backface-visibility: hidden;
-}
-
-/* Placeholder للصور في نافذة المنتج */
-.product-image-wrapper {
-    position: relative;
-    background: linear-gradient(135deg, var(--main-red), #8b0000);
-}
-
-.product-image-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        rgba(199, 3, 1, 0.3) 0%,
-        rgba(254, 219, 23, 0.4) 50%,
-        rgba(199, 3, 1, 0.3) 100%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-    z-index: 1;
-}
-
-.product-image-wrapper img {
-    position: relative;
-    z-index: 2;
-}
-
-.product-image-wrapper:has(img.loaded)::before,
-.product-image-wrapper img:not([src=""]):not([src^="data:"]) ~ ::before {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-/* تحسين أداء التمرير */
-.menu-items {
-    contain: layout style paint;
-}
-
-.menu-item {
-    contain: layout style;
-}
-
-/* Preload indicator (اختياري) */
-.image-preload-indicator {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-size: 0.7rem;
-    z-index: 3;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-.menu-item:hover .image-preload-indicator {
-    opacity: 1;
-}
-.image-skeleton {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        rgba(199, 3, 1, 0.2) 0%,
-        rgba(254, 219, 23, 0.3) 50%,
-        rgba(199, 3, 1, 0.2) 100%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-    z-index: 1;
-    border-radius: 12px;
-}
-
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.lazy-image {
-    opacity: 0;
-    transition: opacity 0.4s ease-in-out;
-    position: relative;
-    z-index: 2;
-}
-
-.lazy-image.loaded {
-    opacity: 1;
-}
-
-.item-image:has(.lazy-image.loaded) .image-skeleton {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.product-image-wrapper img {
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.product-image-wrapper img.loaded {
-    opacity: 1;
 }
 
 /* شريط التمرير المخصص */
