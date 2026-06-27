@@ -16,9 +16,6 @@ let locationPermissionGranted = false;
 const LOCATION_STORAGE_KEY = 'taloola_user_location';
 const LOCATION_PERMISSION_KEY = 'taloola_location_permission';
 const LOCATION_TEXT_STORAGE_KEY = 'taloola_saved_address';
-const CUSTOMER_PHONE_KEY = 'taloola_saved_phone';
-const DELIVERY_AREA_KEY = 'taloola_saved_area';
-
 let savedAddressText = localStorage.getItem(LOCATION_TEXT_STORAGE_KEY) || '';
 
 function saveLocationToStorage(location) {
@@ -58,7 +55,7 @@ async function checkLocationPermissionStatus() {
 function showAndroidSettingsGuide() {
     const statusDiv = document.getElementById('locationModalStatus');
     const textSpan = document.getElementById('locationModalText');
-
+    
     if (statusDiv && textSpan) {
         statusDiv.className = 'location-modal-status error';
         textSpan.innerHTML = `
@@ -80,9 +77,9 @@ function requestLocationPermission() {
             reject(new Error('المتصفح لا يدعم تحديد الموقع'));
             return;
         }
-
+        
         const os = detectOS();
-
+        
         if (os === 'android') {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -119,7 +116,7 @@ function requestLocationPermission() {
                 if (watchId !== null) navigator.geolocation.clearWatch(watchId);
                 reject(new Error('انتهت مهلة طلب الموقع'));
             }, 20000);
-
+            
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     clearTimeout(timeoutId);
@@ -155,32 +152,32 @@ async function requestLocationAndUpdate() {
     const statusDiv = document.getElementById('locationModalStatus');
     const textSpan = document.getElementById('locationModalText');
     const os = detectOS();
-
+    
     if (statusDiv && textSpan) {
         statusDiv.className = 'location-modal-status loading';
         textSpan.textContent = 'جاري تحديد موقعك...';
     }
-
+    
     try {
         const permissionStatus = await checkLocationPermissionStatus();
-
+        
         if (os === 'android' && permissionStatus === 'denied') {
             showAndroidSettingsGuide();
             showNotification('⚠ يرجى تفعيل الموقع من إعدادات Chrome');
             return null;
         }
-
+        
         const location = await requestLocationPermission();
         const savedLocation = saveLocationToStorage(location);
         userLocation = savedLocation;
         locationPermissionGranted = true;
         localStorage.setItem(LOCATION_PERMISSION_KEY, 'granted');
-
+        
         if (statusDiv && textSpan) {
             statusDiv.className = 'location-modal-status success';
             textSpan.textContent = '✓ تم تحديد موقعك بنجاح';
         }
-
+        
         updateLocationModalStatus();
         updateLocationIconStatus();
         updateLocationInCart();
@@ -241,7 +238,7 @@ function updateLocationModalStatus() {
     const infoDiv = document.getElementById('locationModalInfo');
     const coordsP = document.getElementById('locationCoords');
     if (!statusDiv || !textSpan) return;
-
+    
     const location = userLocation || getLocationFromStorage();
     if (location) {
         statusDiv.className = 'location-modal-status success';
@@ -285,7 +282,7 @@ async function initializeLocationSystem() {
 }
 
 // ============================================
-// 🛒 دوال السلة (مُحدّثة للسلة الجديدة)
+// 🛒 دوال السلة
 // ============================================
 let shoppingCart = JSON.parse(localStorage.getItem('taloola_cart')) || [];
 
@@ -295,23 +292,17 @@ function saveCart() {
 }
 
 function updateCartUI() {
-    const cartCount = document.getElementById('cartCount');
+    // تحديث العداد في الشريط العلوي الجديد
+    const cartCountTop = document.getElementById('cartCount');
     const totalItems = shoppingCart.reduce((sum, item) => sum + item.quantity, 0);
-    if (cartCount) {
-        cartCount.textContent = totalItems;
+    
+    if (cartCountTop) {
+        cartCountTop.textContent = totalItems;
         if (totalItems > 0) {
-            cartCount.style.animation = 'none';
-            setTimeout(() => { cartCount.style.animation = 'pulse 2s infinite'; }, 10);
+            cartCountTop.style.animation = 'none';
+            setTimeout(() => { cartCountTop.style.animation = 'pulse 2s infinite'; }, 10);
         }
     }
-    updateCartVisibility();
-}
-
-function updateCartVisibility() {
-    const cartIcon = document.getElementById('cartIcon');
-    if (!cartIcon) return;
-    if (shoppingCart.length === 0) cartIcon.classList.add('empty');
-    else cartIcon.classList.remove('empty');
 }
 
 function addToCart(name, price, quantity = 1) {
@@ -345,9 +336,6 @@ function clearCart() {
     }
 }
 
-// ============================================
-// 🛒 عرض عناصر السلة (التصميم الجديد)
-// ============================================
 function displayCartItems() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalElement = document.getElementById('cartTotal');
@@ -401,44 +389,8 @@ function displayCartItems() {
         cartItemsContainer.appendChild(itemElement);
     });
     
-    if (cartTotalElement) {
-        cartTotalElement.textContent = `${total.toLocaleString('ar-EG')} د.ع`;
-    }
-    if (cartItemsCount) {
-        cartItemsCount.textContent = totalQuantity;
-    }
-}
-
-// ============================================
-// 📞 تحميل البيانات المحفوظة للزبون
-// ============================================
-function loadSavedCustomerInfo() {
-    const phoneInput = document.getElementById('customerPhone');
-    const areaSelect = document.getElementById('deliveryArea');
-    const detailedInput = document.getElementById('detailedAddress');
-    
-    try {
-        const savedPhone = localStorage.getItem(CUSTOMER_PHONE_KEY);
-        const savedArea = localStorage.getItem(DELIVERY_AREA_KEY);
-        const savedDetailed = localStorage.getItem('taloola_saved_detailed');
-        
-        if (savedPhone && phoneInput && !phoneInput.value) {
-            phoneInput.value = savedPhone;
-        }
-        
-        if (savedArea && areaSelect && !areaSelect.value) {
-            const options = Array.from(areaSelect.options).map(o => o.value);
-            if (options.includes(savedArea)) {
-                areaSelect.value = savedArea;
-            }
-        }
-        
-        if (savedDetailed && detailedInput && !detailedInput.value) {
-            detailedInput.value = savedDetailed;
-        }
-    } catch (e) {
-        console.warn('تعذر تحميل البيانات المحفوظة:', e);
-    }
+    if (cartTotalElement) cartTotalElement.textContent = `${total.toLocaleString('ar-EG')} د.ع`;
+    if (cartItemsCount) cartItemsCount.textContent = totalQuantity;
 }
 
 function openCartModal() {
@@ -447,18 +399,30 @@ function openCartModal() {
         m.style.display = 'flex';
         displayCartItems();
         loadSavedCustomerInfo();
-        
-        // إزالة حالات الخطأ السابقة
-        ['customerPhone', 'deliveryArea'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('error');
-        });
     }
 }
 
 function closeCartModal() {
     const m = document.getElementById('cartModal');
     if (m) m.style.display = 'none';
+}
+
+function loadSavedCustomerInfo() {
+    const phoneInput = document.getElementById('customerPhone');
+    const areaSelect = document.getElementById('deliveryArea');
+    
+    if (!phoneInput || !areaSelect) return;
+    
+    try {
+        const savedPhone = localStorage.getItem('taloola_saved_phone');
+        const savedArea = localStorage.getItem('taloola_saved_area');
+        
+        if (savedPhone && !phoneInput.value) phoneInput.value = savedPhone;
+        if (savedArea && !areaSelect.value) {
+            const options = Array.from(areaSelect.options).map(o => o.value);
+            if (options.includes(savedArea)) areaSelect.value = savedArea;
+        }
+    } catch (e) {}
 }
 
 // ============================================
@@ -472,10 +436,10 @@ function openProductModal(element) {
     const price = parseInt(element.getAttribute('data-price'));
     const image = element.getAttribute('data-image');
     const description = element.getAttribute('data-description') || 'منتج لذيذ من مطعم تعلولة';
-
+    
     currentProduct = { name, price, image, description };
     modalQuantity = 1;
-
+    
     document.getElementById('productModalName').textContent = name;
     document.getElementById('productModalPrice').textContent = price.toLocaleString('ar-EG');
     document.getElementById('productModalDescription').textContent = description;
@@ -483,10 +447,10 @@ function openProductModal(element) {
     document.getElementById('productModalImage').alt = name;
     document.getElementById('modalQtyDisplay').textContent = modalQuantity;
     updateModalTotal();
-
+    
     const modal = document.getElementById('productModal');
     modal.style.display = 'flex';
-
+    
     if (navigator.vibrate) navigator.vibrate(10);
 }
 
@@ -511,25 +475,25 @@ function changeModalQuantity(change) {
     }
     document.getElementById('modalQtyDisplay').textContent = modalQuantity;
     updateModalTotal();
-
+    
     const display = document.getElementById('modalQtyDisplay');
     display.style.transform = 'scale(1.3)';
     setTimeout(() => { display.style.transform = 'scale(1)'; }, 200);
-
+    
     if (navigator.vibrate) navigator.vibrate(5);
 }
 
 function addCurrentProductToCart() {
     if (!currentProduct) return;
-
+    
     addToCart(currentProduct.name, currentProduct.price, modalQuantity);
-
+    
     const btn = document.getElementById('modalAddToCartBtn');
     btn.classList.add('added');
     btn.innerHTML = '<i class="fas fa-check"></i> <span>تمت الإضافة!</span>';
-
+    
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
-
+    
     setTimeout(() => {
         btn.classList.remove('added');
         btn.innerHTML = '<i class="fas fa-cart-plus"></i> <span>إضافة للسلة</span>';
@@ -538,12 +502,62 @@ function addCurrentProductToCart() {
 }
 
 // ============================================
-// 📋 نافذة مراجعة الطلب (اختيارية)
+// 📋 نافذة مراجعة الطلب
 // ============================================
 function showOrderReview() {
     if (shoppingCart.length === 0) { alert('السلة فارغة!'); return; }
-    // في التصميم الجديد، نرسل الطلب مباشرة من السلة
-    confirmAndSendOrder();
+    closeCartModal();
+    const reviewModal = document.getElementById('orderReviewModal');
+    if (reviewModal) { reviewModal.style.display = 'flex'; displayOrderReview(); }
+}
+
+function displayOrderReview() {
+    const reviewItemsContainer = document.getElementById('orderReviewItems');
+    const reviewItemCount = document.getElementById('reviewItemCount');
+    const reviewTotalQuantity = document.getElementById('reviewTotalQuantity');
+    const reviewTotalAmount = document.getElementById('reviewTotalAmount');
+    const locationInput = document.getElementById('locationDescription');
+    if (!reviewItemsContainer) return;
+
+    const btn = document.getElementById('useSavedAddressBtn');
+    const preview = document.getElementById('savedAddressPreview');
+    if (btn && preview && savedAddressText) {
+        btn.style.display = 'flex';
+        preview.textContent = savedAddressText.substring(0, 50) + (savedAddressText.length > 50 ? '...' : '');
+        btn.onclick = function() {
+            if (locationInput) locationInput.value = savedAddressText;
+        };
+    }
+
+    const currentOrderAddress = sessionStorage.getItem('current_order_address');
+    if (locationInput) {
+        if (currentOrderAddress) locationInput.value = currentOrderAddress;
+    }
+
+    reviewItemsContainer.innerHTML = '';
+    let totalQuantity = 0, totalAmount = 0;
+    shoppingCart.forEach((item) => {
+        const itemTotal = item.price * item.quantity;
+        totalQuantity += item.quantity;
+        totalAmount += itemTotal;
+        const reviewItem = document.createElement('div');
+        reviewItem.className = 'review-item';
+        reviewItem.innerHTML = `
+            <div class="review-item-info">
+                <div class="review-item-name">${item.name}</div>
+                <div class="review-item-details">
+                    <span><i class="fas fa-box"></i> الكمية: ${item.quantity}</span>
+                    <span><i class="fas fa-tag"></i> السعر: ${item.price.toLocaleString('ar-EG')} د.ع</span>
+                </div>
+            </div>
+            <div class="review-item-total">${itemTotal.toLocaleString('ar-EG')} د.ع</div>
+        `;
+        reviewItemsContainer.appendChild(reviewItem);
+    });
+    
+    if (reviewItemCount) reviewItemCount.textContent = `${shoppingCart.length} منتج`;
+    if (reviewTotalQuantity) reviewTotalQuantity.textContent = `${totalQuantity} قطعة`;
+    if (reviewTotalAmount) reviewTotalAmount.textContent = `${totalAmount.toLocaleString('ar-EG')} د.ع`;
 }
 
 function closeOrderReview() {
@@ -552,24 +566,14 @@ function closeOrderReview() {
 }
 
 // ============================================
-// ✅ التحقق من صحة رقم الهاتف العراقي
-// ============================================
-function validateIraqiPhone(phone) {
-    // يقبل الأرقام التي تبدأ بـ 07 وتتكون من 11 رقم
-    const phoneRegex = /^07[0-9]{9}$/;
-    return phoneRegex.test(phone);
-}
-
-// ============================================
-// 📱 إرسال الطلب عبر واتساب (مُحدّثة)
+// 📱 إرسال الطلب عبر واتساب
 // ============================================
 function confirmAndSendOrder() {
     if (shoppingCart.length === 0) {
-        alert('السلة فارغة! الرجاء إضافة منتجات أولاً.');
+        alert('السلة فارغة!');
         return;
     }
     
-    // جلب البيانات من الحقول الجديدة
     const phoneInput = document.getElementById('customerPhone');
     const areaSelect = document.getElementById('deliveryArea');
     const detailedInput = document.getElementById('detailedAddress');
@@ -578,68 +582,47 @@ function confirmAndSendOrder() {
     const area = areaSelect ? areaSelect.value.trim() : '';
     const detailed = detailedInput ? detailedInput.value.trim() : '';
     
-    // إزالة حالات الخطأ السابقة
     [phoneInput, areaSelect].forEach(el => {
         if (el) el.classList.remove('error');
     });
     
-    // التحقق من الحقول الإلزامية
     let hasError = false;
-    let firstErrorElement = null;
     
     if (!phone) {
         if (phoneInput) {
             phoneInput.classList.add('error');
-            firstErrorElement = phoneInput;
+            phoneInput.focus();
         }
         showNotification('⚠ الرجاء إدخال رقم الهاتف');
         hasError = true;
-    } else if (!validateIraqiPhone(phone)) {
-        if (phoneInput) {
-            phoneInput.classList.add('error');
-            firstErrorElement = phoneInput;
-        }
-        showNotification('⚠ رقم الهاتف غير صحيح (يجب أن يبدأ بـ 07 ويتكون من 11 رقم)');
+    } else if (!/^07[0-9]{9}$/.test(phone)) {
+        if (phoneInput) phoneInput.classList.add('error');
+        showNotification('⚠ رقم الهاتف غير صحيح (يجب أن يبدأ بـ 07)');
         hasError = true;
     }
     
     if (!area) {
         if (areaSelect) {
             areaSelect.classList.add('error');
-            if (!firstErrorElement) firstErrorElement = areaSelect;
+            if (!hasError && phoneInput) areaSelect.focus();
         }
-        if (!hasError) showNotification('⚠ الرجاء اختيار منطقة التوصيل');
+        showNotification('⚠ الرجاء اختيار منطقة التوصيل');
         hasError = true;
     }
     
-    if (hasError) {
-        if (firstErrorElement) {
-            firstErrorElement.focus();
-            firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
-    }
+    if (hasError) return;
     
-    // حفظ البيانات للطلبات القادمة
     try {
-        localStorage.setItem(CUSTOMER_PHONE_KEY, phone);
-        localStorage.setItem(DELIVERY_AREA_KEY, area);
-        if (detailed) {
-            localStorage.setItem('taloola_saved_detailed', detailed);
-        }
-    } catch (e) {
-        console.warn('تعذر حفظ البيانات:', e);
-    }
+        localStorage.setItem('taloola_saved_phone', phone);
+        localStorage.setItem('taloola_saved_area', area);
+    } catch (e) {}
     
     const phoneNumber = '9647755666073';
     let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
     
-    // معلومات الزبون
     message += `📞 رقم الهاتف: ${phone}\n`;
     message += `📍 منطقة التوصيل: ${area}\n`;
-    if (detailed) {
-        message += `🏠 العنوان التفصيلي: ${detailed}\n`;
-    }
+    if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
     
     message += '\n═══════════════════\n';
     message += 'الطلب :\n';
@@ -659,7 +642,6 @@ function confirmAndSendOrder() {
     message += `\nالاجمالي : ${totalAmount}`;
     message += `\nالمجموع النهائي : ${totalAmount}`;
     
-    // إضافة الموقع الجغرافي إذا كان متاحاً
     const gpsLocation = userLocation || getLocationFromStorage();
     if (gpsLocation) {
         const mapUrl = gpsLocation.googleMapsUrl || 
@@ -668,17 +650,14 @@ function confirmAndSendOrder() {
         message += `\n${mapUrl}`;
     }
     
-    // إرسال عبر واتساب
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
     
-    // إغلاق السلة وتنظيف البيانات
     closeCartModal();
     showNotification('✅ تم إرسال طلبك بنجاح!');
     
     setTimeout(() => {
         shoppingCart = [];
         saveCart();
-        // تنظيف الحقول بعد الإرسال
         if (phoneInput) phoneInput.value = '';
         if (areaSelect) areaSelect.value = '';
         if (detailedInput) detailedInput.value = '';
@@ -738,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
         appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7",
         measurementId: "G-L4SLHVVFVR"
     };
-
+    
     const firebaseScript = document.createElement('script');
     firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     document.head.appendChild(firebaseScript);
@@ -749,14 +728,63 @@ document.addEventListener('DOMContentLoaded', function() {
     firebaseStorageScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js';
     document.head.appendChild(firebaseStorageScript);
 
+    // ============================================
+    // 📌 الشريط العلوي الثابت (جديد)
+    // ============================================
+    const topStickyBar = document.getElementById('topStickyBar');
+    const mainHeader = document.getElementById('mainHeader');
+    
+    // حساب ارتفاع الهيدر لتحديد متى يظهر الشريط
+    function getHeaderOffset() {
+        return mainHeader ? mainHeader.offsetHeight - 50 : 200;
+    }
+    
+    // التحكم في ظهور/إخفاء الشريط العلوي
+    function handleScroll() {
+        if (!topStickyBar) return;
+        
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        const headerOffset = getHeaderOffset();
+        
+        if (scrollY > headerOffset) {
+            topStickyBar.classList.add('visible');
+        } else {
+            topStickyBar.classList.remove('visible');
+        }
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // استدعاء أولي
+
+    // ============================================
+    // 🎯 العناصر الأخرى
+    // ============================================
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
     const menuItems = document.querySelectorAll('.menu-item');
-    const cartIcon = document.getElementById('cartIcon');
+    const cartIcon = document.getElementById('cartIcon'); // الآن في الشريط العلوي
+    const adminLoginBtn = document.getElementById('adminLoginBtn'); // الآن في الشريط العلوي
     const getLocationBtn = document.getElementById('getLocationBtn');
 
-    // 🛍️ ربط النقر على بطاقات المنتجات
+    // ربط زر السلة في الشريط العلوي
+    if (cartIcon) {
+        cartIcon.addEventListener('click', function(e) {
+            e.preventDefault();
+            openCartModal();
+        });
+    }
+    
+    // ربط زر تسجيل الدخول في الشريط العلوي
+    if (adminLoginBtn) {
+        adminLoginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const adminAuthModal = document.getElementById('adminAuthModal');
+            if (adminAuthModal) adminAuthModal.style.display = 'flex';
+        });
+    }
+
+    // ربط النقر على بطاقات المنتجات
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
@@ -764,11 +792,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 🛍️ ربط أزرار نافذة المنتج
+    // ربط أزرار نافذة المنتج
     const modalQtyDecrease = document.getElementById('modalQtyDecrease');
     const modalQtyIncrease = document.getElementById('modalQtyIncrease');
     const modalAddToCartBtn = document.getElementById('modalAddToCartBtn');
-
+    
     if (modalQtyDecrease) {
         modalQtyDecrease.addEventListener('click', function(e) {
             e.preventDefault();
@@ -776,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function() {
             changeModalQuantity(-1);
         });
     }
-
+    
     if (modalQtyIncrease) {
         modalQtyIncrease.addEventListener('click', function(e) {
             e.preventDefault();
@@ -784,7 +812,7 @@ document.addEventListener('DOMContentLoaded', function() {
             changeModalQuantity(1);
         });
     }
-
+    
     if (modalAddToCartBtn) {
         modalAddToCartBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -800,7 +828,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 🎯 التحكم بظهور زر الرجوع لأعلى (باستخدام class)
+    // زر الرجوع لأعلى
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) {
             if (window.pageYOffset > 300) {
@@ -817,7 +845,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 🔄 شريط التنقل - التمرير التلقائي للزر النشط
+    // التنقل بين الأقسام
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const targetSection = document.getElementById(this.getAttribute('data-section'));
@@ -825,39 +853,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 menuSections.forEach(s => s.classList.remove('active'));
                 targetSection.classList.add('active');
-                
-                // تحديث الأزرار النشطة
-                navButtons.forEach(b => {
-                    b.classList.remove('active');
-                    b.style.background = 'var(--main-yellow)';
-                });
-                this.classList.add('active');
+                navButtons.forEach(b => b.style.background = 'var(--main-yellow)');
                 this.style.background = '#ffffff';
-                
-                // 🔄 التمرير الأفقي التلقائي للزر النشط
-                this.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'nearest',
-                    inline: 'center'
-                });
             }
         });
     });
 
-    if (cartIcon) {
-        cartIcon.addEventListener('click', function(e) {
-            e.preventDefault();
-            openCartModal();
-        });
-    }
-
-    // تأثيرات الظهور عند التمرير
+    // تأثيرات التمرير
     const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => { 
-            if (entry.isIntersecting) entry.target.classList.add('animate-in'); 
-        });
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('animate-in'); });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    
     menuSections.forEach(s => observer.observe(s));
     document.querySelectorAll('section.info-section').forEach(s => observer.observe(s));
 
@@ -871,30 +876,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === document.getElementById('adminAuthModal')) closeAuthModal();
     });
 
-    // 📱 تهيئة حقول الإدخال (منع الأحرف في حقل الرقم)
-    const phoneInput = document.getElementById('customerPhone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            // السماح بالأرقام فقط
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-        
-        // إزالة حالة الخطأ عند الكتابة
-        phoneInput.addEventListener('input', function() {
-            this.classList.remove('error');
-        });
-    }
-    
-    const areaSelect = document.getElementById('deliveryArea');
-    if (areaSelect) {
-        areaSelect.addEventListener('change', function() {
-            this.classList.remove('error');
-        });
-    }
-
     updateCartUI();
     initLocationIcon();
     initializeLocationSystem();
+
+    // ربط لوحة التحكم
+    const adminLoginSubmit = document.getElementById('adminLoginSubmit');
+    const adminPanel = document.getElementById('adminPanel');
+    const closeAdminPanel = document.getElementById('closeAdminPanel');
+    const adminAuthModal = document.getElementById('adminAuthModal');
+    const ADMIN_CREDENTIALS = { username: "admin", password: "admin123" };
+
+    if (adminLoginSubmit) {
+        adminLoginSubmit.addEventListener('click', () => {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                if (adminAuthModal) adminAuthModal.style.display = 'none';
+                if (adminPanel) adminPanel.style.display = 'flex';
+                loadCurrentAds();
+            } else alert('بيانات خاطئة');
+        });
+    }
+    
+    if (closeAdminPanel) {
+        closeAdminPanel.addEventListener('click', () => {
+            if (adminPanel) adminPanel.style.display = 'none';
+        });
+    }
 
     firebaseStorageScript.onload = function() {
         setTimeout(() => {
@@ -908,16 +917,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 // نظام الإعلانات (Firebase)
 // ============================================
-const ADMIN_CREDENTIALS = { username: "admin", password: "admin123" };
-
 function loadCurrentAds() {
     const currentAds = document.getElementById('currentAds');
     if (!currentAds) return;
     currentAds.innerHTML = '<p>جاري تحميل الإعلانات...</p>';
-    if (typeof firebase === 'undefined' || !firebase.database) { 
-        currentAds.innerHTML = '<p>Firebase غير متوفر</p>'; 
-        return; 
-    }
+    if (typeof firebase === 'undefined' || !firebase.database) { currentAds.innerHTML = '<p>Firebase غير متوفر</p>'; return; }
     firebase.database().ref('ads/').orderByChild('timestamp').once('value').then((snapshot) => {
         const ads = snapshot.val();
         if (!ads) { currentAds.innerHTML = '<p>لا توجد إعلانات</p>'; return; }
@@ -940,10 +944,7 @@ function loadCurrentAds() {
 function displayAds() {
     const adsContainer = document.getElementById('adsContainer');
     if (!adsContainer) return;
-    if (typeof firebase === 'undefined' || !firebase.database) { 
-        adsContainer.innerHTML = '<p class="no-ads">Firebase غير متوفر</p>'; 
-        return; 
-    }
+    if (typeof firebase === 'undefined' || !firebase.database) { adsContainer.innerHTML = '<p class="no-ads">Firebase غير متوفر</p>'; return; }
     adsContainer.innerHTML = '<p class="no-ads">جاري التحميل...</p>';
     firebase.database().ref('ads/').orderByChild('timestamp').once('value').then((snapshot) => {
         const ads = snapshot.val();
@@ -971,11 +972,8 @@ function createAd() {
     const template = document.getElementById('adTemplate').value;
     const imageFile = document.getElementById('adImage').files[0];
     if (!title || !description) { alert('املأ الحقول الإلزامية'); return; }
-    if (typeof firebase === 'undefined' || !firebase.storage || !firebase.database) { 
-        alert('Firebase غير متوفر'); 
-        return; 
-    }
-
+    if (typeof firebase === 'undefined' || !firebase.storage || !firebase.database) { alert('Firebase غير متوفر'); return; }
+    
     const storage = firebase.storage();
     const database = firebase.database();
     let imageUrl = '';
@@ -998,20 +996,14 @@ function createAd() {
 
 function deleteAd(key, imageUrl) {
     if (!confirm('هل أنت متأكد؟')) return;
-    if (typeof firebase === 'undefined' || !firebase.database) { 
-        alert('Firebase غير متوفر'); 
-        return; 
-    }
+    if (typeof firebase === 'undefined' || !firebase.database) { alert('Firebase غير متوفر'); return; }
     const database = firebase.database();
     const storage = firebase.storage();
     database.ref('ads/' + key).remove().then(() => {
         if (imageUrl) return storage.refFromURL(imageUrl).delete();
         return Promise.resolve();
-    }).then(() => { 
-        alert('تم الحذف'); 
-        loadCurrentAds(); 
-        displayAds(); 
-    }).catch(() => alert('خطأ'));
+    }).then(() => { alert('تم الحذف'); loadCurrentAds(); displayAds(); })
+    .catch(() => alert('خطأ'));
 }
 
 function clearAdForm() {
@@ -1027,33 +1019,7 @@ function clearAdForm() {
     if (imagePreview) imagePreview.innerHTML = '<span>معاينة الصورة</span>';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const adminLoginSubmit = document.getElementById('adminLoginSubmit');
-    const adminPanel = document.getElementById('adminPanel');
-    const closeAdminPanel = document.getElementById('closeAdminPanel');
-    const adminAuthModal = document.getElementById('adminAuthModal');
-
-    if (adminLoginBtn) adminLoginBtn.addEventListener('click', () => {
-        if (adminAuthModal) adminAuthModal.style.display = 'flex';
-    });
-    if (adminLoginSubmit) adminLoginSubmit.addEventListener('click', () => {
-        const username = document.getElementById('adminUsername').value;
-        const password = document.getElementById('adminPassword').value;
-        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-            if (adminAuthModal) adminAuthModal.style.display = 'none';
-            if (adminPanel) adminPanel.style.display = 'flex';
-            loadCurrentAds();
-        } else alert('بيانات خاطئة');
-    });
-    if (closeAdminPanel) closeAdminPanel.addEventListener('click', () => {
-        if (adminPanel) adminPanel.style.display = 'none';
-    });
-});
-
-// ============================================
 // تصدير الدوال العامة
-// ============================================
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.changeQuantity = changeQuantity;
@@ -1076,5 +1042,3 @@ window.openProductModal = openProductModal;
 window.closeProductModal = closeProductModal;
 window.changeModalQuantity = changeModalQuantity;
 window.addCurrentProductToCart = addCurrentProductToCart;
-window.loadSavedCustomerInfo = loadSavedCustomerInfo;
-window.validateIraqiPhone = validateIraqiPhone;
