@@ -6,6 +6,7 @@
     <title>لوحة تحكم مطعم تعلولة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="admin-image-styles.css">
 </head>
 <body>
     <!-- شاشة تسجيل الدخول -->
@@ -29,12 +30,18 @@
     <div id="dashboard" class="dashboard" style="display: none;">
         <!-- الشريط الجانبي -->
         <aside class="sidebar">
+            
             <div class="sidebar-header">
                 <img src="../assets/images/Logo.gif" alt="Logo" class="sidebar-logo">
                 <h3>تعلولة</h3>
                 <p class="sidebar-subtitle">لوحة الإدارة</p>
             </div>
             <nav class="sidebar-nav">
+                <button class="nav-btn" data-tab="orders">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>الطلبات</span>
+                    <span class="badge" id="newOrdersBadge" style="display:none;">0</span>
+                </button>
                 <button class="nav-btn active" data-tab="menu">
                     <i class="fas fa-utensils"></i>
                     <span>إدارة المنيو</span>
@@ -50,6 +57,10 @@
                 <button class="nav-btn" data-tab="ads">
                     <i class="fas fa-bullhorn"></i>
                     <span>الإعلانات</span>
+                </button>
+                <button class="nav-btn" id="closeRestaurantBtn" style="background: linear-gradient(135deg, #dc3545, #a71d2a); color: white; margin-top: 10px;">
+                    <i class="fas fa-door-closed"></i>
+                    <span>إغلاق المطعم</span>
                 </button>
             </nav>
             <div class="sidebar-footer">
@@ -150,8 +161,16 @@
                                 <input type="url" id="menuItemImage" placeholder="https://example.com/image.jpg">
                                 <small class="form-hint">
                                     <i class="fas fa-info-circle"></i>
-                                    أدخل رابط صورة مباشر (مثل: Imgur, ImgBB)
+                                    أدخل رابط صورة مباشر (مثل: Imgur, ImgBB, Google Drive, GitHub)
                                 </small>
+                            </div>
+                        </div>
+
+                        <!-- حاوية معاينة الصورة -->
+                        <div id="imagePreviewContainer" class="image-preview-container">
+                            <div class="empty-preview">
+                                <i class="fas fa-image"></i>
+                                <p>أدخل رابط صورة لعرض معاينة</p>
                             </div>
                         </div>
                         <div class="form-group">
@@ -283,129 +302,300 @@
                 </div>
             </section>
 
-            <!-- 🆕 تبويب الثيم والألوان -->
-            <section id="tab-theme" class="tab-content">
-                <div class="page-header">
-                    <div class="header-content">
-                        <h1><i class="fas fa-palette"></i> الثيم والألوان</h1>
-                        <p>خصص ألوان وخلفية المنيو الإلكتروني</p>
-                    </div>
-                </div>
+            <!-- 🎨 تبويب الثيم والألوان - النسخة المتقدمة -->
+<section id="tab-theme" class="tab-content">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-palette"></i> الثيم والألوان المتقدم</h1>
+            <p>خصص مظهر المنيو الإلكتروني بالكامل</p>
+        </div>
+    </div>
 
-                <!-- وضع العرض -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-sun"></i> وضع العرض</h2>
-                    </div>
-                    <div class="theme-options">
-                        <label class="theme-option">
-                            <input type="radio" name="themeMode" value="light" id="themeLight">
-                            <div class="theme-preview light-preview">
-                                <i class="fas fa-sun"></i>
-                                <span>الوضع المشرق</span>
-                            </div>
-                        </label>
-                        <label class="theme-option">
-                            <input type="radio" name="themeMode" value="dark" id="themeDark" checked>
-                            <div class="theme-preview dark-preview">
-                                <i class="fas fa-moon"></i>
-                                <span>الوضع الداكن</span>
-                            </div>
-                        </label>
-                    </div>
+    <!-- 🌗 وضع العرض -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-adjust"></i> وضع العرض</h2>
+            <p class="card-subtitle">اختر الوضع المناسب للمنيو</p>
+        </div>
+        <div class="theme-options theme-options-3">
+            <label class="theme-option">
+                <input type="radio" name="themeMode" value="light" id="themeLight">
+                <div class="theme-preview light-preview">
+                    <i class="fas fa-sun"></i>
+                    <span>المشرق</span>
                 </div>
+            </label>
+            <label class="theme-option">
+                <input type="radio" name="themeMode" value="dark" id="themeDark">
+                <div class="theme-preview dark-preview">
+                    <i class="fas fa-moon"></i>
+                    <span>الداكن</span>
+                </div>
+            </label>
+            <label class="theme-option">
+                <input type="radio" name="themeMode" value="gray" id="themeGray">
+                <div class="theme-preview gray-preview">
+                    <i class="fas fa-cloud"></i>
+                    <span>الرمادي</span>
+                </div>
+            </label>
+        </div>
+    </div>
 
-                <!-- الألوان الرئيسية -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-palette"></i> الألوان الرئيسية</h2>
-                    </div>
-                    <div class="color-options">
-                        <div class="color-option">
-                            <label for="primaryColor">
-                                <i class="fas fa-fill-drip"></i> اللون الأساسي
-                            </label>
-                            <div class="color-input-wrapper">
-                                <input type="color" id="primaryColor" value="#c70301">
-                                <input type="text" id="primaryColorText" value="#c70301">
-                            </div>
-                        </div>
-                        <div class="color-option">
-                            <label for="secondaryColor">
-                                <i class="fas fa-fill-drip"></i> اللون الثانوي
-                            </label>
-                            <div class="color-input-wrapper">
-                                <input type="color" id="secondaryColor" value="#fedb17">
-                                <input type="text" id="secondaryColorText" value="#fedb17">
-                            </div>
-                        </div>
-                    </div>
+    <!-- 🎨 الألوان الرئيسية -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-palette"></i> الألوان الرئيسية</h2>
+        </div>
+        <div class="color-options-grid">
+            <div class="color-option">
+                <label for="primaryColor"><i class="fas fa-fill-drip"></i> اللون الأساسي</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="primaryColor" value="#c70301">
+                    <input type="text" id="primaryColorText" value="#c70301">
                 </div>
+            </div>
+            <div class="color-option">
+                <label for="secondaryColor"><i class="fas fa-fill-drip"></i> اللون الثانوي</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="secondaryColor" value="#fedb17">
+                    <input type="text" id="secondaryColorText" value="#fedb17">
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- الخلفية -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-image"></i> الخلفية</h2>
-                    </div>
-                    <div class="background-options">
-                        <label class="background-option">
-                            <input type="radio" name="backgroundType" value="video" id="bgVideo" checked>
-                            <div class="background-preview">
-                                <i class="fas fa-video"></i>
-                                <span>فيديو</span>
-                            </div>
-                        </label>
-                        <label class="background-option">
-                            <input type="radio" name="backgroundType" value="color" id="bgColor">
-                            <div class="background-preview">
-                                <i class="fas fa-fill-drip"></i>
-                                <span>لون محدد</span>
-                            </div>
-                        </label>
-                        <label class="background-option">
-                            <input type="radio" name="backgroundType" value="gradient" id="bgGradient">
-                            <div class="background-preview">
-                                <i class="fas fa-palette"></i>
-                                <span>تدرج لوني</span>
-                            </div>
-                        </label>
-                    </div>
-                    
-                    <!-- خيارات الفيديو -->
-                    <div id="videoOptions" class="background-detail">
-                        <label for="videoUrl">رابط الفيديو</label>
-                        <input type="url" id="videoUrl" placeholder="https://example.com/video.mp4" value="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4">
-                    </div>
-                    
-                    <!-- خيارات اللون -->
-                    <div id="colorOptions" class="background-detail" style="display: none;">
-                        <label for="bgColorPicker">اختر اللون</label>
-                        <div class="color-input-wrapper">
-                            <input type="color" id="bgColorPicker" value="#1a1a1a">
-                            <input type="text" id="bgColorText" value="#1a1a1a">
-                        </div>
-                    </div>
-                    
-                    <!-- خيارات التدرج -->
-                    <div id="gradientOptions" class="background-detail" style="display: none;">
-                        <label>ألوان التدرج</label>
-                        <div class="gradient-colors">
-                            <input type="color" id="gradientColor1" value="#1a1a1a">
-                            <input type="color" id="gradientColor2" value="#2c2c2c">
-                        </div>
-                    </div>
+    <!-- 🎨 ألوان النصوص -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-font"></i> ألوان النصوص</h2>
+            <p class="card-subtitle">تحكم في ألوان النصوص والعناوين</p>
+        </div>
+        <div class="color-options-grid">
+            <div class="color-option">
+                <label for="textColor"><i class="fas fa-paragraph"></i> لون النص العام</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="textColor" value="#ffffff">
+                    <input type="text" id="textColorText" value="#ffffff">
                 </div>
+            </div>
+            <div class="color-option">
+                <label for="headingColor"><i class="fas fa-heading"></i> لون العناوين</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="headingColor" value="#ffffff">
+                    <input type="text" id="headingColorText" value="#ffffff">
+                </div>
+            </div>
+            <div class="color-option">
+                <label for="descriptionColor"><i class="fas fa-align-right"></i> لون الوصف</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="descriptionColor" value="#cccccc">
+                    <input type="text" id="descriptionColorText" value="#cccccc">
+                </div>
+            </div>
+            <div class="color-option">
+                <label for="priceColor"><i class="fas fa-tag"></i> لون السعر</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="priceColor" value="#fedb17">
+                    <input type="text" id="priceColorText" value="#fedb17">
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- حفظ الإعدادات -->
-                <div class="card">
-                    <button id="saveThemeBtn" class="btn-primary btn-lg">
-                        <i class="fas fa-save"></i> حفظ الإعدادات
-                    </button>
-                    <button id="resetThemeBtn" class="btn-secondary">
-                        <i class="fas fa-undo"></i> إعادة تعيين
-                    </button>
+    <!-- 🔤 نوع الخط -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-font"></i> نوع الخط</h2>
+            <p class="card-subtitle">اختر الخط المناسب للمنيو</p>
+        </div>
+        <div class="form-group">
+            <label for="fontFamily"><i class="fas fa-text-height"></i> الخط الرئيسي</label>
+            <select id="fontFamily" class="theme-select">
+                <option value="'Cairo', sans-serif">Cairo (افتراضي)</option>
+                <option value="'Tajawal', sans-serif">Tajawal</option>
+                <option value="'Almarai', sans-serif">Almarai</option>
+                <option value="'Amiri', serif">Amiri</option>
+                <option value="'Changa', sans-serif">Changa</option>
+                <option value="'El Messiri', sans-serif">El Messiri</option>
+                <option value="'Lemonada', cursive">Lemonada</option>
+                <option value="'Rakkas', cursive">Rakkas</option>
+                <option value="'Reem Kufi', sans-serif">Reem Kufi</option>
+                <option value="'Scheherazade New', serif">Scheherazade</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="fontSize">حجم الخط الأساسي</label>
+            <div class="range-group">
+                <input type="range" id="fontSize" min="12" max="20" value="16" step="1">
+                <span id="fontSizeValue" class="range-value">16px</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🖼️ الخلفية -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-image"></i> الخلفية</h2>
+            <p class="card-subtitle">اختر نوع الخلفية للمنيو</p>
+        </div>
+        <div class="background-options background-options-4">
+            <label class="background-option">
+                <input type="radio" name="backgroundType" value="video" id="bgVideo">
+                <div class="background-preview">
+                    <i class="fas fa-video"></i>
+                    <span>فيديو</span>
                 </div>
-            </section>
+            </label>
+            <label class="background-option">
+                <input type="radio" name="backgroundType" value="image" id="bgImage">
+                <div class="background-preview">
+                    <i class="fas fa-image"></i>
+                    <span>صورة</span>
+                </div>
+            </label>
+            <label class="background-option">
+                <input type="radio" name="backgroundType" value="color" id="bgColor">
+                <div class="background-preview">
+                    <i class="fas fa-fill-drip"></i>
+                    <span>لون</span>
+                </div>
+            </label>
+            <label class="background-option">
+                <input type="radio" name="backgroundType" value="gradient" id="bgGradient">
+                <div class="background-preview">
+                    <i class="fas fa-palette"></i>
+                    <span>تدرج</span>
+                </div>
+            </label>
+        </div>
+        
+        <!-- خيارات الفيديو -->
+        <div id="videoOptions" class="background-detail">
+            <label for="videoUrl"><i class="fas fa-link"></i> رابط الفيديو</label>
+            <input type="url" id="videoUrl" placeholder="https://example.com/video.mp4">
+            <small class="form-hint">
+                <i class="fas fa-info-circle"></i>
+                يجب أن يكون الفيديو بصيغة MP4 مباشر
+            </small>
+        </div>
+        
+        <!-- خيارات الصورة (جديد) -->
+        <div id="imageOptions" class="background-detail" style="display: none;">
+            <label for="imageUrl"><i class="fas fa-link"></i> رابط الصورة</label>
+            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+            <small class="form-hint">
+                <i class="fas fa-info-circle"></i>
+                يُنصح باستخدام صور عالية الجودة (JPG, PNG, WebP)
+            </small>
+        </div>
+        
+        <!-- خيارات اللون -->
+        <div id="colorOptions" class="background-detail" style="display: none;">
+            <label for="bgColorPicker"><i class="fas fa-palette"></i> اختر اللون</label>
+            <div class="color-input-wrapper">
+                <input type="color" id="bgColorPicker" value="#1a1a1a">
+                <input type="text" id="bgColorText" value="#1a1a1a">
+            </div>
+        </div>
+        
+        <!-- خيارات التدرج -->
+        <div id="gradientOptions" class="background-detail" style="display: none;">
+            <label><i class="fas fa-palette"></i> ألوان التدرج</label>
+            <div class="gradient-colors">
+                <input type="color" id="gradientColor1" value="#1a1a1a">
+                <input type="color" id="gradientColor2" value="#2c2c2c">
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="gradientDirection">اتجاه التدرج</label>
+                <select id="gradientDirection" class="theme-select">
+                    <option value="135deg">↘ من الأعلى-يسار إلى الأسفل-يمين</option>
+                    <option value="45deg">↗ من الأسفل-يسار إلى الأعلى-يمين</option>
+                    <option value="90deg">→ من اليسار إلى اليمين</option>
+                    <option value="180deg">↓ من الأعلى إلى الأسفل</option>
+                    <option value="to right">→ أفقي</option>
+                    <option value="to bottom">↓ عمودي</option>
+                    <option value="to bottom right">↘ قطري</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- شفافية الطبقة العلوية -->
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="overlayOpacity">
+                <i class="fas fa-eye-dropper"></i> شفافية الطبقة فوق الخلفية
+            </label>
+            <div class="range-group">
+                <input type="range" id="overlayOpacity" min="0" max="100" value="60" step="5">
+                <span id="overlayOpacityValue" class="range-value">60%</span>
+            </div>
+            <small class="form-hint">
+                <i class="fas fa-info-circle"></i>
+                كلما زادت الشفافية، أصبحت الخلفية أقل وضوحاً
+            </small>
+        </div>
+    </div>
+
+    <!-- 🖼️ خلفية صور العناصر -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-images"></i> خلفية صور المنتجات</h2>
+            <p class="card-subtitle">تحكم في خلفية صور الأصناف في المنيو</p>
+        </div>
+        <div class="image-bg-options">
+            <label class="image-bg-option">
+                <input type="radio" name="itemImageBg" value="transparent" id="imgBgTransparent">
+                <div class="image-bg-preview transparent-preview">
+                    <i class="fas fa-border-none"></i>
+                    <span>شفاف</span>
+                </div>
+            </label>
+            <label class="image-bg-option">
+                <input type="radio" name="itemImageBg" value="white" id="imgBgWhite">
+                <div class="image-bg-preview white-preview">
+                    <i class="fas fa-square" style="color: #fff;"></i>
+                    <span>أبيض</span>
+                </div>
+            </label>
+            <label class="image-bg-option">
+                <input type="radio" name="itemImageBg" value="primary" id="imgBgPrimary">
+                <div class="image-bg-preview primary-preview">
+                    <i class="fas fa-square"></i>
+                    <span>اللون الأساسي</span>
+                </div>
+            </label>
+            <label class="image-bg-option">
+                <input type="radio" name="itemImageBg" value="custom" id="imgBgCustom">
+                <div class="image-bg-preview custom-preview">
+                    <i class="fas fa-palette"></i>
+                    <span>مخصص</span>
+                </div>
+            </label>
+        </div>
+        <div id="customImageBgOptions" class="background-detail" style="display: none; margin-top: 15px;">
+            <label for="itemImageBgColor"><i class="fas fa-palette"></i> اختر لون الخلفية</label>
+            <div class="color-input-wrapper">
+                <input type="color" id="itemImageBgColor" value="#ffffff">
+                <input type="text" id="itemImageBgColorText" value="#ffffff">
+            </div>
+        </div>
+    </div>
+
+    <!-- 💾 حفظ الإعدادات -->
+    <div class="card">
+        <div class="form-actions">
+            <button id="saveThemeBtn" class="btn-primary btn-lg">
+                <i class="fas fa-save"></i> حفظ الإعدادات
+            </button>
+            <button id="previewThemeBtn" class="btn-secondary btn-lg">
+                <i class="fas fa-eye"></i> معاينة مباشرة
+            </button>
+            <button id="resetThemeBtn" class="btn-secondary">
+                <i class="fas fa-undo"></i> إعادة تعيين
+            </button>
+        </div>
+    </div>
+</section>
 
             <!-- تبويب الإعلانات -->
             <section id="tab-ads" class="tab-content">
@@ -474,15 +664,122 @@
                         </div>
                     </div>
                 </div>
+
             </section>
+
+<!-- 📋 إدارة الطلبات -->
+<div class="tab-content" id="tab-orders">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-clipboard-list"></i> إدارة الطلبات</h1>
+            <p>متابعة وعرض جميع الطلبات الواردة من الزبائن</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-card">
+                <i class="fas fa-clock" style="color:#ffc107;"></i>
+                <div class="stat-info">
+                    <div class="stat-number" id="pendingOrdersCount">0</div>
+                    <div class="stat-label">طلبات معلقة</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle" style="color:#28a745;"></i>
+                <div class="stat-info">
+                    <div class="stat-number" id="completedOrdersCount">0</div>
+                    <div class="stat-label">طلبات مكتملة</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-shopping-bag"></i>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalOrdersCount">0</div>
+                    <div class="stat-label">الإجمالي</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-receipt" style="color: var(--primary);"></i>
+                <div class="stat-info">
+                    <div class="stat-number" id="currentOrderNumber">0</div>
+                    <div class="stat-label">رقم الطلب التالي</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h3 class="card-title"><i class="fas fa-list"></i> قائمة الطلبات</h3>
+                <p class="card-subtitle">جميع الطلبات الواردة</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <!-- 🆕 شارة الطلبات الجديدة -->
+                <div id="newOrdersLiveBadge" style="display:none;">
+                    <i class="fas fa-bell"></i>
+                    <span id="newOrdersLiveCount">0</span> جديد
+                </div>
+                
+                <!-- 🆕 زر إعادة البحث -->
+                <button class="refresh-orders-btn" id="refreshOrdersBtn" onclick="manualRefreshOrders()" title="تحديث الطلبات">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>تحديث</span>
+                </button>
+                
+                <!-- 🆕 زر تبديل الصوت -->
+                <button class="sound-toggle-btn" id="toggleSoundBtn" onclick="toggleOrderSound()" title="تفعيل/تعطيل الصوت">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="filter-chips">
+        <button class="chip active" data-filter="all">الكل</button>
+        <button class="chip" data-filter="pending">⏳ معلقة</button>
+        <button class="chip" data-filter="preparing">🔥 قيد التحضير</button>
+        <button class="chip" data-filter="ready">✓ جاهزة</button>
+        <button class="chip" data-filter="completed">✅ مكتملة</button>
+        <button class="chip" data-filter="cancelled">❌ ملغية</button>
+    </div>
+</div>
+<!-- 🆕 قائمة الطلبات - كانت مفقودة! -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-list"></i> قائمة الطلبات</h3>
+        <p class="card-subtitle">جميع الطلبات الواردة</p>
+    </div>
+    <div id="ordersList" class="orders-grid">
+        <div class="loading-state">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>جاري تحميل الطلبات...</p>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+
         </main>
     </div>
 
     <!-- إشعارات Toast -->
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- firebase scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- معالج الصور المتقدم -->
+    <script src="../advanced-image-loader.js"></script>
+    
+    <!-- نظام معالجة الصور في الإدارة -->
+    <script src="admin-image-handler.js"></script>
+    
+        <!-- تحسينات معالجة الصور الإضافية -->
+        <script src="admin-image-enhancements.js"></script>
+    
+    <!-- سكريبت الإدارة الرئيسي -->
     <script src="admin.js"></script>
 </body>
 </html>
