@@ -1,103 +1,287 @@
 // ============================================
-// 🍽️ تحميل المنيو ديناميكياً من Firebase
+// 🍽️ تحميل المنيو الديناميكي من Firebase (مُصحّح)
 // ============================================
+
+/**
+ * 🆕 الدالة الرئيسية: تحميل الأقسام والأصناف من Firebase
+ * وتوليد HTML ديناميكياً للأقسام الجديدة
+ */
 function loadMenuFromFirebase() {
-    const sections = document.querySelectorAll('.menu-section[data-category]');
-    
-    // إظهار حالة التحميل
-    sections.forEach(section => {
-        const itemsContainer = section.querySelector('.menu-items');
-        if (itemsContainer) {
-            itemsContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #fff; opacity: 0.7;">جاري التحميل...</p>';
-        }
-    });
-    
     if (typeof firebase === 'undefined' || !firebase.database) {
         setTimeout(loadMenuFromFirebase, 500);
         return;
     }
     
-    firebase.database().ref('menu').orderByChild('order').on('value', (snapshot) => {
-        const items = snapshot.val();
+    console.log('🔍 بدء تحميل المنيو من Firebase...');
+    
+    // 1️⃣ أولاً: تحميل الأقسام من /categories
+    firebase.database().ref('categories').orderByChild('order').on('value', (categoriesSnapshot) => {
+        const categories = categoriesSnapshot.val();
         
-        // تفريغ جميع الأقسام
-        sections.forEach(section => {
-            const itemsContainer = section.querySelector('.menu-items');
-            if (itemsContainer) itemsContainer.innerHTML = '';
-        });
-        
-        if (!items) {
-            sections.forEach(section => {
-                const itemsContainer = section.querySelector('.menu-items');
-                if (itemsContainer) {
-                    itemsContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #fff; opacity: 0.7;">لا توجد أصناف متاحة حالياً</p>';
-                }
-            });
+        if (!categories) {
+            console.warn('⚠️ لا توجد أقسام في Firebase');
             return;
         }
         
-        // ترتيب المنتجات
-        const sortedItems = Object.values(items).sort((a, b) => (a.order || 0) - (b.order || 0));
+        // 2️⃣ بناء مصفوفة الأقسام مرتبة
+        const categoriesArray = Object.keys(categories).map(key => ({
+            id: key,
+            ...categories[key]
+        })).sort((a, b) => (a.order || 0) - (b.order || 0));
         
-        // تجميع المنتجات حسب القسم
-        sortedItems.forEach(item => {
-            // تجاهل المنتجات غير المتوفرة
-            if (!item.available) return;
+        console.log(`✅ تم تحميل ${categoriesArray.length} قسم`);
+        
+        // 3️⃣ إنشاء/تحديث أقسام HTML
+        syncSectionsWithCategories(categoriesArray);
+        
+        // 4️⃣ ثانياً: تحميل الأصناف من /menu
+        firebase.database().ref('menu').on('value', (menuSnapshot) => {
+            const menuItems = menuSnapshot.val();
             
-            const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
-            if (!section) return;
+            if (!menuItems) {
+                console.warn('⚠️ لا توجد أصناف في Firebase');
+                return;
+            }
             
-            const itemsContainer = section.querySelector('.menu-items');
-            if (!itemsContainer) return;
+            // 5️⃣ توزيع الأصناف على الأقسام
+            populateMenuItems(categoriesArray, menuItems);
             
-            const menuElement = document.createElement('div');
-            menuElement.className = 'menu-item';
-            menuElement.setAttribute('data-name', item.name);
-            menuElement.setAttribute('data-price', item.price);
-            menuElement.setAttribute('data-image', item.image || '');
-            menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
+            // 6️⃣ إعادة مراقبة الصور الجديدة
+            if (smartImageLoader) {
+                smartImageLoader.observeAllImages();
+            }
             
-            menuElement.innerHTML = `
-                <div class="item-image">
-                    <div class="image-skeleton"></div>
-                    <img data-src="${item.image || ''}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="${item.name}" class="lazy-image" decoding="async" width="400" height="400">
-                </div>
-                <h4>${item.name}</h4>
-                <p class="price">${item.price.toLocaleString('ar-EG')} د.ع</p>
-            `;
+            // 7️⃣ إعادة ربط النقر على البطاقات
+            reattachClickHandlers();
             
-            itemsContainer.appendChild(menuElement);
+        }, (error) => {
+            console.error('❌ خطأ في تحميل الأصناف:', error);
         });
         
-        // إخفاء الأقسام الفارغة
-        sections.forEach(section => {
-            const itemsContainer = section.querySelector('.menu-items');
-            if (itemsContainer && itemsContainer.children.length === 0) {
-                section.style.display = 'none';
-            } else {
-                section.style.display = '';
+    }, (error) => {
+        console.error('❌ خطأ في تحميل الأقسام:', error);
+    });
+}
+
+/**
+ * 🆕 مزامنة أقسام HTML مع الأقسام في Firebase
+ * ينشئ الأقسام الجديدة ويحذف الأقسام المحذوفة
+ */
+function syncSectionsWithCategories(categoriesArray) {
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+    
+    // الحصول على جميع الأقسام الحالية في HTML
+    const existingSections = mainElement.querySelectorAll('.menu-section[data-category]');
+    const existingCategoriesMap = new Map();
+    
+    existingSections.forEach(section => {
+        const categoryName = section.getAttribute('data-category');
+        existingCategoriesMap.set(categoryName, section);
+    });
+    
+    // الحصول على جميع أسماء الأقسام من Firebase
+    const firebaseCategoryNames = new Set(categoriesArray.map(c => c.name));
+    
+    // 🆕 حذف الأقسام من HTML التي لم تعد في Firebase
+    existingCategoriesMap.forEach((section, categoryName) => {
+        if (!firebaseCategoryNames.has(categoryName)) {
+            console.log(`🗑️ حذف قسم غير موجود: ${categoryName}`);
+            section.remove();
+        }
+    });
+    
+    // 🆕 إنشاء الأقسام الجديدة من Firebase
+    categoriesArray.forEach((category, index) => {
+        if (!existingCategoriesMap.has(category.name)) {
+            console.log(`✨ إنشاء قسم جديد: ${category.name}`);
+            const newSection = createSectionElement(category, index);
+            
+            // إدراج القسم في المكان الصحيح (بعد قسم الإعلانات)
+            const adsSection = mainElement.querySelector('#ads');
+            const teamSection = mainElement.querySelector('#team');
+            
+            if (teamSection) {
+                mainElement.insertBefore(newSection, teamSection);
+            } else if (adsSection && adsSection.nextSibling) {
+                // إدراج بعد آخر قسم menu-section موجود
+                const allMenuSections = mainElement.querySelectorAll('.menu-section');
+                if (allMenuSections.length > 0) {
+                    const lastMenuSection = allMenuSections[allMenuSections.length - 1];
+                    mainElement.insertBefore(newSection, lastMenuSection.nextSibling);
+                } else {
+                    mainElement.insertBefore(newSection, teamSection);
+                }
+            }
+        }
+    });
+    
+    // 🆕 إعادة ترتيب الأقسام حسب order
+    reorderSections(categoriesArray);
+    
+    // 🆕 تحديث شريط التنقل
+    updateNavigationButtons(categoriesArray);
+}
+
+/**
+ * 🆕 إنشاء عنصر section جديد من بيانات القسم
+ */
+function createSectionElement(category, index) {
+    const section = document.createElement('section');
+    section.className = 'menu-section';
+    section.id = `sec-${category.id}`;
+    section.setAttribute('data-category', category.name);
+    
+    section.innerHTML = `
+        <h3>${category.icon || '📁'} ${category.name}</h3>
+        <div class="menu-items"></div>
+    `;
+    
+    return section;
+}
+
+/**
+ * 🆕 إعادة ترتيب الأقسام حسب order
+ */
+function reorderSections(categoriesArray) {
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+    
+    const teamSection = mainElement.querySelector('#team');
+    const supportSection = mainElement.querySelector('#support');
+    const socialSection = mainElement.querySelector('#social');
+    
+    // جمع جميع الأقسام menu-section
+    const menuSections = Array.from(mainElement.querySelectorAll('.menu-section[data-category]'));
+    
+    // ترتيبها حسب categoriesArray
+    categoriesArray.forEach(category => {
+        const section = menuSections.find(s => s.getAttribute('data-category') === category.name);
+        if (section && teamSection) {
+            mainElement.insertBefore(section, teamSection);
+        }
+    });
+}
+
+/**
+ * 🆕 تحديث أزرار التنقل لتتوافق مع الأقسام
+ */
+function updateNavigationButtons(categoriesArray) {
+    const navElement = document.getElementById('sectionsNav');
+    if (!navElement) return;
+    
+    // مسح الأزرار الحالية
+    navElement.innerHTML = '';
+    
+    // إنشاء أزرار جديدة
+    categoriesArray.forEach((category, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('data-section', `sec-${category.id}`);
+        button.textContent = `${category.icon || ''} ${category.name}`;
+        
+        button.addEventListener('click', function() {
+            const targetSection = document.getElementById(`sec-${category.id}`);
+            if (targetSection) {
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // تمييز الزر النشط
+                navElement.querySelectorAll('button').forEach(b => {
+                    b.style.background = 'var(--main-yellow)';
+                    b.style.color = '#000';
+                });
+                this.style.background = '#ffffff';
+                this.style.color = 'var(--main-red)';
             }
         });
         
-        // إعادة مراقبة الصور الجديدة (للتحميل الذكي)
-        if (smartImageLoader) {
-            smartImageLoader.observeAllImages();
+        navElement.appendChild(button);
+    });
+}
+
+/**
+ * 🆕 توزيع الأصناف على الأقسام
+ */
+function populateMenuItems(categoriesArray, menuItems) {
+    // تفريغ جميع حاويات menu-items
+    document.querySelectorAll('.menu-section .menu-items').forEach(container => {
+        container.innerHTML = '';
+    });
+    
+    // تحويل menuItems إلى مصفوفة مرتبة
+    const itemsArray = Object.keys(menuItems).map(key => ({
+        id: key,
+        ...menuItems[key]
+    })).sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    // توزيع الأصناف على الأقسام
+    itemsArray.forEach(item => {
+        // تجاهل الأصناف غير المتوفرة
+        if (item.available === false) return;
+        
+        // البحث عن القسم المناسب
+        const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
+        if (!section) {
+            console.warn(`⚠️ القسم "${item.category}" غير موجود - تم تجاهل "${item.name}"`);
+            return;
         }
         
-        // إعادة ربط النقر على بطاقات المنتجات
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                openProductModal(this);
-            });
-        });
-    }, (error) => {
-        console.error('خطأ في تحميل المنيو:', error);
-        sections.forEach(section => {
-            const itemsContainer = section.querySelector('.menu-items');
-            if (itemsContainer) {
-                itemsContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #fff; opacity: 0.7;">تعذر تحميل المنيو</p>';
-            }
+        const itemsContainer = section.querySelector('.menu-items');
+        if (!itemsContainer) return;
+        
+        // إنشاء عنصر الصنف
+        const menuElement = document.createElement('div');
+        menuElement.className = 'menu-item';
+        menuElement.setAttribute('data-name', item.name);
+        menuElement.setAttribute('data-price', item.price);
+        menuElement.setAttribute('data-image', item.image || '');
+        menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
+        
+        menuElement.innerHTML = `
+            <div class="item-image">
+                <div class="image-skeleton"></div>
+                <img data-src="${item.image || ''}" 
+                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                     alt="${item.name}" 
+                     class="lazy-image" 
+                     decoding="async" 
+                     width="400" 
+                     height="400">
+            </div>
+            <h4>${item.name}</h4>
+            <p class="price">${item.price.toLocaleString('ar-EG')} د.ع</p>
+        `;
+        
+        itemsContainer.appendChild(menuElement);
+    });
+    
+    // إخفاء الأقسام الفارغة
+    document.querySelectorAll('.menu-section[data-category]').forEach(section => {
+        const itemsContainer = section.querySelector('.menu-items');
+        if (itemsContainer && itemsContainer.children.length === 0) {
+            section.style.display = 'none';
+        } else {
+            section.style.display = '';
+        }
+    });
+    
+    console.log(`✅ تم توزيع ${itemsArray.length} صنف على الأقسام`);
+}
+
+/**
+ * 🆕 إعادة ربط معالجات النقر على البطاقات
+ */
+function reattachClickHandlers() {
+    document.querySelectorAll('.menu-item').forEach(item => {
+        // إزالة المعالجات القديمة
+        item.replaceWith(item.cloneNode(true));
+    });
+    
+    // إضافة المعالجات الجديدة
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            openProductModal(this);
         });
     });
 }
@@ -424,7 +608,6 @@ function initSmartImageLoading() {
         console.log('✅ نظام تحميل الصور الذكي المتسلسل جاهز');
     }
     
-    // إحصائيات التطوير فقط
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
         setInterval(() => {
             if (smartImageLoader) {
@@ -1230,7 +1413,6 @@ document.addEventListener('DOMContentLoaded', function() {
     firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     document.head.appendChild(firebaseScript);
     
-    // ✅ تم إصلاح الخطأ: استخدام firebaseDbScript بدلاً من firebaseStorageScript
     const firebaseDbScript = document.createElement('script');
     firebaseDbScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
     document.head.appendChild(firebaseDbScript);
@@ -1272,7 +1454,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 🎯 العناصر الأخرى
     // ============================================
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-    const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
     
     const floatingCartBtn = document.getElementById('floatingCartBtn');
@@ -1308,20 +1489,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // التنقل بين الأقسام
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const targetSection = document.getElementById(this.getAttribute('data-section'));
-            if (targetSection) {
-                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                menuSections.forEach(s => s.classList.remove('active'));
-                targetSection.classList.add('active');
-                navButtons.forEach(b => b.style.background = 'var(--main-yellow)');
-                this.style.background = '#ffffff';
-            }
-        });
-    });
-
     // مراقب الأنيميشن
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => { 
@@ -1346,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeLocationSystem();
 
     // ============================================
-    // ✅ تم الإصلاح: استخدام firebaseDbScript.onload
+    // ✅ تهيئة Firebase وتحميل المنيو
     // ============================================
     firebaseDbScript.onload = function() {
         setTimeout(() => {
@@ -1355,7 +1522,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     firebase.initializeApp(firebaseConfig);
                     console.log('✅ تم تهيئة Firebase بنجاح');
                     displayAds();
-                    loadMenuFromFirebase();
+                    loadMenuFromFirebase(); // 🆕 تحميل المنيو الديناميكي
                 } catch (error) {
                     console.error('خطأ في تهيئة Firebase:', error);
                 }
