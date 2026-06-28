@@ -1,24 +1,22 @@
 // ============================================
-// ⚙️ إعدادات Firebase
+// ⚙️ إعدادات Firebase (Database فقط - بدون Storage)
 // ============================================
 const firebaseConfig = {
     apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
     authDomain: "talola-food.firebaseapp.com",
     databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
     projectId: "talola-food",
-    storageBucket: "talola-food.firebasestorage.app", // تأكد من صحة هذا الرابط من Firebase Console
     messagingSenderId: "440585170470",
     appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const storage = firebase.storage();
 
 // ============================================
-// 🔐 نظام المصادقة (بسيط للوحة التحكم)
+// 🔐 نظام المصادقة
 // ============================================
-const ADMIN_PASSWORD = "TaloolaAdmin@2024"; // قم بتغييرها لكلمة مرور قوية
+const ADMIN_PASSWORD = "TaloolaAdmin@2024";
 const loginScreen = document.getElementById('loginScreen');
 const dashboard = document.getElementById('dashboard');
 const loginBtn = document.getElementById('loginBtn');
@@ -40,9 +38,12 @@ loginBtn.addEventListener('click', () => {
     }
 });
 
+// تسجيل الخروج
 document.getElementById('logoutBtn').addEventListener('click', () => {
-    sessionStorage.removeItem('isAdminLoggedIn');
-    location.reload();
+    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+        sessionStorage.removeItem('isAdminLoggedIn');
+        location.reload();
+    }
 });
 
 function showDashboard() {
@@ -57,6 +58,7 @@ function showDashboard() {
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         if (this.disabled) return;
+        
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         
@@ -66,40 +68,43 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // ============================================
-// 📢 إدارة الإعلانات (CRUD)
+// 📢 إدارة الإعلانات (CRUD بدون Storage)
 // ============================================
 const adForm = document.getElementById('adForm');
 const adsList = document.getElementById('adsList');
-const fileUploadArea = document.getElementById('fileUploadArea');
-const adImageInput = document.getElementById('adImage');
+const imageUrlInput = document.getElementById('imageUrl');
+const previewBtn = document.getElementById('previewBtn');
+const imagePreviewContainer = document.getElementById('imagePreviewContainer');
 const imagePreview = document.getElementById('imagePreview');
-let uploadedImageUrl = '';
+const removeImageBtn = document.getElementById('removeImageBtn');
+const totalAdsCount = document.getElementById('totalAdsCount');
 
-// رفع الصورة
-fileUploadArea.addEventListener('click', () => adImageInput.click());
-fileUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); fileUploadArea.style.borderColor = '#c70301'; });
-fileUploadArea.addEventListener('dragleave', () => { fileUploadArea.style.borderColor = '#ddd'; });
-fileUploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    fileUploadArea.style.borderColor = '#ddd';
-    if (e.dataTransfer.files.length) {
-        adImageInput.files = e.dataTransfer.files;
-        previewFile(e.dataTransfer.files[0]);
+// معاينة الصورة من الرابط
+previewBtn.addEventListener('click', () => {
+    const url = imageUrlInput.value.trim();
+    if (!url) {
+        showToast('الرجاء إدخال رابط الصورة أولاً', 'error');
+        return;
     }
+    
+    // التحقق من صحة الرابط
+    try {
+        new URL(url);
+    } catch (e) {
+        showToast('الرابط غير صالح', 'error');
+        return;
+    }
+    
+    imagePreview.src = url;
+    imagePreviewContainer.style.display = 'block';
 });
 
-adImageInput.addEventListener('change', function() {
-    if (this.files.length) previewFile(this.files[0]);
+// إزالة الصورة
+removeImageBtn.addEventListener('click', () => {
+    imageUrlInput.value = '';
+    imagePreview.src = '';
+    imagePreviewContainer.style.display = 'none';
 });
-
-function previewFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        imagePreview.src = e.target.result;
-        imagePreview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-}
 
 // حفظ الإعلان
 adForm.addEventListener('submit', async function(e) {
@@ -108,27 +113,29 @@ adForm.addEventListener('submit', async function(e) {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
 
-    const title = document.getElementById('adTitle').value;
-    const description = document.getElementById('adDescription').value;
-    const price = document.getElementById('adPrice').value;
-    const imageFile = adImageInput.files[0];
+    const title = document.getElementById('adTitle').value.trim();
+    const description = document.getElementById('adDescription').value.trim();
+    const price = document.getElementById('adPrice').value.trim();
+    const imageUrl = imageUrlInput.value.trim();
+
+    // التحقق من صحة الرابط إذا تم إدخاله
+    if (imageUrl) {
+        try {
+            new URL(imageUrl);
+        } catch (e) {
+            showToast('رابط الصورة غير صالح', 'error');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
+            return;
+        }
+    }
 
     try {
-        let imageUrl = '';
-        
-        // رفع الصورة إذا وجدت
-        if (imageFile) {
-            const storageRef = storage.ref().child('ads/' + Date.now() + '_' + imageFile.name);
-            const snapshot = await storageRef.put(imageFile);
-            imageUrl = await snapshot.ref.getDownloadURL();
-        }
-
-        // حفظ في قاعدة البيانات
         const newAd = {
             title,
             description,
             price: price || '',
-            imageUrl,
+            imageUrl: imageUrl || '',
             template: 'red',
             timestamp: Date.now(),
             date: new Date().toLocaleDateString('ar-EG')
@@ -138,8 +145,7 @@ adForm.addEventListener('submit', async function(e) {
         
         showToast('تم نشر الإعلان بنجاح!', 'success');
         adForm.reset();
-        imagePreview.style.display = 'none';
-        uploadedImageUrl = '';
+        imagePreviewContainer.style.display = 'none';
         
     } catch (error) {
         console.error(error);
@@ -150,6 +156,14 @@ adForm.addEventListener('submit', async function(e) {
     }
 });
 
+// مسح النموذج
+adForm.addEventListener('reset', () => {
+    setTimeout(() => {
+        imagePreviewContainer.style.display = 'none';
+        imagePreview.src = '';
+    }, 10);
+});
+
 // جلب وعرض الإعلانات
 function loadAds() {
     db.ref('ads').orderByChild('timestamp').on('value', (snapshot) => {
@@ -157,27 +171,38 @@ function loadAds() {
         const ads = snapshot.val();
         
         if (!ads) {
-            adsList.innerHTML = '<p class="loading-text">لا توجد إعلانات حالياً. أضف أول إعلان!</p>';
+            adsList.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-bullhorn fa-3x"></i>
+                    <h3>لا توجد إعلانات</h3>
+                    <p>أضف أول إعلان لبدء عرض العروض الخاصة</p>
+                </div>
+            `;
+            totalAdsCount.textContent = '0';
             return;
         }
 
         // عكس الترتيب لعرض الأحدث أولاً
         const sortedAds = Object.keys(ads).reverse();
+        totalAdsCount.textContent = sortedAds.length;
         
         sortedAds.forEach(key => {
             const ad = ads[key];
             const card = document.createElement('div');
             card.className = 'ad-card';
             card.innerHTML = `
-                <button class="delete-btn" onclick="deleteAd('${key}', '${ad.imageUrl}')">
+                <button class="delete-btn" onclick="deleteAd('${key}')" title="حذف الإعلان">
                     <i class="fas fa-trash"></i>
                 </button>
-                ${ad.imageUrl ? `<img src="${ad.imageUrl}" alt="${ad.title}">` : ''}
+                ${ad.imageUrl ? `<img src="${ad.imageUrl}" alt="${ad.title}" onerror="this.style.display='none'">` : ''}
                 <div class="ad-card-content">
                     <h4>${ad.title}</h4>
                     <p>${ad.description}</p>
                     ${ad.price ? `<div class="price">${ad.price} د.ع</div>` : ''}
-                    <small style="color: #999; display: block; margin-top: 10px;">${ad.date}</small>
+                    <div class="date">
+                        <i class="fas fa-calendar"></i>
+                        ${ad.date}
+                    </div>
                 </div>
             `;
             adsList.appendChild(card);
@@ -186,14 +211,11 @@ function loadAds() {
 }
 
 // حذف الإعلان
-window.deleteAd = async function(key, imageUrl) {
+window.deleteAd = async function(key) {
     if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
     
     try {
         await db.ref('ads/' + key).remove();
-        if (imageUrl) {
-            await storage.refFromURL(imageUrl).delete();
-        }
         showToast('تم حذف الإعلان بنجاح', 'success');
     } catch (error) {
         showToast('فشل الحذف: ' + error.message, 'error');
@@ -212,8 +234,9 @@ function showToast(message, type = 'success') {
         <span>${message}</span>
     `;
     container.appendChild(toast);
+    
     setTimeout(() => {
-        toast.style.animation = 'slideIn 0.3s ease reverse';
-        setTimeout(() => toast.remove(), 300);
+        toast.style.animation = 'slideIn 0.4s ease reverse';
+        setTimeout(() => toast.remove(), 400);
     }, 3000);
 }
