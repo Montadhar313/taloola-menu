@@ -1,6 +1,11 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي من Firebase (النسخة النهائية المُصحّحة)
+// 🍽️ تحميل المنيو الديناميكي - النسخة النهائية
 // ============================================
+
+// 🆕 متغيرات عامة لتخزين البيانات
+let cachedCategories = [];
+let cachedMenuItems = null;
+let isMenuInitialized = false;
 
 function loadMenuFromFirebase() {
     if (typeof firebase === 'undefined' || !firebase.database) {
@@ -10,53 +15,62 @@ function loadMenuFromFirebase() {
     
     console.log('🔍 بدء تحميل المنيو من Firebase...');
     
-    firebase.database().ref('categories').orderByChild('order').on('value', (categoriesSnapshot) => {
-        const categories = categoriesSnapshot.val();
-        
-        if (!categories) {
-            console.warn('⚠️ لا توجد أقسام في Firebase');
-            return;
-        }
-        
-        const categoriesArray = Object.keys(categories).map(key => ({
-            id: key,
-            ...categories[key]
-        })).sort((a, b) => (a.order || 0) - (b.order || 0));
-        
-        console.log(`✅ تم تحميل ${categoriesArray.length} قسم`);
-        
-        rebuildMenuSections(categoriesArray);
-        
-        firebase.database().ref('menu').on('value', (menuSnapshot) => {
-            const menuItems = menuSnapshot.val();
+    // 🆕 الاستماع للأقسام (بشكل منفصل)
+    firebase.database().ref('categories').orderByChild('order').on('value', 
+        (snapshot) => {
+            const categories = snapshot.val();
+            if (!categories) {
+                console.warn('⚠️ لا توجد أقسام في Firebase');
+                return;
+            }
             
-            if (!menuItems) {
+            cachedCategories = Object.keys(categories).map(key => ({
+                id: key,
+                ...categories[key]
+            })).sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            console.log(`✅ تم تحميل ${cachedCategories.length} قسم`);
+            
+            // إعادة بناء أقسام HTML
+            rebuildMenuSections(cachedCategories);
+            updateNavigationButtons(cachedCategories);
+            
+            // إعادة رسم الأصناف إذا كانت موجودة
+            if (cachedMenuItems) {
+                populateMenuItems(cachedCategories, cachedMenuItems);
+                if (smartImageLoader) smartImageLoader.observeAllImages();
+                reattachClickHandlers();
+            }
+        },
+        (error) => {
+            console.error('❌ خطأ في تحميل الأقسام:', error);
+        }
+    );
+    
+    // 🆕 الاستماع للأصناف (بشكل منفصل)
+    firebase.database().ref('menu').on('value',
+        (snapshot) => {
+            cachedMenuItems = snapshot.val();
+            if (!cachedMenuItems) {
                 console.warn('⚠️ لا توجد أصناف في Firebase');
                 return;
             }
             
-            populateMenuItems(categoriesArray, menuItems);
+            console.log(`✅ تم تحميل ${Object.keys(cachedMenuItems).length} صنف`);
             
-            // 🆕 انتظار قليل قبل إعادة مراقبة الصور
-            setTimeout(() => {
-                if (smartImageLoader) {
-                    smartImageLoader.observeAllImages();
-                }
+            // رسم الأصناف إذا كانت الأقسام جاهزة
+            if (cachedCategories.length > 0) {
+                populateMenuItems(cachedCategories, cachedMenuItems);
+                if (smartImageLoader) smartImageLoader.observeAllImages();
                 reattachClickHandlers();
-            }, 100);
-            
-        }, (error) => {
+            }
+        },
+        (error) => {
             console.error('❌ خطأ في تحميل الأصناف:', error);
-        });
-        
-    }, (error) => {
-        console.error('❌ خطأ في تحميل الأقسام:', error);
-    });
+        }
+    );
 }
 
-/**
- * 🆕 إعادة بناء أقسام HTML مع الحفاظ على جميع التنسيقات
- */
 function rebuildMenuSections(categoriesArray) {
     const mainElement = document.querySelector('main');
     if (!mainElement) {
@@ -70,38 +84,20 @@ function rebuildMenuSections(categoriesArray) {
     
     console.log(`🗑️ تم حذف ${oldSections.length} قسم قديم`);
     
-    // الحصول على العنصر المرجعي
+    // الحصول على العنصر المرجعي (قبل قسم فريق تعلولة)
     const teamSection = mainElement.querySelector('#team');
-    const referenceElement = teamSection || mainElement.querySelector('#support') || mainElement.querySelector('#social');
+    const referenceElement = teamSection || mainElement.querySelector('#support');
     
-    // 🆕 إنشاء أقسام جديدة مع جميع التنسيقات الضرورية
+    // إنشاء أقسام جديدة بالترتيب الصحيح
     categoriesArray.forEach((category, index) => {
         const newSection = document.createElement('section');
-        newSection.className = 'menu-section animate-in'; // 🆕 إضافة animate-in
+        newSection.className = 'menu-section animate-in';
         newSection.id = `sec-${category.id}`;
         newSection.setAttribute('data-category', category.name);
         
-        // 🆕 إضافة أنماط inline لضمان الظهور
-        newSection.style.cssText = `
-            display: block;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            animation: fadeInUp 0.6s ease forwards;
-        `;
-        
         newSection.innerHTML = `
-            <h3 style="color: #fff; font-size: 1.5rem; margin-bottom: 20px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                ${category.icon || '📁'} ${category.name}
-            </h3>
-            <div class="menu-items" style="
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                gap: 20px;
-                padding: 10px;
-            "></div>
+            <h3>${category.icon || '📁'} ${category.name}</h3>
+            <div class="menu-items"></div>
         `;
         
         if (referenceElement) {
@@ -112,13 +108,8 @@ function rebuildMenuSections(categoriesArray) {
     });
     
     console.log(`✨ تم إنشاء ${categoriesArray.length} قسم جديد`);
-    
-    updateNavigationButtons(categoriesArray);
 }
 
-/**
- * تحديث أزرار التنقل
- */
 function updateNavigationButtons(categoriesArray) {
     const navElement = document.getElementById('sectionsNav');
     if (!navElement) return;
@@ -136,13 +127,11 @@ function updateNavigationButtons(categoriesArray) {
             if (targetSection) {
                 targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
-                // تمييز الزر النشط
                 navElement.querySelectorAll('button').forEach(b => {
-                    b.style.background = 'var(--main-yellow)';
-                    b.style.color = '#000';
+                    b.style.background = '';
+                    b.classList.remove('active-nav-btn');
                 });
-                this.style.background = '#ffffff';
-                this.style.color = 'var(--main-red)';
+                this.classList.add('active-nav-btn');
             }
         });
         
@@ -152,15 +141,13 @@ function updateNavigationButtons(categoriesArray) {
     console.log(`🔘 تم تحديث ${categoriesArray.length} زر تنقل`);
 }
 
-/**
- * 🆕 توزيع الأصناف مع ضمان العرض الصحيح
- */
 function populateMenuItems(categoriesArray, menuItems) {
     // تفريغ جميع حاويات menu-items
     document.querySelectorAll('.menu-section .menu-items').forEach(container => {
         container.innerHTML = '';
     });
     
+    // تحويل menuItems إلى مصفوفة مرتبة
     const itemsArray = Object.keys(menuItems).map(key => ({
         id: key,
         ...menuItems[key]
@@ -168,18 +155,22 @@ function populateMenuItems(categoriesArray, menuItems) {
     
     let itemsAdded = 0;
     
+    // توزيع الأصناف على الأقسام
     itemsArray.forEach(item => {
+        // تجاهل الأصناف غير المتوفرة
         if (item.available === false) return;
         
+        // البحث عن القسم المناسب
         const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
         if (!section) {
-            console.warn(`⚠️ القسم "${item.category}" غير موجود - تم تجاهل "${item.name}"`);
+            console.warn(`⚠️ القسم "${item.category}" غير موجود`);
             return;
         }
         
         const itemsContainer = section.querySelector('.menu-items');
         if (!itemsContainer) return;
         
+        // إنشاء عنصر الصنف
         const menuElement = document.createElement('div');
         menuElement.className = 'menu-item';
         menuElement.setAttribute('data-name', item.name);
@@ -187,111 +178,56 @@ function populateMenuItems(categoriesArray, menuItems) {
         menuElement.setAttribute('data-image', item.image || '');
         menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
         
-        // 🆕 إضافة أنماط inline لضمان الظهور
-        menuElement.style.cssText = `
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-        `;
-        
         menuElement.innerHTML = `
-            <div class="item-image" style="
-                position: relative;
-                width: 100%;
-                height: 200px;
-                overflow: hidden;
-                background: #f5f5f5;
-            ">
-                <div class="image-skeleton" style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 1.5s infinite;
-                "></div>
+            <div class="item-image">
+                <div class="image-skeleton"></div>
                 <img data-src="${item.image || ''}" 
                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
                      alt="${item.name}" 
                      class="lazy-image" 
                      decoding="async" 
                      width="400" 
-                     height="400"
-                     style="
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                        opacity: 0;
-                        transition: opacity 0.4s ease;
-                     ">
+                     height="400">
             </div>
-            <div style="padding: 15px; flex: 1; display: flex; flex-direction: column;">
-                <h4 style="
-                    color: #1a1a1a;
-                    font-size: 1.1rem;
-                    margin-bottom: 8px;
-                    font-weight: 700;
-                ">${item.name}</h4>
-                <p class="price" style="
-                    color: var(--main-red, #c70301);
-                    font-size: 1.25rem;
-                    font-weight: 800;
-                    margin-top: auto;
-                ">${item.price.toLocaleString('ar-EG')} د.ع</p>
-            </div>
+            <h4>${item.name}</h4>
+            <p class="price">${item.price.toLocaleString('ar-EG')} د.ع</p>
         `;
         
         itemsContainer.appendChild(menuElement);
         itemsAdded++;
     });
     
-    // إخفاء الأقسام الفارغة
+    // 🆕 إظهار/إخفاء الأقسام حسب المحتوى
     document.querySelectorAll('.menu-section[data-category]').forEach(section => {
         const itemsContainer = section.querySelector('.menu-items');
         if (itemsContainer && itemsContainer.children.length === 0) {
             section.style.display = 'none';
         } else {
-            section.style.display = 'block';
+            section.style.display = '';
         }
     });
     
     console.log(`✅ تم توزيع ${itemsAdded} صنف على الأقسام`);
 }
 
-/**
- * 🆕 إعادة ربط معالجات النقر بشكل آمن
- */
 function reattachClickHandlers() {
-    // استخدام event delegation بدلاً من إضافة handlers متعددة
-    const mainElement = document.querySelector('main');
-    if (!mainElement) return;
+    // إزالة المعالجات القديمة
+    document.querySelectorAll('.menu-item').forEach(item => {
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+    });
     
-    // إزالة الـ listener القديم إذا كان موجوداً
-    if (mainElement._menuClickHandler) {
-        mainElement.removeEventListener('click', mainElement._menuClickHandler);
-    }
-    
-    // إضافة listener جديد باستخدام delegation
-    mainElement._menuClickHandler = function(e) {
-        const menuItem = e.target.closest('.menu-item');
-        if (menuItem) {
+    // إضافة المعالجات الجديدة
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            if (typeof openProductModal === 'function') {
-                openProductModal(menuItem);
-            }
-        }
-    };
-    
-    mainElement.addEventListener('click', mainElement._menuClickHandler);
+            openProductModal(this);
+        });
+    });
 }
+
+
 
 /**
  * 🆕 إعادة بناء أقسام HTML بالكامل من الصفر
