@@ -14,8 +14,11 @@
         <div class="login-box">
             <img src="../assets/images/Logo.gif" alt="شعار تعلولة" class="login-logo">
             <h2>لوحة تحكم تعلولة</h2>
-            <p>أدخل كلمة المرور للوصول</p>
-            <input type="password" id="adminPassword" placeholder="كلمة المرور">
+            <p class="login-subtitle">أدخل كلمة المرور للوصول إلى لوحة الإدارة</p>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="adminPassword" placeholder="كلمة المرور" autocomplete="current-password">
+            </div>
             <button id="loginBtn" class="btn-primary">
                 <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
             </button>
@@ -30,21 +33,28 @@
             <div class="sidebar-header">
                 <img src="../assets/images/Logo.gif" alt="Logo" class="sidebar-logo">
                 <h3>تعلولة</h3>
+                <p class="sidebar-subtitle">لوحة الإدارة</p>
             </div>
             <nav class="sidebar-nav">
                 <button class="nav-btn active" data-tab="ads">
-                    <i class="fas fa-bullhorn"></i> إدارة الإعلانات
+                    <i class="fas fa-bullhorn"></i>
+                    <span>إدارة الإعلانات</span>
                 </button>
                 <button class="nav-btn" data-tab="menu" disabled title="قريباً">
-                    <i class="fas fa-utensils"></i> إدارة المنيو
+                    <i class="fas fa-utensils"></i>
+                    <span>إدارة المنيو</span>
+                    <span class="badge">قريباً</span>
                 </button>
                 <button class="nav-btn" data-tab="orders" disabled title="قريباً">
-                    <i class="fas fa-receipt"></i> الطلبات
+                    <i class="fas fa-receipt"></i>
+                    <span>الطلبات</span>
+                    <span class="badge">قريباً</span>
                 </button>
             </nav>
             <div class="sidebar-footer">
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
                 </button>
             </div>
         </aside>
@@ -54,48 +64,94 @@
             <!-- تبويب الإعلانات -->
             <section id="tab-ads" class="tab-content active">
                 <div class="page-header">
-                    <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات والعروض</h1>
-                    <p>أضف عروضاً خاصة تظهر لعملائك في المنيو الإلكتروني</p>
+                    <div class="header-content">
+                        <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات والعروض</h1>
+                        <p>أضف عروضاً خاصة تظهر لعملائك في المنيو الإلكتروني مباشرة</p>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-ad"></i>
+                            <div class="stat-info">
+                                <span class="stat-number" id="totalAdsCount">0</span>
+                                <span class="stat-label">إعلان نشط</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- نموذج إضافة إعلان -->
                 <div class="card">
-                    <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
-                    <form id="adForm">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
+                        <p class="card-subtitle">أضف عرضاً جديداً يظهر في قسم العروض الخاصة</p>
+                    </div>
+                    <form id="adForm" class="ad-form">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>عنوان الإعلان *</label>
+                                <label for="adTitle">
+                                    <i class="fas fa-heading"></i> عنوان الإعلان <span class="required">*</span>
+                                </label>
                                 <input type="text" id="adTitle" required placeholder="مثال: عرض البرجر المزدوج">
                             </div>
                             <div class="form-group">
-                                <label>السعر (اختياري)</label>
+                                <label for="adPrice">
+                                    <i class="fas fa-tag"></i> السعر (اختياري)
+                                </label>
                                 <input type="number" id="adPrice" placeholder="مثال: 5000">
                             </div>
                         </div>
+                        
                         <div class="form-group">
-                            <label>وصف الإعلان *</label>
+                            <label for="adDescription">
+                                <i class="fas fa-align-right"></i> وصف الإعلان <span class="required">*</span>
+                            </label>
                             <textarea id="adDescription" required rows="3" placeholder="اكتب وصفاً جذاباً للعرض..."></textarea>
                         </div>
+
                         <div class="form-group">
-                            <label>صورة الإعلان (اختياري)</label>
-                            <div class="file-upload-area" id="fileUploadArea">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>اسحب الصورة هنا أو انقر للاختيار</p>
-                                <input type="file" id="adImage" accept="image/*" hidden>
-                                <img id="imagePreview" class="image-preview" style="display: none;">
+                            <label for="imageUrl">
+                                <i class="fas fa-link"></i> رابط صورة الإعلان (اختياري)
+                            </label>
+                            <div class="url-input-group">
+                                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                                <button type="button" id="previewBtn" class="btn-secondary" title="معاينة الصورة">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                أدخل رابط صورة من الإنترنت (مثل: Imgur, Google Drive, أو أي استضافة صور)
+                            </small>
+                            <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+                                <img id="imagePreview" class="image-preview">
+                                <button type="button" id="removeImageBtn" class="btn-remove-image" title="إزالة الصورة">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
-                        <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
-                            <i class="fas fa-save"></i> حفظ ونشر الإعلان
-                        </button>
+
+                        <div class="form-actions">
+                            <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
+                                <i class="fas fa-save"></i> حفظ ونشر الإعلان
+                            </button>
+                            <button type="reset" class="btn-secondary">
+                                <i class="fas fa-undo"></i> مسح النموذج
+                            </button>
+                        </div>
                     </form>
                 </div>
 
                 <!-- قائمة الإعلانات الحالية -->
                 <div class="card">
-                    <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات النشطة حالياً</h2>
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات النشطة حالياً</h2>
+                        <p class="card-subtitle">جميع الإعلانات المعروضة حالياً في المنيو</p>
+                    </div>
                     <div id="adsList" class="ads-grid">
-                        <p class="loading-text">جاري تحميل الإعلانات...</p>
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin fa-3x"></i>
+                            <p>جاري تحميل الإعلانات...</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -107,7 +163,7 @@
                     <p>هذه الميزة قيد التطوير وستتاح قريباً لإضافة وتعديل الأصناف ديناميكياً.</p>
                 </div>
                 <div class="card empty-state">
-                    <i class="fas fa-tools fa-3x"></i>
+                    <i class="fas fa-tools fa-4x"></i>
                     <h3>قيد التطوير</h3>
                     <p>سيتمكن المسؤول قريباً من إضافة، تعديل، وحذف أصناف المنيو مباشرة من هنا.</p>
                 </div>
@@ -118,10 +174,9 @@
     <!-- إشعارات Toast -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Database فقط - بدون Storage) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>
