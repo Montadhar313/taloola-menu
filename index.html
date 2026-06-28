@@ -1,35 +1,68 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="تعلولة">
-<meta name="description" content="مطعم تعلولة - أفضل الوجبات السريعة في بغداد، مدينة الصدر. اطلب الآن عبر المنيو الإلكتروني">
-<meta name="theme-color" content="#c70301">
-<title>تعلولة - مطعم الوجبات السريعة</title>
-
-<!-- 🚀 تحسينات الأداء المتقدمة -->
-<meta http-equiv="Cache-Control" content="max-age=31536000">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="dns-prefetch" href="https://v1.pinimg.com">
-<link rel="dns-prefetch" href="https://www.gstatic.com">
-
-<!-- 🚀 Preload للملفات الأساسية -->
-<link rel="preload" href="styles.css" as="style">
-<link rel="preload" href="script.js" as="script">
-<link rel="preload" as="image" href="assets/images/Logo.gif" fetchpriority="high">
-<link rel="preload" as="image" href="assets/images/BRGER.png">
-<link rel="preload" as="image" href="assets/images/ZENGER.png">
-
-<!-- 📱 أيقونات التطبيق -->
-<link rel="icon" type="image/gif" href="assets/images/Logo.gif">
-<link rel="apple-touch-icon" href="assets/images/Logo.gif">
-
-<!-- 🎨 الملفات الخارجية -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="تعلولة">
+    <meta name="description" content="مطعم تعلولة - أفضل الوجبات السريعة في بغداد، مدينة الصدر. اطلب الآن عبر المنيو الإلكتروني">
+    <meta name="theme-color" content="#c70301">
+    <title>تعلولة - مطعم الوجبات السريعة</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- 🆕 تحميل الثيم من Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        // تحميل وتطبيق الثيم
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
+            authDomain: "talola-food.firebaseapp.com",
+            databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
+            projectId: "talola-food",
+            messagingSenderId: "440585170470",
+            appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        
+        firebase.database().ref('theme').on('value', (snapshot) => {
+            const theme = snapshot.val();
+            if (theme) {
+                applyTheme(theme);
+            }
+        });
+        
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            
+            // تطبيق الألوان
+            root.style.setProperty('--main-red', theme.primaryColor || '#c70301');
+            root.style.setProperty('--main-yellow', theme.secondaryColor || '#fedb17');
+            
+            // تطبيق الخلفية
+            const body = document.body;
+            const video = document.getElementById('background-video');
+            
+            if (theme.backgroundType === 'video') {
+                body.style.background = '';
+                if (video) {
+                    video.style.display = 'block';
+                    video.querySelector('source').src = theme.videoUrl || 'https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4';
+                    video.load();
+                }
+            } else if (theme.backgroundType === 'color') {
+                if (video) video.style.display = 'none';
+                body.style.background = theme.bgColor || '#1a1a1a';
+            } else if (theme.backgroundType === 'gradient') {
+                if (video) video.style.display = 'none';
+                body.style.background = `linear-gradient(135deg, ${theme.gradientColor1 || '#1a1a1a'}, ${theme.gradientColor2 || '#2c2c2c'})`;
+            }
+        }
+    </script>
 </head>
 <body>
 
