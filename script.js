@@ -328,28 +328,22 @@ function populateMenuItems(categoriesArray, menuItems) {
         container.innerHTML = '';
     });
     
-    // تحويل menuItems إلى مصفوفة مرتبة
     const itemsArray = Object.keys(menuItems).map(key => ({
         id: key,
         ...menuItems[key]
     })).sort((a, b) => (a.order || 0) - (b.order || 0));
     
-    // توزيع الأصناف على الأقسام
+    let itemsAdded = 0;
+    
     itemsArray.forEach(item => {
-        // تجاهل الأصناف غير المتوفرة
         if (item.available === false) return;
         
-        // البحث عن القسم المناسب
         const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
-        if (!section) {
-            console.warn(`⚠️ القسم "${item.category}" غير موجود - تم تجاهل "${item.name}"`);
-            return;
-        }
+        if (!section) return;
         
         const itemsContainer = section.querySelector('.menu-items');
         if (!itemsContainer) return;
         
-        // إنشاء عنصر الصنف
         const menuElement = document.createElement('div');
         menuElement.className = 'menu-item';
         menuElement.setAttribute('data-name', item.name);
@@ -357,25 +351,29 @@ function populateMenuItems(categoriesArray, menuItems) {
         menuElement.setAttribute('data-image', item.image || '');
         menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
         
+        // 🆕 معالجة الصور - استخدام placeholder إذا كانت الصورة غير موجودة
+        const imageUrl = item.image || 'https://via.placeholder.com/300x200?text=No+Image';
+        
         menuElement.innerHTML = `
             <div class="item-image">
                 <div class="image-skeleton"></div>
-                <img data-src="${item.image || ''}" 
+                <img data-src="${imageUrl}" 
                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
                      alt="${item.name}" 
                      class="lazy-image" 
                      decoding="async" 
                      width="400" 
-                     height="400">
+                     height="400"
+                     onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
             </div>
             <h4>${item.name}</h4>
             <p class="price">${item.price.toLocaleString('ar-EG')} د.ع</p>
         `;
         
         itemsContainer.appendChild(menuElement);
+        itemsAdded++;
     });
     
-    // إخفاء الأقسام الفارغة
     document.querySelectorAll('.menu-section[data-category]').forEach(section => {
         const itemsContainer = section.querySelector('.menu-items');
         if (itemsContainer && itemsContainer.children.length === 0) {
@@ -385,7 +383,7 @@ function populateMenuItems(categoriesArray, menuItems) {
         }
     });
     
-    console.log(`✅ تم توزيع ${itemsArray.length} صنف على الأقسام`);
+    console.log(`✅ تم توزيع ${itemsAdded} صنف`);
 }
 
 /**
