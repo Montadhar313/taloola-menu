@@ -1394,15 +1394,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // 📢 بدء جلب الإعلانات من Firebase
     // ============================================
-    firebaseDbScript.onload = function() {
+    firebaseStorageScript.onload = function() {
         setTimeout(() => {
-            if (typeof firebase !== 'undefined') {
-                try {
-                    firebase.initializeApp(firebaseConfig);
-                    console.log('✅ تم تهيئة Firebase بنجاح');
-                    displayAds();
-                } catch (error) {
-                    console.error('خطأ في تهيئة Firebase:', error);
+        if (typeof firebase !== 'undefined') {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                console.log('✅ تم تهيئة Firebase بنجاح');
+                displayAds();
+                loadMenuFromFirebase(); // 🆕 تحميل المنيو ديناميكياً
+            } catch (error) {
+                console.error('خطأ في تهيئة Firebase:', error);
                 }
             }
         }, 500);
