@@ -606,26 +606,25 @@
 </main>
 
 <!-- ============================================ -->
-<!-- 🎯 أزرار المساعدة السفلية (مع السلة الديناميكية) -->
+<!-- 🎯 الأزرار السفلية المنفصلة -->
 <!-- ============================================ -->
-<div class="bottom-action-buttons">
-    <!-- زر الموقع (يمين في RTL) -->
-    <button id="locationIconBtn" class="action-btn-bottom location-btn-bottom" title="تحديد الموقع">
-        <i class="fas fa-map-marker-alt"></i>
-    </button>
-    
-    <!-- 🛒 زر السلة العائم (شكل حبوبي مع نص) -->
+
+<!-- 📍 زر الموقع (يمين الشاشة) -->
+<button id="locationIconBtn" class="floating-btn location-floating-btn" title="تحديد الموقع">
+    <i class="fas fa-map-marker-alt"></i>
+</button>
+
+<!-- ⬆️ زر العودة للأعلى (يسار الشاشة) -->
+<button id="scrollToTopBtn" class="floating-btn scroll-floating-btn" aria-label="العودة لأعلى الصفحة" title="العودة لأعلى">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<!-- 🛒 زر السلة العائم (الوسط - شكل حبوبي) -->
 <button id="floatingCartBtn" class="floating-cart-btn" title="عرض السلة وتأكيد الطلب">
     <i class="fas fa-shopping-cart cart-icon-float"></i>
     <span class="cart-text-float">تأكيد الطلب</span>
     <span id="floatingCartCount" class="cart-count-badge">0</span>
 </button>
-    
-    <!-- زر العودة للأعلى (يسار في RTL) -->
-    <button id="scrollToTopBtn" class="action-btn-bottom scroll-top-btn-bottom" aria-label="العودة لأعلى الصفحة" title="العودة لأعلى">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-</div>
 
 <!-- ============================================ -->
 <!-- 🛒 نافذة سلة المشتريات -->
