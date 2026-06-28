@@ -1,48 +1,51 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي - النسخة المحسنة
+// 🍽️ تحميل المنيو الديناميكي - النسخة المُحدَّثة
 // ============================================
 
+// 🆕 متغيرات عامة لتخزين البيانات
 let cachedCategories = [];
 let cachedMenuItems = null;
 let isMenuInitialized = false;
-let firebaseReady = false;
 
 // ============================================
-// 🔥 تهيئة Firebase
+// 🛡️ دوال مساعدة آمنة
 // ============================================
-function initFirebase() {
-    if (typeof firebase === 'undefined' || !firebase.database) {
-        setTimeout(initFirebase, 500);
-        return;
-    }
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
-        authDomain: "talola-food.firebaseapp.com",
-        databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
-        projectId: "talola-food",
-        messagingSenderId: "440585170470",
-        appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
-    };
-    
+function safeLocalStorageGet(key, defaultValue = null) {
     try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            console.log('✅ تم تهيئة Firebase بنجاح');
-        }
-        firebaseReady = true;
-        displayAds();
-        loadMenuFromFirebase();
-    } catch (error) {
-        console.error('❌ خطأ في تهيئة Firebase:', error);
+        const value = localStorage.getItem(key);
+        return value !== null ? value : defaultValue;
+    } catch (e) {
+        console.warn(`⚠️ لا يمكن الوصول إلى localStorage: ${key}`);
+        return defaultValue;
     }
 }
 
+function safeLocalStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        console.warn(`⚠️ لا يمكن الكتابة إلى localStorage: ${key}`);
+        return false;
+    }
+}
+
+function safeJsonParse(str, defaultValue = null) {
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        return defaultValue;
+    }
+}
+
+// Placeholder للصور الفاشلة
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+TuyDZhNmI2YXYryDYqtmC2LPYqSDYp9mE2YXYutmI2LHYqTwvdGV4dD48L3N2Zz4=';
+
 // ============================================
-// 🍽️ تحميل المنيو من Firebase
+// 📥 تحميل المنيو من Firebase
 // ============================================
 function loadMenuFromFirebase() {
-    if (!firebaseReady) {
+    if (typeof firebase === 'undefined' || !firebase.database) {
         setTimeout(loadMenuFromFirebase, 500);
         return;
     }
@@ -66,12 +69,11 @@ function loadMenuFromFirebase() {
             console.log(`✅ تم تحميل ${cachedCategories.length} قسم`);
             
             rebuildMenuSections(cachedCategories);
+            updateNavigationButtons(cachedCategories);
             
             if (cachedMenuItems) {
                 populateMenuItems(cachedCategories, cachedMenuItems);
-                if (smartImageLoader) {
-                    setTimeout(() => smartImageLoader.observeAllImages(), 100);
-                }
+                if (smartImageLoader) smartImageLoader.observeAllImages();
             }
         },
         (error) => {
@@ -92,9 +94,7 @@ function loadMenuFromFirebase() {
             
             if (cachedCategories.length > 0) {
                 populateMenuItems(cachedCategories, cachedMenuItems);
-                if (smartImageLoader) {
-                    setTimeout(() => smartImageLoader.observeAllImages(), 100);
-                }
+                if (smartImageLoader) smartImageLoader.observeAllImages();
             }
         },
         (error) => {
@@ -113,17 +113,13 @@ function rebuildMenuSections(categoriesArray) {
         return;
     }
     
-    // حذف الأقسام القديمة
     const oldSections = mainElement.querySelectorAll('.menu-section[data-category]');
     oldSections.forEach(section => section.remove());
-    console.log(`🗑️ تم حذف ${oldSections.length} قسم قديم`);
     
-    // الحصول على العنصر المرجعي
     const teamSection = mainElement.querySelector('#team');
     const referenceElement = teamSection || mainElement.querySelector('#support') || mainElement.querySelector('#social');
     
-    // إنشاء أقسام جديدة
-    categoriesArray.forEach((category, index) => {
+    categoriesArray.forEach((category) => {
         const newSection = document.createElement('section');
         newSection.className = 'menu-section animate-in';
         newSection.id = `sec-${category.id}`;
@@ -142,12 +138,8 @@ function rebuildMenuSections(categoriesArray) {
     });
     
     console.log(`✨ تم إنشاء ${categoriesArray.length} قسم جديد`);
-    updateNavigationButtons(categoriesArray);
 }
 
-// ============================================
-// 🔘 أزرار التنقل
-// ============================================
 function updateNavigationButtons(categoriesArray) {
     const navElement = document.getElementById('sectionsNav');
     if (!navElement) return;
@@ -167,31 +159,24 @@ function updateNavigationButtons(categoriesArray) {
                 
                 navElement.querySelectorAll('button').forEach(b => {
                     b.style.background = '';
-                    b.style.color = '';
                     b.classList.remove('active-nav-btn');
                 });
                 this.classList.add('active-nav-btn');
-                this.style.background = '#ffffff';
-                this.style.color = 'var(--main-red)';
             }
         });
         
         navElement.appendChild(button);
     });
-    
-    console.log(`🔘 تم تحديث ${categoriesArray.length} زر تنقل`);
 }
 
 // ============================================
-// 🍕 توزيع الأصناف على الأقسام
+// 🎯 توزيع الأصناف على الأقسام (محسّن للصور)
 // ============================================
 function populateMenuItems(categoriesArray, menuItems) {
-    // تفريغ الحاويات
     document.querySelectorAll('.menu-section .menu-items').forEach(container => {
         container.innerHTML = '';
     });
     
-    // تحويل إلى مصفوفة مرتبة
     const itemsArray = Object.keys(menuItems).map(key => ({
         id: key,
         ...menuItems[key]
@@ -199,51 +184,68 @@ function populateMenuItems(categoriesArray, menuItems) {
     
     let itemsAdded = 0;
     
-    // توزيع الأصناف
     itemsArray.forEach(item => {
         if (item.available === false) return;
         
         const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
-        if (!section) {
-            console.warn(`⚠️ القسم "${item.category}" غير موجود`);
-            return;
-        }
+        if (!section) return;
         
         const itemsContainer = section.querySelector('.menu-items');
         if (!itemsContainer) return;
         
-        // إنشاء عنصر الصنف
+        // ✅ التحقق من صلاحية الصورة
+        const rawImage = (item.image || '').trim();
+        const hasValidImage = rawImage && 
+            (rawImage.startsWith('http://') || 
+             rawImage.startsWith('https://') || 
+             rawImage.startsWith('data:image/') ||
+             rawImage.startsWith('/'));
+        
         const menuElement = document.createElement('div');
         menuElement.className = 'menu-item';
-        menuElement.setAttribute('data-name', item.name);
-        menuElement.setAttribute('data-price', item.price);
-        menuElement.setAttribute('data-image', item.image || '');
+        menuElement.setAttribute('data-name', item.name || '');
+        menuElement.setAttribute('data-price', String(item.price || 0));
+        menuElement.setAttribute('data-image', hasValidImage ? rawImage : '');
         menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
         
-        const imageUrl = item.image || '';
-        
-        menuElement.innerHTML = `
-            <div class="item-image">
-                <div class="image-skeleton"></div>
-                <img data-src="${imageUrl}" 
-                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                     alt="${item.name}" 
-                     class="lazy-image" 
-                     loading="lazy"
-                     decoding="async" 
-                     width="400" 
-                     height="400"
-                     crossorigin="anonymous">
-            </div>
-            <h4>${item.name}</h4>
-            <p class="price">${item.price.toLocaleString('ar-EG')} د.ع</p>
-        `;
+        if (hasValidImage) {
+            menuElement.innerHTML = `
+                <div class="item-image">
+                    <div class="image-skeleton"></div>
+                    <img data-src="${rawImage}" 
+                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f5f5f5'/%3E%3C/svg%3E" 
+                         alt="${item.name || 'منتج'}" 
+                         class="lazy-image" 
+                         decoding="async" 
+                         loading="lazy"
+                         width="400" 
+                         height="400"
+                         onerror="handleImageError(this)">
+                </div>
+                <h4>${item.name || 'منتج'}</h4>
+                <p class="price">${(item.price || 0).toLocaleString('ar-EG')} د.ع</p>
+            `;
+        } else {
+            // صورة غير موجودة - استخدم placeholder مباشرة
+            menuElement.innerHTML = `
+                <div class="item-image">
+                    <img src="${PLACEHOLDER_IMAGE}" 
+                         alt="${item.name || 'منتج'}" 
+                         class="loaded placeholder"
+                         decoding="async"
+                         width="400" 
+                         height="400">
+                </div>
+                <h4>${item.name || 'منتج'}</h4>
+                <p class="price">${(item.price || 0).toLocaleString('ar-EG')} د.ع</p>
+            `;
+        }
         
         itemsContainer.appendChild(menuElement);
         itemsAdded++;
     });
     
-    // إظهار/إخفاء الأقسام حسب المحتوى
+    // إظهار/إخفاء الأقسام الفارغة
     document.querySelectorAll('.menu-section[data-category]').forEach(section => {
         const itemsContainer = section.querySelector('.menu-items');
         if (itemsContainer && itemsContainer.children.length === 0) {
@@ -253,11 +255,23 @@ function populateMenuItems(categoriesArray, menuItems) {
         }
     });
     
-    console.log(`✅ تم توزيع ${itemsAdded} صنف على الأقسام`);
+    console.log(`✅ تم توزيع ${itemsAdded} صنف`);
 }
 
+// ✅ معالج عام لأخطاء الصور
+function handleImageError(img) {
+    if (!img) return;
+    img.onerror = null; // منع التكرار
+    img.src = PLACEHOLDER_IMAGE;
+    img.classList.remove('lazy-image', 'loading');
+    img.classList.add('loaded', 'error-img');
+    const skeleton = img.parentElement?.querySelector('.image-skeleton');
+    if (skeleton) skeleton.remove();
+}
+window.handleImageError = handleImageError;
+
 // ============================================
-// 🖼️ نظام تحميل الصور الذكي المحسّن
+// 🚀 نظام تحميل الصور الذكي (مُحسَّن)
 // ============================================
 class SmartSequentialImageLoader {
     constructor() {
@@ -265,15 +279,15 @@ class SmartSequentialImageLoader {
         this.currentlyLoading = new Set();
         this.cache = new Map();
         this.waitingElements = new Map();
-        this.failedImages = new Map(); // تتبع الصور الفاشلة
         this.visibilityObserver = null;
         this.preloadObserver = null;
+        this.retryCount = new Map(); // ✅ تتبع إعادة المحاولة
+        this.maxRetries = 2;
         this.config = {
             maxConcurrent: this.detectOptimalConcurrency(),
-            preloadDistance: 500,
-            highPriorityDistance: 200,
-            maxRetries: 3,
-            retryDelay: 1000
+            preloadDistance: 400,
+            highPriorityDistance: 150,
+            useIdleCallback: 'requestIdleCallback' in window
         };
         
         console.log(`⚡ Smart Loader جاهز - Concurrent: ${this.config.maxConcurrent}`);
@@ -281,26 +295,18 @@ class SmartSequentialImageLoader {
     }
     
     detectOptimalConcurrency() {
-        const connection = navigator.connection || 
-                          navigator.mozConnection || 
-                          navigator.webkitConnection;
-        
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (connection) {
-            const type = connection.effectiveType;
-            const saveData = connection.saveData;
-            
-            if (saveData) return 2;
-            
-            switch(type) {
-                case '4g': return 6;
-                case '3g': return 4;
+            if (connection.saveData) return 1;
+            switch(connection.effectiveType) {
+                case '4g': return 4;
+                case '3g': return 2;
                 case '2g': 
-                case 'slow-2g': return 2;
-                default: return 4;
+                case 'slow-2g': return 1;
+                default: return 2;
             }
         }
-        
-        return Math.min(navigator.hardwareConcurrency || 4, 6);
+        return Math.min(navigator.hardwareConcurrency || 4, 4);
     }
     
     init() {
@@ -311,12 +317,16 @@ class SmartSequentialImageLoader {
     }
     
     setupObservers() {
-        // Observer للصور المرئية
         this.visibilityObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
+                        // ✅ تحقق أن الصورة لا تزال في DOM
+                        if (!document.body.contains(img)) {
+                            this.visibilityObserver.unobserve(img);
+                            return;
+                        }
                         const priority = this.calculatePriority(img);
                         this.enqueue(img, priority);
                         this.visibilityObserver.unobserve(img);
@@ -329,18 +339,19 @@ class SmartSequentialImageLoader {
             }
         );
         
-        // Observer لتحميل مسبق للأقسام
         this.preloadObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        this.preloadSectionImages(entry.target);
+                        if (document.body.contains(entry.target)) {
+                            this.preloadSectionImages(entry.target);
+                        }
                         this.preloadObserver.unobserve(entry.target);
                     }
                 });
             },
             {
-                rootMargin: '800px 0px',
+                rootMargin: '500px 0px',
                 threshold: 0
             }
         );
@@ -349,27 +360,40 @@ class SmartSequentialImageLoader {
     calculatePriority(img) {
         const rect = img.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
         
-        // صور في الـ viewport - أولوية عالية جداً
+        const centerX = viewportWidth / 2;
+        const centerY = viewportHeight / 2;
+        const imgCenterX = rect.left + rect.width / 2;
+        const imgCenterY = rect.top + rect.height / 2;
+        
+        const distance = Math.sqrt(
+            Math.pow(imgCenterX - centerX, 2) + 
+            Math.pow(imgCenterY - centerY, 2)
+        );
+        
         if (rect.top < viewportHeight && rect.bottom > 0) {
-            return 1;
+            return 1 + (distance / 1000);
         }
         
-        // صور قريبة من الـ viewport - أولوية عالية
         if (rect.top < viewportHeight + this.config.highPriorityDistance) {
-            return 10;
+            return 10 + (distance / 500);
         }
         
-        // صور بعيدة - أولوية منخفضة
-        return 100 + (rect.top / 100);
+        return 100 + (distance / 200);
     }
     
     observeAllImages() {
-        const lazyImages = document.querySelectorAll('.lazy-image[data-src]');
+        const lazyImages = document.querySelectorAll('img.lazy-image:not(.loaded):not(.loading)');
         
         lazyImages.forEach(img => {
-            if (img.classList.contains('loaded') || img.classList.contains('loading')) {
-                return; // تخطي الصور المحملة بالفعل
+            // ✅ تحقق من وجود data-src صالح
+            const dataSrc = img.getAttribute('data-src');
+            if (!dataSrc || dataSrc.trim() === '') {
+                img.classList.remove('lazy-image');
+                img.src = PLACEHOLDER_IMAGE;
+                img.classList.add('loaded', 'placeholder');
+                return;
             }
             
             if (this.visibilityObserver) {
@@ -386,19 +410,20 @@ class SmartSequentialImageLoader {
     }
     
     enqueue(img, priority = 50) {
+        // ✅ تحقق أن الصورة لا تزال في DOM
+        if (!document.body.contains(img)) return;
+        
         const src = img.getAttribute('data-src');
-        if (!src) {
-            this.showFallbackImage(img);
+        if (!src || src.trim() === '') {
+            this.applyFallback(img);
             return;
         }
         
-        // التحقق من الكاش
         if (this.cache.has(src)) {
             this.applyImage(img, src);
             return;
         }
         
-        // إضافة إلى قائمة الانتظار
         if (!this.waitingElements.has(src)) {
             this.waitingElements.set(src, []);
             this.queue.push({ src, priority });
@@ -421,32 +446,23 @@ class SmartSequentialImageLoader {
         ) {
             const next = this.queue.shift();
             if (next) {
-                this.loadImage(next.src, 0);
+                this.loadImage(next.src);
             }
         }
     }
     
-    loadImage(src, retryCount = 0) {
+    loadImage(src) {
         this.currentlyLoading.add(src);
         
         const img = new Image();
         img.decoding = 'async';
-        img.crossOrigin = 'anonymous';
-        
-        // Timeout للتحميل
-        const timeout = setTimeout(() => {
-            console.warn(`⏱️ Timeout في تحميل: ${src}`);
-            this.handleImageError(src, retryCount);
-        }, 15000); // 15 ثانية timeout
         
         img.onload = () => {
-            clearTimeout(timeout);
             this.handleImageLoad(src, img);
         };
         
         img.onerror = () => {
-            clearTimeout(timeout);
-            this.handleImageError(src, retryCount);
+            this.handleImageError(src);
         };
         
         img.src = src;
@@ -455,43 +471,60 @@ class SmartSequentialImageLoader {
     handleImageLoad(src, img) {
         this.currentlyLoading.delete(src);
         this.cache.set(src, src);
-        this.failedImages.delete(src);
+        this.retryCount.delete(src); // ✅ إعادة تعيين عدد المحاولات
         
         const waitingElements = this.waitingElements.get(src) || [];
         waitingElements.forEach(element => {
-            this.applyImage(element, src);
+            if (document.body.contains(element)) {
+                this.applyImage(element, src);
+            }
         });
         
         this.waitingElements.delete(src);
         this.saveToSessionCache(src);
         this.processQueue();
         
-        console.log(`✅ تم تحميل: ${src.split('/').pop()}`);
+        console.log(`✅ تم تحميل: ${src.split('/').pop().substring(0, 50)}`);
     }
     
-    handleImageError(src, retryCount = 0) {
+    handleImageError(src) {
+        console.warn(`❌ فشل تحميل: ${src}`);
         this.currentlyLoading.delete(src);
         
-        // محاولة إعادة التحميل
-        if (retryCount < this.config.maxRetries) {
-            console.warn(`🔄 إعادة محاولة تحميل (${retryCount + 1}/${this.config.maxRetries}): ${src}`);
+        // ✅ نظام إعادة المحاولة
+        const retries = this.retryCount.get(src) || 0;
+        if (retries < this.maxRetries) {
+            this.retryCount.set(src, retries + 1);
+            console.log(`🔄 إعادة المحاولة ${retries + 1}/${this.maxRetries} لـ ${src.split('/').pop()}`);
             setTimeout(() => {
-                this.loadImage(src, retryCount + 1);
-            }, this.config.retryDelay * (retryCount + 1));
+                if (!this.cache.has(src)) {
+                    this.loadImage(src);
+                }
+            }, 1000 * (retries + 1));
             return;
         }
         
-        // فشل نهائي
-        console.error(`❌ فشل تحميل بعد ${this.config.maxRetries} محاولات: ${src}`);
-        this.failedImages.set(src, true);
+        this.retryCount.delete(src);
         
         const waitingElements = this.waitingElements.get(src) || [];
         waitingElements.forEach(element => {
-            this.showFallbackImage(element);
+            if (document.body.contains(element)) {
+                this.applyFallback(element);
+            }
         });
-        
         this.waitingElements.delete(src);
         this.processQueue();
+    }
+    
+    applyFallback(img) {
+        img.src = PLACEHOLDER_IMAGE;
+        img.classList.remove('loading', 'lazy-image');
+        img.classList.add('loaded', 'error-img');
+        const skeleton = img.parentElement?.querySelector('.image-skeleton');
+        if (skeleton) {
+            skeleton.style.opacity = '0';
+            setTimeout(() => skeleton.remove(), 400);
+        }
     }
     
     applyImage(img, src) {
@@ -511,36 +544,14 @@ class SmartSequentialImageLoader {
         }
     }
     
-    showFallbackImage(img) {
-        // صورة fallback SVG
-        const fallbackSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23f0f0f0' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='24' fill='%23999'%3E🍽️%3C/text%3E%3C/svg%3E`;
-        
-        img.src = fallbackSvg;
-        img.classList.remove('loading');
-        img.classList.add('error');
-        
-        const skeleton = img.parentElement?.querySelector('.image-skeleton');
-        if (skeleton) {
-            skeleton.style.transition = 'opacity 0.4s ease';
-            skeleton.style.opacity = '0';
-            setTimeout(() => {
-                if (skeleton.parentElement) {
-                    skeleton.remove();
-                }
-            }, 400);
-        }
-    }
-    
     preloadSectionImages(section) {
-        const images = section.querySelectorAll('.lazy-image[data-src]');
+        const images = section.querySelectorAll('img.lazy-image[data-src]');
         
         images.forEach((img, index) => {
+            if (!document.body.contains(img)) return;
             const src = img.getAttribute('data-src');
-            if (src && !this.cache.has(src) && !this.currentlyLoading.has(src)) {
-                this.queue.push({ 
-                    src, 
-                    priority: 20 + index
-                });
+            if (src && src.trim() !== '' && !this.cache.has(src) && !this.currentlyLoading.has(src)) {
+                this.queue.push({ src, priority: 20 + index });
                 
                 if (!this.waitingElements.has(src)) {
                     this.waitingElements.set(src, []);
@@ -555,40 +566,35 @@ class SmartSequentialImageLoader {
     
     saveToSessionCache(src) {
         try {
-            const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
+            const cached = safeJsonParse(sessionStorage.getItem('taloola_image_cache') || '[]', []);
             if (!cached.includes(src)) {
-                cached.push(src);
-                if (cached.length > 100) cached.shift();
+                cached.unshift(src);
+                if (cached.length > 50) cached.pop();
                 sessionStorage.setItem('taloola_image_cache', JSON.stringify(cached));
             }
-        } catch (e) {
-            console.warn('⚠️ فشل حفظ الكاش');
-        }
+        } catch (e) {}
     }
     
     loadFromSessionCache() {
         try {
-            const cached = JSON.parse(sessionStorage.getItem('taloola_image_cache') || '[]');
+            const cached = safeJsonParse(sessionStorage.getItem('taloola_image_cache') || '[]', []);
             
-            cached.slice(0, 20).forEach(src => {
+            cached.slice(0, 15).forEach(src => {
+                if (this.cache.has(src)) return;
                 const img = new Image();
-                img.onload = () => {
-                    this.cache.set(src, src);
-                };
+                img.onload = () => this.cache.set(src, src);
+                img.onerror = () => {};
                 img.src = src;
             });
             
             if (cached.length > 0) {
-                console.log(`⚡ تم استرجاع ${Math.min(cached.length, 20)} صورة من الكاش`);
+                console.log(`⚡ تم استرجاع ${Math.min(cached.length, 15)} صورة من الكاش`);
             }
         } catch (e) {}
     }
     
     monitorConnectionChanges() {
-        const connection = navigator.connection || 
-                          navigator.mozConnection || 
-                          navigator.webkitConnection;
-        
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (connection) {
             connection.addEventListener('change', () => {
                 const newConcurrency = this.detectOptimalConcurrency();
@@ -607,7 +613,6 @@ class SmartSequentialImageLoader {
             loading: this.currentlyLoading.size,
             queued: this.queue.length,
             waiting: this.waitingElements.size,
-            failed: this.failedImages.size,
             maxConcurrent: this.config.maxConcurrent
         };
     }
@@ -640,7 +645,7 @@ let locationPermissionGranted = false;
 const LOCATION_STORAGE_KEY = 'taloola_user_location';
 const LOCATION_PERMISSION_KEY = 'taloola_location_permission';
 const LOCATION_TEXT_STORAGE_KEY = 'taloola_saved_address';
-let savedAddressText = localStorage.getItem(LOCATION_TEXT_STORAGE_KEY) || '';
+let savedAddressText = safeLocalStorageGet(LOCATION_TEXT_STORAGE_KEY) || '';
 
 function saveLocationToStorage(location) {
     try {
@@ -650,16 +655,17 @@ function saveLocationToStorage(location) {
             timestamp: Date.now(),
             googleMapsUrl: `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
         };
-        localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
+        safeLocalStorageSet(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
         return locationData;
     } catch (error) { return null; }
 }
 
 function getLocationFromStorage() {
     try {
-        const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
+        const storedLocation = safeLocalStorageGet(LOCATION_STORAGE_KEY);
         if (storedLocation) {
-            const locationData = JSON.parse(storedLocation);
+            const locationData = safeJsonParse(storedLocation);
+            if (!locationData) return null;
             const oneWeek = 7 * 24 * 60 * 60 * 1000;
             if (Date.now() - locationData.timestamp < oneWeek) return locationData;
             else localStorage.removeItem(LOCATION_STORAGE_KEY);
@@ -795,7 +801,7 @@ async function requestLocationAndUpdate() {
         const savedLocation = saveLocationToStorage(location);
         userLocation = savedLocation;
         locationPermissionGranted = true;
-        localStorage.setItem(LOCATION_PERMISSION_KEY, 'granted');
+        safeLocalStorageSet(LOCATION_PERMISSION_KEY, 'granted');
         
         if (statusDiv && textSpan) {
             statusDiv.className = 'location-modal-status success';
@@ -906,33 +912,29 @@ async function initializeLocationSystem() {
 }
 
 // ============================================
-// 🛒 نظام السلة العائمة المحسّن
+// 🛒 نظام السلة العائمة (مُحسَّن)
 // ============================================
-let shoppingCart = JSON.parse(localStorage.getItem('taloola_cart')) || [];
+let shoppingCart = [];
+try {
+    shoppingCart = safeJsonParse(safeLocalStorageGet('taloola_cart') || '[]', []);
+    if (!Array.isArray(shoppingCart)) shoppingCart = [];
+} catch (e) {
+    shoppingCart = [];
+}
 
 function saveCart() {
     try {
-        // التحقق من صحة البيانات قبل الحفظ
-        const validCart = shoppingCart.filter(item => 
-            item && item.name && typeof item.price === 'number' && item.price > 0 && item.quantity > 0
-        );
-        
-        if (validCart.length !== shoppingCart.length) {
-            console.warn('⚠️ تم إزالة عناصر غير صالحة من السلة');
-            shoppingCart = validCart;
-        }
-        
-        localStorage.setItem('taloola_cart', JSON.stringify(shoppingCart));
-        updateCartUI();
-    } catch (error) {
-        console.error('❌ خطأ في حفظ السلة:', error);
+        safeLocalStorageSet('taloola_cart', JSON.stringify(shoppingCart));
+    } catch (e) {
+        console.warn('⚠️ فشل حفظ السلة');
     }
+    updateCartUI();
 }
 
 function updateCartUI() {
     const floatingCartBtn = document.getElementById('floatingCartBtn');
     const floatingCartCount = document.getElementById('floatingCartCount');
-    const totalItems = shoppingCart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const totalItems = shoppingCart.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
     
     if (floatingCartBtn && floatingCartCount) {
         floatingCartCount.textContent = totalItems;
@@ -951,7 +953,7 @@ function showCartAddEffect() {
     const floatingCartBtn = document.getElementById('floatingCartBtn');
     if (floatingCartBtn && floatingCartBtn.classList.contains('has-items')) {
         floatingCartBtn.classList.remove('item-added');
-        void floatingCartBtn.offsetWidth; // Force reflow
+        void floatingCartBtn.offsetWidth;
         floatingCartBtn.classList.add('item-added');
         
         setTimeout(() => {
@@ -961,80 +963,57 @@ function showCartAddEffect() {
 }
 
 function addToCart(name, price, quantity = 1) {
-    // التحقق من صحة البيانات
-    if (!name || typeof name !== 'string') {
-        console.error('❌ اسم المنتج غير صالح');
-        showNotification('⚠ خطأ في إضافة المنتج');
-        return;
+    // ✅ التحقق من صحة المدخلات
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+        showNotification('⚠ اسم المنتج غير صالح');
+        return false;
     }
     
-    const parsedPrice = parseInt(price);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
-        console.error('❌ سعر المنتج غير صالح');
-        showNotification('⚠ خطأ في سعر المنتج');
-        return;
+    const numPrice = parseInt(price);
+    if (isNaN(numPrice) || numPrice < 0) {
+        showNotification('⚠ سعر المنتج غير صالح');
+        return false;
     }
     
-    const parsedQuantity = parseInt(quantity);
-    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-        console.error('❌ الكمية غير صالحة');
-        showNotification('⚠ خطأ في الكمية');
-        return;
+    const numQty = parseInt(quantity);
+    if (isNaN(numQty) || numQty < 1) {
+        showNotification('⚠ الكمية غير صالحة');
+        return false;
     }
     
-    // البحث عن المنتج في السلة
-    const existingItem = shoppingCart.find(item => item.name === name);
-    
+    const trimmedName = name.trim();
+    const existingItem = shoppingCart.find(item => item.name === trimmedName);
     if (existingItem) {
-        existingItem.quantity += parsedQuantity;
-        // التحقق من الحد الأقصى
-        if (existingItem.quantity > 99) {
-            existingItem.quantity = 99;
-            showNotification('⚠ الحد الأقصى 99 قطعة لكل منتج');
-        }
+        existingItem.quantity += numQty;
     } else {
-        shoppingCart.push({ 
-            name: name.trim(), 
-            price: parsedPrice, 
-            quantity: parsedQuantity 
-        });
+        shoppingCart.push({ name: trimmedName, price: numPrice, quantity: numQty });
     }
-    
     saveCart();
-    showNotification(`✓ تم إضافة ${parsedQuantity} × ${name}`);
+    showNotification(`✓ تم إضافة ${numQty} × ${trimmedName}`);
+    
     showCartAddEffect();
     
     if (navigator.vibrate) {
         navigator.vibrate([10, 30, 10]);
     }
+    return true;
 }
 
 function removeFromCart(index) {
-    if (index < 0 || index >= shoppingCart.length) {
-        console.error('❌ فهرس غير صالح');
-        return;
-    }
-    
+    if (index < 0 || index >= shoppingCart.length) return;
     shoppingCart.splice(index, 1);
     saveCart();
     displayCartItems();
 }
 
 function changeQuantity(index, change) {
-    if (index < 0 || index >= shoppingCart.length) {
-        console.error('❌ فهرس غير صالح');
-        return;
-    }
-    
-    shoppingCart[index].quantity += change;
-    
-    if (shoppingCart[index].quantity <= 0) {
+    if (index < 0 || index >= shoppingCart.length) return;
+    const newQty = (shoppingCart[index].quantity || 0) + change;
+    if (newQty <= 0) {
         shoppingCart.splice(index, 1);
-    } else if (shoppingCart[index].quantity > 99) {
-        shoppingCart[index].quantity = 99;
-        showNotification('⚠ الحد الأقصى 99 قطعة');
+    } else {
+        shoppingCart[index].quantity = newQty;
     }
-    
     saveCart();
     displayCartItems();
 }
@@ -1044,7 +1023,6 @@ function clearCart() {
         showNotification('السلة فارغة بالفعل');
         return; 
     }
-    
     if (confirm('هل أنت متأكد من تفريغ السلة؟')) {
         shoppingCart = [];
         saveCart();
@@ -1078,16 +1056,18 @@ function displayCartItems() {
     let totalQuantity = 0;
     
     shoppingCart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
+        const itemPrice = parseInt(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 0;
+        const itemTotal = itemPrice * itemQty;
         total += itemTotal;
-        totalQuantity += item.quantity;
+        totalQuantity += itemQty;
         
         const itemElement = document.createElement('div');
         itemElement.className = 'cart-item-new';
         itemElement.innerHTML = `
             <div class="cart-item-info-new">
                 <div class="cart-item-name-new">${item.name}</div>
-                <div class="cart-item-price-new">${item.price.toLocaleString('ar-EG')} د.ع × ${item.quantity}</div>
+                <div class="cart-item-price-new">${itemPrice.toLocaleString('ar-EG')} د.ع × ${itemQty}</div>
                 <div class="cart-item-total-new">${itemTotal.toLocaleString('ar-EG')} د.ع</div>
             </div>
             <div class="cart-item-controls-new">
@@ -1097,7 +1077,7 @@ function displayCartItems() {
                 <button class="qty-btn-new" onclick="changeQuantity(${index}, -1)">
                     <i class="fas fa-minus"></i>
                 </button>
-                <span class="qty-display-new">${item.quantity}</span>
+                <span class="qty-display-new">${itemQty}</span>
                 <button class="qty-btn-new" onclick="changeQuantity(${index}, 1)">
                     <i class="fas fa-plus"></i>
                 </button>
@@ -1131,8 +1111,8 @@ function loadSavedCustomerInfo() {
     if (!phoneInput || !areaSelect) return;
     
     try {
-        const savedPhone = localStorage.getItem('taloola_saved_phone');
-        const savedArea = localStorage.getItem('taloola_saved_area');
+        const savedPhone = safeLocalStorageGet('taloola_saved_phone');
+        const savedArea = safeLocalStorageGet('taloola_saved_area');
         
         if (savedPhone && !phoneInput.value) phoneInput.value = savedPhone;
         if (savedArea && !areaSelect.value) {
@@ -1143,58 +1123,77 @@ function loadSavedCustomerInfo() {
 }
 
 // ============================================
-// 🛍️ نافذة تفاصيل المنتج
+// 🛍️ نافذة تفاصيل المنتج (مُحسَّنة)
 // ============================================
 let currentProduct = null;
 let modalQuantity = 1;
 
 function openProductModal(element) {
+    if (!element) return;
+    
+    // ✅ التحقق من العنصر
     const name = element.getAttribute('data-name');
-    const price = parseInt(element.getAttribute('data-price'));
-    const image = element.getAttribute('data-image');
+    const priceStr = element.getAttribute('data-price');
+    const price = parseInt(priceStr);
+    
+    // ✅ الحصول على الصورة من عنصر img الحقيقي (وليس data-image)
+    const imgElement = element.querySelector('img');
+    const image = imgElement ? (imgElement.src || imgElement.getAttribute('data-src') || '') : '';
     const description = element.getAttribute('data-description') || 'منتج لذيذ من مطعم تعلولة';
     
-    if (!name || isNaN(price) || price <= 0) {
-        console.error('❌ بيانات المنتج غير صالحة');
-        showNotification('⚠ خطأ في بيانات المنتج');
+    // ✅ التحقق من صحة البيانات
+    if (!name || name.trim() === '') {
+        showNotification('⚠ بيانات المنتج غير صالحة');
         return;
     }
     
-    currentProduct = { name, price, image, description };
-    modalQuantity = 1;
-    
-    document.getElementById('productModalName').textContent = name;
-    document.getElementById('productModalPrice').textContent = price.toLocaleString('ar-EG');
-    document.getElementById('productModalDescription').textContent = description;
-    
-    const modalImg = document.getElementById('productModalImage');
-    modalImg.classList.remove('loaded');
-    
-    if (image) {
-        modalImg.src = image;
-        modalImg.alt = name;
-        modalImg.onload = () => modalImg.classList.add('loaded');
-        modalImg.onerror = () => {
-            // Fallback image
-            modalImg.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23f0f0f0' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='24' fill='%23999'%3E🍽️%3C/text%3E%3C/svg%3E`;
-            modalImg.classList.add('loaded');
-        };
-    } else {
-        modalImg.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23f0f0f0' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='24' fill='%23999'%3E🍽️%3C/text%3E%3C/svg%3E`;
-        modalImg.classList.add('loaded');
+    if (isNaN(price) || price <= 0) {
+        showNotification('⚠ سعر المنتج غير صالح');
+        return;
     }
     
-    document.getElementById('modalQtyDisplay').textContent = modalQuantity;
+    currentProduct = { 
+        name: name.trim(), 
+        price, 
+        image: image || PLACEHOLDER_IMAGE, 
+        description 
+    };
+    modalQuantity = 1;
+    
+    const nameEl = document.getElementById('productModalName');
+    const priceEl = document.getElementById('productModalPrice');
+    const descEl = document.getElementById('productModalDescription');
+    
+    if (nameEl) nameEl.textContent = currentProduct.name;
+    if (priceEl) priceEl.textContent = currentProduct.price.toLocaleString('ar-EG');
+    if (descEl) descEl.textContent = currentProduct.description;
+    
+    const modalImg = document.getElementById('productModalImage');
+    if (modalImg) {
+        modalImg.classList.remove('loaded');
+        modalImg.onload = () => modalImg.classList.add('loaded');
+        modalImg.onerror = () => {
+            modalImg.src = PLACEHOLDER_IMAGE;
+            modalImg.classList.add('loaded');
+        };
+        modalImg.src = currentProduct.image;
+        modalImg.alt = currentProduct.name;
+    }
+    
+    const qtyDisplay = document.getElementById('modalQtyDisplay');
+    if (qtyDisplay) qtyDisplay.textContent = modalQuantity;
     updateModalTotal();
     
     const modal = document.getElementById('productModal');
-    modal.style.display = 'flex';
-    
-    if (navigator.vibrate) navigator.vibrate(10);
+    if (modal) {
+        modal.style.display = 'flex';
+        if (navigator.vibrate) navigator.vibrate(10);
+    }
 }
 
 function closeProductModal() {
-    document.getElementById('productModal').style.display = 'none';
+    const modal = document.getElementById('productModal');
+    if (modal) modal.style.display = 'none';
     currentProduct = null;
     modalQuantity = 1;
 }
@@ -1202,7 +1201,8 @@ function closeProductModal() {
 function updateModalTotal() {
     if (!currentProduct) return;
     const total = currentProduct.price * modalQuantity;
-    document.getElementById('modalTotalPrice').textContent = `${total.toLocaleString('ar-EG')} د.ع`;
+    const totalEl = document.getElementById('modalTotalPrice');
+    if (totalEl) totalEl.textContent = `${total.toLocaleString('ar-EG')} د.ع`;
 }
 
 function changeModalQuantity(change) {
@@ -1212,42 +1212,47 @@ function changeModalQuantity(change) {
         modalQuantity = 99;
         showNotification('الحد الأقصى 99');
     }
-    document.getElementById('modalQtyDisplay').textContent = modalQuantity;
-    updateModalTotal();
-    
     const display = document.getElementById('modalQtyDisplay');
-    display.style.transform = 'scale(1.3)';
-    setTimeout(() => { display.style.transform = 'scale(1)'; }, 200);
-    
+    if (display) {
+        display.textContent = modalQuantity;
+        display.style.transform = 'scale(1.3)';
+        setTimeout(() => { display.style.transform = 'scale(1)'; }, 200);
+    }
+    updateModalTotal();
     if (navigator.vibrate) navigator.vibrate(5);
 }
 
 function addCurrentProductToCart() {
     if (!currentProduct) {
-        showNotification('⚠ خطأ في المنتج');
+        showNotification('⚠ لا يوجد منتج محدد');
         return;
     }
     
-    addToCart(currentProduct.name, currentProduct.price, modalQuantity);
+    const success = addToCart(currentProduct.name, currentProduct.price, modalQuantity);
+    if (!success) return;
     
     const btn = document.getElementById('modalAddToCartBtn');
-    btn.classList.add('added');
-    btn.innerHTML = '<i class="fas fa-check"></i> <span>تمت الإضافة!</span>';
-    
-    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
-    
-    setTimeout(() => {
-        btn.classList.remove('added');
-        btn.innerHTML = '<i class="fas fa-cart-plus"></i> <span>إضافة للسلة</span>';
+    if (btn) {
+        btn.classList.add('added');
+        btn.innerHTML = '<i class="fas fa-check"></i> <span>تمت الإضافة!</span>';
+        
+        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+        
+        setTimeout(() => {
+            btn.classList.remove('added');
+            btn.innerHTML = '<i class="fas fa-cart-plus"></i> <span>إضافة للسلة</span>';
+            closeProductModal();
+        }, 800);
+    } else {
         closeProductModal();
-    }, 800);
+    }
 }
 
 // ============================================
 // 📋 نافذة مراجعة الطلب
 // ============================================
 function showOrderReview() {
-    if (shoppingCart.length === 0) { 
+    if (!shoppingCart || shoppingCart.length === 0) { 
         showNotification('السلة فارغة!');
         return; 
     }
@@ -1265,7 +1270,6 @@ function displayOrderReview() {
     const reviewTotalQuantity = document.getElementById('reviewTotalQuantity');
     const reviewTotalAmount = document.getElementById('reviewTotalAmount');
     const locationInput = document.getElementById('locationDescription');
-    
     if (!reviewItemsContainer) return;
 
     const btn = document.getElementById('useSavedAddressBtn');
@@ -1279,26 +1283,26 @@ function displayOrderReview() {
     }
 
     const currentOrderAddress = sessionStorage.getItem('current_order_address');
-    if (locationInput) {
-        if (currentOrderAddress) locationInput.value = currentOrderAddress;
+    if (locationInput && currentOrderAddress) {
+        locationInput.value = currentOrderAddress;
     }
 
     reviewItemsContainer.innerHTML = '';
     let totalQuantity = 0, totalAmount = 0;
-    
     shoppingCart.forEach((item) => {
-        const itemTotal = item.price * item.quantity;
-        totalQuantity += item.quantity;
+        const itemPrice = parseInt(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 0;
+        const itemTotal = itemPrice * itemQty;
+        totalQuantity += itemQty;
         totalAmount += itemTotal;
-        
         const reviewItem = document.createElement('div');
         reviewItem.className = 'review-item';
         reviewItem.innerHTML = `
             <div class="review-item-info">
                 <div class="review-item-name">${item.name}</div>
                 <div class="review-item-details">
-                    <span><i class="fas fa-box"></i> الكمية: ${item.quantity}</span>
-                    <span><i class="fas fa-tag"></i> السعر: ${item.price.toLocaleString('ar-EG')} د.ع</span>
+                    <span><i class="fas fa-box"></i> الكمية: ${itemQty}</span>
+                    <span><i class="fas fa-tag"></i> السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع</span>
                 </div>
             </div>
             <div class="review-item-total">${itemTotal.toLocaleString('ar-EG')} د.ع</div>
@@ -1317,10 +1321,10 @@ function closeOrderReview() {
 }
 
 // ============================================
-// 📱 إرسال الطلب عبر واتساب
+// 📱 إرسال الطلب عبر واتساب (مُحصَّن)
 // ============================================
 function confirmAndSendOrder() {
-    if (shoppingCart.length === 0) {
+    if (!shoppingCart || shoppingCart.length === 0) {
         showNotification('السلة فارغة!');
         return;
     }
@@ -1363,19 +1367,9 @@ function confirmAndSendOrder() {
     
     if (hasError) return;
     
-    // التحقق من صحة عناصر السلة
-    const validItems = shoppingCart.filter(item => 
-        item && item.name && typeof item.price === 'number' && item.price > 0 && item.quantity > 0
-    );
-    
-    if (validItems.length === 0) {
-        showNotification('⚠ السلة فارغة أو تحتوي على عناصر غير صالحة');
-        return;
-    }
-    
     try {
-        localStorage.setItem('taloola_saved_phone', phone);
-        localStorage.setItem('taloola_saved_area', area);
+        safeLocalStorageSet('taloola_saved_phone', phone);
+        safeLocalStorageSet('taloola_saved_area', area);
     } catch (e) {}
     
     const phoneNumber = '9647755666073';
@@ -1389,19 +1383,21 @@ function confirmAndSendOrder() {
     message += 'الطلب :\n';
     
     let totalAmount = 0;
-    validItems.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
+    shoppingCart.forEach((item, index) => {
+        const itemPrice = parseInt(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 0;
+        const itemTotal = itemPrice * itemQty;
         totalAmount += itemTotal;
         
         message += `\n${index + 1}. ${item.name}`;
-        message += `\nالكمية : ${item.quantity}`;
-        message += `\nالسعر : ${item.price.toLocaleString('ar-EG')}`;
+        message += `\nالكمية : ${itemQty}`;
+        message += `\nالسعر : ${itemPrice}`;
         message += `\n`;
     });
     
     message += '\n═══════════════════\n';
-    message += `\nالاجمالي : ${totalAmount.toLocaleString('ar-EG')} د.ع`;
-    message += `\nالمجموع النهائي : ${totalAmount.toLocaleString('ar-EG')} د.ع`;
+    message += `\nالاجمالي : ${totalAmount}`;
+    message += `\nالمجموع النهائي : ${totalAmount}`;
     
     const gpsLocation = userLocation || getLocationFromStorage();
     if (gpsLocation) {
@@ -1411,18 +1407,24 @@ function confirmAndSendOrder() {
         message += `\n${mapUrl}`;
     }
     
-    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-    
-    closeCartModal();
-    showNotification('✅ تم إرسال طلبك بنجاح!');
-    
-    setTimeout(() => {
-        shoppingCart = [];
-        saveCart();
-        if (phoneInput) phoneInput.value = '';
-        if (areaSelect) areaSelect.value = '';
-        if (detailedInput) detailedInput.value = '';
-    }, 500);
+    try {
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        
+        closeCartModal();
+        showNotification('✅ تم إرسال طلبك بنجاح!');
+        
+        setTimeout(() => {
+            shoppingCart = [];
+            saveCart();
+            if (phoneInput) phoneInput.value = '';
+            if (areaSelect) areaSelect.value = '';
+            if (detailedInput) detailedInput.value = '';
+        }, 500);
+    } catch (e) {
+        showNotification('⚠ فشل فتح واتساب، يرجى المحاولة مرة أخرى');
+        console.error('خطأ في فتح واتساب:', e);
+    }
 }
 
 // ============================================
@@ -1431,21 +1433,25 @@ function confirmAndSendOrder() {
 function showNotification(message) {
     const existing = document.querySelector('.cart-notification');
     if (existing) existing.remove();
-    
     const notification = document.createElement('div');
     notification.className = 'cart-notification';
     notification.textContent = message;
     notification.style.display = 'block';
     document.body.appendChild(notification);
-    
     setTimeout(() => {
         notification.style.animation = 'slideInDown 0.5s ease reverse';
-        setTimeout(() => notification.remove(), 500);
+        setTimeout(() => {
+            if (notification.parentElement) notification.remove();
+        }, 500);
     }, 3000);
 }
 
 function openSupport() {
-    window.open(`https://wa.me/9647755666073?text=${encodeURIComponent('أحتاج إلى مساعدة')}`, '_blank');
+    try {
+        window.open(`https://wa.me/9647755666073?text=${encodeURIComponent('أحتاج إلى مساعدة')}`, '_blank');
+    } catch (e) {
+        showNotification('⚠ فشل فتح واتساب');
+    }
 }
 
 // ============================================
@@ -1457,47 +1463,89 @@ function displayAds() {
     
     adsContainer.innerHTML = '<p class="loading-text" style="color: #fff; text-align: center; grid-column: 1/-1;">جاري تحميل العروض...</p>';
     
-    if (!firebaseReady) {
-        setTimeout(displayAds, 1000);
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        setTimeout(() => {
+            if (typeof firebase !== 'undefined' && firebase.database) {
+                listenToAds();
+            } else {
+                adsContainer.innerHTML = '<p class="no-ads">تعذر تحميل العروض حالياً</p>';
+            }
+        }, 1000);
         return;
     }
     
-    firebase.database().ref('ads').orderByChild('timestamp').on('value', (snapshot) => {
-        adsContainer.innerHTML = '';
-        const ads = snapshot.val();
-        
-        if (!ads) {
-            adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
-            return;
-        }
-        
-        const sortedKeys = Object.keys(ads).reverse();
-        
-        sortedKeys.forEach(key => {
-            const ad = ads[key];
-            const adElement = document.createElement('div');
-            adElement.className = `ad-card ${ad.template || 'red'}`;
-            adElement.innerHTML = `
-                ${ad.imageUrl ? `<div class="ad-image"><img src="${ad.imageUrl}" alt="${ad.title}" loading="lazy" class="lazy-image"></div>` : ''}
-                <h4>${ad.title}</h4>
-                <p>${ad.description}</p>
-                ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
-            `;
-            adsContainer.appendChild(adElement);
-        });
-        
-        if (smartImageLoader) {
-            const newLazyImages = adsContainer.querySelectorAll('.lazy-image:not(.loaded):not(.loading)');
-            newLazyImages.forEach(img => {
-                if (smartImageLoader.visibilityObserver) {
-                    smartImageLoader.visibilityObserver.observe(img);
-                }
+    listenToAds();
+    
+    function listenToAds() {
+        firebase.database().ref('ads').orderByChild('timestamp').on('value', (snapshot) => {
+            adsContainer.innerHTML = '';
+            const ads = snapshot.val();
+            
+            if (!ads) {
+                adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
+                return;
+            }
+            
+            const sortedKeys = Object.keys(ads).reverse();
+            
+            sortedKeys.forEach(key => {
+                const ad = ads[key];
+                const adElement = document.createElement('div');
+                adElement.className = `ad-card ${ad.template || 'red'}`;
+                
+                const imageUrl = (ad.imageUrl || '').trim();
+                const hasImage = imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'));
+                
+                adElement.innerHTML = `
+                    ${hasImage ? `<div class="ad-image"><img src="${imageUrl}" alt="${ad.title || ''}" loading="lazy" onerror="handleImageError(this)"></div>` : ''}
+                    <h4>${ad.title || 'عرض'}</h4>
+                    <p>${ad.description || ''}</p>
+                    ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+                `;
+                adsContainer.appendChild(adElement);
             });
+            
+            if (smartImageLoader && smartImageLoader.visibilityObserver) {
+                const newLazyImages = adsContainer.querySelectorAll('.lazy-image:not(.loaded):not(.loading)');
+                newLazyImages.forEach(img => {
+                    smartImageLoader.visibilityObserver.observe(img);
+                });
+            }
+        }, (error) => {
+            console.error('خطأ في جلب الإعلانات:', error);
+            adsContainer.innerHTML = '<p class="no-ads">تعذر تحميل العروض حالياً</p>';
+        });
+    }
+}
+
+// ============================================
+// 🎯 Event Delegation للنقر على المنتجات (بديل سريع لـ reattachClickHandlers)
+// ============================================
+function setupProductClickDelegation() {
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+    
+    // إزالة المستمع القديم إذا كان موجوداً
+    if (mainElement._productClickHandler) {
+        mainElement.removeEventListener('click', mainElement._productClickHandler);
+    }
+    
+    const handler = function(e) {
+        // تجاهل النقرات على الأزرار أو الروابط داخل العنصر
+        if (e.target.closest('button, a, .qty-btn-new')) return;
+        
+        const menuItem = e.target.closest('.menu-item');
+        if (menuItem) {
+            e.preventDefault();
+            e.stopPropagation();
+            openProductModal(menuItem);
         }
-    }, (error) => {
-        console.error('خطأ في جلب الإعلانات:', error);
-        adsContainer.innerHTML = '<p class="no-ads">تعذر تحميل العروض حالياً</p>';
-    });
+    };
+    
+    mainElement.addEventListener('click', handler);
+    mainElement._productClickHandler = handler;
+    
+    console.log('✅ تم إعداد Event Delegation للمنتجات');
 }
 
 // ============================================
@@ -1506,7 +1554,15 @@ function displayAds() {
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchstart', function(){}, {passive: true});
 
-    // تحميل Firebase scripts
+    const firebaseConfig = {
+        apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
+        authDomain: "talola-food.firebaseapp.com",
+        databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
+        projectId: "talola-food",
+        messagingSenderId: "440585170470",
+        appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
+    };
+    
     const firebaseScript = document.createElement('script');
     firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     document.head.appendChild(firebaseScript);
@@ -1531,14 +1587,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (scrollY > headerOffset) {
             topStickyBar.classList.add('visible');
-            if (sectionsNav) {
-                sectionsNav.classList.add('stuck-under-bar');
-            }
+            if (sectionsNav) sectionsNav.classList.add('stuck-under-bar');
         } else {
             topStickyBar.classList.remove('visible');
-            if (sectionsNav) {
-                sectionsNav.classList.remove('stuck-under-bar');
-            }
+            if (sectionsNav) sectionsNav.classList.remove('stuck-under-bar');
         }
     }
     
@@ -1571,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 scrollToTopBtn.classList.remove('visible');
             }
         }
-    }, { passive: true });
+    });
     
     if (scrollToTopBtn) {
         scrollToTopBtn.addEventListener('click', () => {
@@ -1579,7 +1631,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Event delegation للنوافذ المنبثقة
     window.addEventListener('click', function(event) {
         if (event.target === document.getElementById('cartModal')) closeCartModal();
         if (event.target === document.getElementById('orderReviewModal')) closeOrderReview();
@@ -1587,25 +1638,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === document.getElementById('productModal')) closeProductModal();
     });
 
-    // Event delegation للنقر على عناصر المنيو
-    document.addEventListener('click', function(e) {
-        const menuItem = e.target.closest('.menu-item');
-        if (menuItem) {
-            e.preventDefault();
-            e.stopPropagation();
-            openProductModal(menuItem);
-        }
-    });
-
     updateCartUI();
     initLocationIcon();
     initializeLocationSystem();
+    
+    // ✅ إعداد Event Delegation مرة واحدة (بدلاً من cloneNode البطيء)
+    setupProductClickDelegation();
+    
+    // ✅ تهيئة محمل الصور الذكي
     initSmartImageLoading();
 
-    // تهيئة Firebase بعد تحميل الـ scripts
     firebaseDbScript.onload = function() {
         setTimeout(() => {
-            initFirebase();
+            if (typeof firebase !== 'undefined') {
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log('✅ تم تهيئة Firebase بنجاح');
+                    displayAds();
+                    loadMenuFromFirebase();
+                } catch (error) {
+                    console.error('خطأ في تهيئة Firebase:', error);
+                }
+            }
         }, 500);
     };
 });
@@ -1631,3 +1685,4 @@ window.changeModalQuantity = changeModalQuantity;
 window.addCurrentProductToCart = addCurrentProductToCart;
 window.showCartAddEffect = showCartAddEffect;
 window.smartImageLoader = smartImageLoader;
+window.handleImageError = handleImageError;
