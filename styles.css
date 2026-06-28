@@ -1463,6 +1463,163 @@ section.info-section p { line-height: 1.8; font-size: 1.1rem; margin-bottom: 1.5
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
 /* ============================================ */
+/* 🆕 أنماط للمنيو الديناميكي */
+/* ============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ضمان ظهور الأقسام */
+.menu-section {
+    display: block !important;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.menu-section h3 {
+    color: #fff !important;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.menu-section .menu-items {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 10px;
+}
+
+.menu-item {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 15px !important;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: flex !important;
+    flex-direction: column;
+}
+
+.menu-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.menu-item .item-image {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.menu-item .item-image img.lazy-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.4s ease;
+}
+
+.menu-item .item-image img.lazy-image.loaded {
+    opacity: 1 !important;
+}
+
+.menu-item h4 {
+    color: #1a1a1a !important;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+    padding: 15px 15px 5px 15px;
+}
+
+.menu-item .price {
+    color: #c70301 !important;
+    font-size: 1.25rem;
+    font-weight: 800;
+    padding: 5px 15px 15px 15px;
+}
+
+.image-skeleton {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+/* حالة التحميل للصور */
+.lazy-image.loading {
+    opacity: 0;
+}
+
+.lazy-image.loaded {
+    opacity: 1 !important;
+}
+
+.lazy-image.error {
+    opacity: 0.5;
+}
+
+/* ============================================ */
+/* 📱 Responsive للمنيو الديناميكي */
+/* ============================================ */
+@media (max-width: 768px) {
+    .menu-section .menu-items {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .menu-item .item-image {
+        height: 150px;
+    }
+    
+    .menu-section h3 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-section .menu-items {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .menu-item .item-image {
+        height: 120px;
+    }
+    
+    .menu-item h4 {
+        font-size: 0.95rem;
+    }
+    
+    .menu-item .price {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================ */
 /* 📱 التجاوب - محسّن للهاتف */
 /* ============================================ */
 @media (max-width: 768px) {
