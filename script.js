@@ -1,5 +1,5 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي - النسخة المُحدَّثة
+// 🍽️ تحميل المنيو الديناميكي - النسخة المُصلَّحة
 // ============================================
 
 // 🆕 متغيرات عامة لتخزين البيانات
@@ -52,7 +52,6 @@ function loadMenuFromFirebase() {
     
     console.log('🔍 بدء تحميل المنيو من Firebase...');
     
-    // الاستماع للأقسام
     firebase.database().ref('categories').orderByChild('order').on('value', 
         (snapshot) => {
             const categories = snapshot.val();
@@ -81,7 +80,6 @@ function loadMenuFromFirebase() {
         }
     );
     
-    // الاستماع للأصناف
     firebase.database().ref('menu').on('value',
         (snapshot) => {
             cachedMenuItems = snapshot.val();
@@ -193,7 +191,6 @@ function populateMenuItems(categoriesArray, menuItems) {
         const itemsContainer = section.querySelector('.menu-items');
         if (!itemsContainer) return;
         
-        // ✅ التحقق من صلاحية الصورة
         const rawImage = (item.image || '').trim();
         const hasValidImage = rawImage && 
             (rawImage.startsWith('http://') || 
@@ -226,7 +223,6 @@ function populateMenuItems(categoriesArray, menuItems) {
                 <p class="price">${(item.price || 0).toLocaleString('ar-EG')} د.ع</p>
             `;
         } else {
-            // صورة غير موجودة - استخدم placeholder مباشرة
             menuElement.innerHTML = `
                 <div class="item-image">
                     <img src="${PLACEHOLDER_IMAGE}" 
@@ -245,7 +241,6 @@ function populateMenuItems(categoriesArray, menuItems) {
         itemsAdded++;
     });
     
-    // إظهار/إخفاء الأقسام الفارغة
     document.querySelectorAll('.menu-section[data-category]').forEach(section => {
         const itemsContainer = section.querySelector('.menu-items');
         if (itemsContainer && itemsContainer.children.length === 0) {
@@ -261,7 +256,7 @@ function populateMenuItems(categoriesArray, menuItems) {
 // ✅ معالج عام لأخطاء الصور
 function handleImageError(img) {
     if (!img) return;
-    img.onerror = null; // منع التكرار
+    img.onerror = null;
     img.src = PLACEHOLDER_IMAGE;
     img.classList.remove('lazy-image', 'loading');
     img.classList.add('loaded', 'error-img');
@@ -281,7 +276,7 @@ class SmartSequentialImageLoader {
         this.waitingElements = new Map();
         this.visibilityObserver = null;
         this.preloadObserver = null;
-        this.retryCount = new Map(); // ✅ تتبع إعادة المحاولة
+        this.retryCount = new Map();
         this.maxRetries = 2;
         this.config = {
             maxConcurrent: this.detectOptimalConcurrency(),
@@ -322,7 +317,6 @@ class SmartSequentialImageLoader {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        // ✅ تحقق أن الصورة لا تزال في DOM
                         if (!document.body.contains(img)) {
                             this.visibilityObserver.unobserve(img);
                             return;
@@ -387,7 +381,6 @@ class SmartSequentialImageLoader {
         const lazyImages = document.querySelectorAll('img.lazy-image:not(.loaded):not(.loading)');
         
         lazyImages.forEach(img => {
-            // ✅ تحقق من وجود data-src صالح
             const dataSrc = img.getAttribute('data-src');
             if (!dataSrc || dataSrc.trim() === '') {
                 img.classList.remove('lazy-image');
@@ -410,7 +403,6 @@ class SmartSequentialImageLoader {
     }
     
     enqueue(img, priority = 50) {
-        // ✅ تحقق أن الصورة لا تزال في DOM
         if (!document.body.contains(img)) return;
         
         const src = img.getAttribute('data-src');
@@ -471,7 +463,7 @@ class SmartSequentialImageLoader {
     handleImageLoad(src, img) {
         this.currentlyLoading.delete(src);
         this.cache.set(src, src);
-        this.retryCount.delete(src); // ✅ إعادة تعيين عدد المحاولات
+        this.retryCount.delete(src);
         
         const waitingElements = this.waitingElements.get(src) || [];
         waitingElements.forEach(element => {
@@ -491,7 +483,6 @@ class SmartSequentialImageLoader {
         console.warn(`❌ فشل تحميل: ${src}`);
         this.currentlyLoading.delete(src);
         
-        // ✅ نظام إعادة المحاولة
         const retries = this.retryCount.get(src) || 0;
         if (retries < this.maxRetries) {
             this.retryCount.set(src, retries + 1);
@@ -963,7 +954,6 @@ function showCartAddEffect() {
 }
 
 function addToCart(name, price, quantity = 1) {
-    // ✅ التحقق من صحة المدخلات
     if (!name || typeof name !== 'string' || name.trim() === '') {
         showNotification('⚠ اسم المنتج غير صالح');
         return false;
@@ -1123,7 +1113,7 @@ function loadSavedCustomerInfo() {
 }
 
 // ============================================
-// 🛍️ نافذة تفاصيل المنتج (مُحسَّنة)
+// 🛍️ نافذة تفاصيل المنتج (🔥 مُصلَّح)
 // ============================================
 let currentProduct = null;
 let modalQuantity = 1;
@@ -1131,17 +1121,14 @@ let modalQuantity = 1;
 function openProductModal(element) {
     if (!element) return;
     
-    // ✅ التحقق من العنصر
     const name = element.getAttribute('data-name');
     const priceStr = element.getAttribute('data-price');
     const price = parseInt(priceStr);
     
-    // ✅ الحصول على الصورة من عنصر img الحقيقي (وليس data-image)
     const imgElement = element.querySelector('img');
     const image = imgElement ? (imgElement.src || imgElement.getAttribute('data-src') || '') : '';
     const description = element.getAttribute('data-description') || 'منتج لذيذ من مطعم تعلولة';
     
-    // ✅ التحقق من صحة البيانات
     if (!name || name.trim() === '') {
         showNotification('⚠ بيانات المنتج غير صالحة');
         return;
@@ -1184,11 +1171,20 @@ function openProductModal(element) {
     if (qtyDisplay) qtyDisplay.textContent = modalQuantity;
     updateModalTotal();
     
+    // 🔥 إعادة تعيين زر الإضافة
+    const addBtn = document.getElementById('modalAddToCartBtn');
+    if (addBtn) {
+        addBtn.classList.remove('added');
+        addBtn.innerHTML = '<i class="fas fa-cart-plus"></i> <span>إضافة للسلة</span>';
+    }
+    
     const modal = document.getElementById('productModal');
     if (modal) {
         modal.style.display = 'flex';
         if (navigator.vibrate) navigator.vibrate(10);
     }
+    
+    console.log('✅ تم فتح نافذة المنتج:', currentProduct.name);
 }
 
 function closeProductModal() {
@@ -1321,7 +1317,7 @@ function closeOrderReview() {
 }
 
 // ============================================
-// 📱 إرسال الطلب عبر واتساب (مُحصَّن)
+// 📱 إرسال الطلب عبر واتساب
 // ============================================
 function confirmAndSendOrder() {
     if (!shoppingCart || shoppingCart.length === 0) {
@@ -1519,19 +1515,17 @@ function displayAds() {
 }
 
 // ============================================
-// 🎯 Event Delegation للنقر على المنتجات (بديل سريع لـ reattachClickHandlers)
+// 🎯 Event Delegation للنقر على المنتجات
 // ============================================
 function setupProductClickDelegation() {
     const mainElement = document.querySelector('main');
     if (!mainElement) return;
     
-    // إزالة المستمع القديم إذا كان موجوداً
     if (mainElement._productClickHandler) {
         mainElement.removeEventListener('click', mainElement._productClickHandler);
     }
     
     const handler = function(e) {
-        // تجاهل النقرات على الأزرار أو الروابط داخل العنصر
         if (e.target.closest('button, a, .qty-btn-new')) return;
         
         const menuItem = e.target.closest('.menu-item');
@@ -1546,6 +1540,60 @@ function setupProductClickDelegation() {
     mainElement._productClickHandler = handler;
     
     console.log('✅ تم إعداد Event Delegation للمنتجات');
+}
+
+// ============================================
+// 🔥 إعداد معالجات نافذة المنتج (الحل الأساسي للمشكلة)
+// ============================================
+function setupProductModalHandlers() {
+    // 🔥 أزرار الكمية
+    const decreaseBtn = document.getElementById('modalQtyDecrease');
+    const increaseBtn = document.getElementById('modalQtyIncrease');
+    const addToCartBtn = document.getElementById('modalAddToCartBtn');
+    const closeBtn = document.querySelector('.close-product-modal');
+    
+    if (decreaseBtn) {
+        decreaseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔽 تقليل الكمية');
+            changeModalQuantity(-1);
+        });
+    } else {
+        console.error('❌ زر تقليل الكمية غير موجود');
+    }
+    
+    if (increaseBtn) {
+        increaseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔼 زيادة الكمية');
+            changeModalQuantity(1);
+        });
+    } else {
+        console.error('❌ زر زيادة الكمية غير موجود');
+    }
+    
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🛒 إضافة للسلة');
+            addCurrentProductToCart();
+        });
+    } else {
+        console.error('❌ زر إضافة للسلة غير موجود');
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeProductModal();
+        });
+    }
+    
+    console.log('✅ تم إعداد معالجات نافذة المنتج بنجاح');
 }
 
 // ============================================
@@ -1642,8 +1690,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initLocationIcon();
     initializeLocationSystem();
     
-    // ✅ إعداد Event Delegation مرة واحدة (بدلاً من cloneNode البطيء)
+    // ✅ إعداد Event Delegation للمنتجات
     setupProductClickDelegation();
+    
+    // 🔥 إعداد معالجات نافذة المنتج (الحل الأساسي)
+    setupProductModalHandlers();
     
     // ✅ تهيئة محمل الصور الذكي
     initSmartImageLoading();
