@@ -1,4 +1,108 @@
 // ============================================
+// 🍽️ تحميل المنيو ديناميكياً من Firebase
+// ============================================
+function loadMenuFromFirebase() {
+    const sections = document.querySelectorAll('.menu-section[data-category]');
+    
+    // إظهار حالة التحميل
+    sections.forEach(section => {
+        const itemsContainer = section.querySelector('.menu-items');
+        if (itemsContainer) {
+            itemsContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #fff; opacity: 0.7;">جاري التحميل...</p>';
+        }
+    });
+    
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        setTimeout(loadMenuFromFirebase, 500);
+        return;
+    }
+    
+    firebase.database().ref('menu').orderByChild('order').on('value', (snapshot) => {
+        const items = snapshot.val();
+        
+        // تفريغ جميع الأقسام
+        sections.forEach(section => {
+            const itemsContainer = section.querySelector('.menu-items');
+            if (itemsContainer) itemsContainer.innerHTML = '';
+        });
+        
+        if (!items) {
+            sections.forEach(section => {
+                const itemsContainer = section.querySelector('.menu-items');
+                if (itemsContainer) {
+                    itemsContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #fff; opacity: 0.7;">لا توجد أصناف متاحة حالياً</p>';
+                }
+            });
+            return;
+        }
+        
+        // ترتيب المنتجات
+        const sortedItems = Object.values(items).sort((a, b) => (a.order || 0) - (b.order || 0));
+        
+        // تجميع المنتجات حسب القسم
+        sortedItems.forEach(item => {
+            // تجاهل المنتجات غير المتوفرة
+            if (!item.available) return;
+            
+            const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
+            if (!section) return;
+            
+            const itemsContainer = section.querySelector('.menu-items');
+            if (!itemsContainer) return;
+            
+            const menuElement = document.createElement('div');
+            menuElement.className = 'menu-item';
+            menuElement.setAttribute('data-name', item.name);
+            menuElement.setAttribute('data-price', item.price);
+            menuElement.setAttribute('data-image', item.image || '');
+            menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
+            
+            menuElement.innerHTML = `
+                <div class="item-image">
+                    <div class="image-skeleton"></div>
+                    <img data-src="${item.image || ''}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="${item.name}" class="lazy-image" decoding="async" width="400" height="400">
+                </div>
+                <h4>${item.name}</h4>
+                <p class="price">${item.price.toLocaleString('ar-EG')} د.ع</p>
+            `;
+            
+            itemsContainer.appendChild(menuElement);
+        });
+        
+        // إخفاء الأقسام الفارغة
+        sections.forEach(section => {
+            const itemsContainer = section.querySelector('.menu-items');
+            if (itemsContainer && itemsContainer.children.length === 0) {
+                section.style.display = 'none';
+            } else {
+                section.style.display = '';
+            }
+        });
+        
+        // إعادة مراقبة الصور الجديدة (للتحميل الذكي)
+        if (smartImageLoader) {
+            smartImageLoader.observeAllImages();
+        }
+        
+        // إعادة ربط النقر على بطاقات المنتجات
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                openProductModal(this);
+            });
+        });
+    }, (error) => {
+        console.error('خطأ في تحميل المنيو:', error);
+        sections.forEach(section => {
+            const itemsContainer = section.querySelector('.menu-items');
+            if (itemsContainer) {
+                itemsContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #fff; opacity: 0.7;">تعذر تحميل المنيو</p>';
+            }
+        });
+    });
+}
+
+// ============================================
 // 🚀 نظام تحميل الصور الذكي المتسلسل
 // ============================================
 
