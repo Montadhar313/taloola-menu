@@ -653,13 +653,15 @@ function updateCartUI() {
 function showCartAddEffect() {
     const floatingCartBtn = document.getElementById('floatingCartBtn');
     if (floatingCartBtn && floatingCartBtn.classList.contains('has-items')) {
+        // إزالة الكلاس وإعادة تشغيل الأنيميشن
         floatingCartBtn.classList.remove('item-added');
-        void floatingCartBtn.offsetWidth; // إعادة تشغيل الأنيميشن
+        void floatingCartBtn.offsetWidth; // Force reflow
         floatingCartBtn.classList.add('item-added');
         
+        // إزالة الكلاس بعد انتهاء الأنيميشن
         setTimeout(() => {
             floatingCartBtn.classList.remove('item-added');
-        }, 500);
+        }, 600);
     }
 }
 
