@@ -1156,3 +1156,410 @@ body {
         padding: 6px 12px;
     }
 }
+/* ============================================ */
+/* 🍽️ إدارة المنيو - محسّن */
+/* ============================================ */
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box i {
+    position: absolute;
+    right: 15px;
+    color: var(--gray);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.1);
+}
+
+/* ============================================ */
+/* 🎯 Custom Select (Dropdown محسّن) */
+/* ============================================ */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+.custom-select-selected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 15px;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    background: white;
+    transition: var(--transition);
+    min-height: 50px;
+}
+
+.custom-select-selected:hover {
+    border-color: var(--primary);
+}
+
+.custom-select.open .custom-select-selected {
+    border-color: var(--primary);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.1);
+}
+
+.custom-select-selected .selected-text {
+    color: var(--dark);
+    font-size: 1rem;
+}
+
+.custom-select-selected .selected-icon {
+    font-size: 1.3rem;
+    margin-left: 8px;
+}
+
+.custom-select-selected i.fa-chevron-down {
+    color: var(--gray);
+    transition: transform 0.3s;
+}
+
+.custom-select.open .custom-select-selected i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.custom-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid var(--primary);
+    border-top: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.custom-select.open .custom-select-options {
+    display: block;
+}
+
+.custom-select-search {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    border-bottom: 1px solid var(--gray-light);
+    font-size: 0.95rem;
+    background: #fafafa;
+    font-family: 'Cairo', sans-serif;
+}
+
+.custom-select-search:focus {
+    outline: none;
+    background: white;
+}
+
+.custom-select-list {
+    padding: 8px;
+}
+
+.custom-select-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.95rem;
+}
+
+.custom-select-option:hover {
+    background: var(--light);
+    color: var(--primary);
+}
+
+.custom-select-option.selected {
+    background: var(--primary);
+    color: white;
+}
+
+.custom-select-option .option-icon {
+    font-size: 1.3rem;
+    width: 30px;
+    text-align: center;
+}
+
+.custom-select-option .option-name {
+    flex: 1;
+}
+
+.custom-select-option .option-count {
+    background: rgba(0,0,0,0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.custom-select-option.selected .option-count {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* ============================================ */
+/* 🎨 Icon Picker */
+/* ============================================ */
+.icon-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.icon-picker input {
+    width: 100%;
+    padding: 13px 15px;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+}
+
+.icon-picker input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.1);
+}
+
+.icon-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    background: var(--light);
+    border-radius: 12px;
+    border: 2px solid var(--gray-light);
+}
+
+.icon-suggestion {
+    font-size: 1.5rem;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: var(--transition);
+    background: white;
+    min-width: 45px;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.icon-suggestion:hover {
+    transform: scale(1.2);
+    background: var(--secondary);
+    border-color: var(--primary);
+}
+
+.icon-suggestion.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    transform: scale(1.1);
+}
+
+/* ============================================ */
+/* 📂 قائمة الأقسام */
+/* ============================================ */
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: white;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    transition: var(--transition);
+    cursor: grab;
+}
+
+.category-item:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.category-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.category-item.drag-over {
+    border-color: var(--success);
+    background: #f0fff4;
+}
+
+.category-drag-handle {
+    color: var(--gray);
+    font-size: 1.3rem;
+    cursor: grab;
+    padding: 5px;
+}
+
+.category-icon-display {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--light);
+    border-radius: 12px;
+    border: 2px solid var(--gray-light);
+}
+
+.category-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.category-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.category-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.category-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.category-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.category-actions button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    font-family: 'Cairo', sans-serif;
+}
+
+.btn-edit-category {
+    background: var(--secondary);
+    color: var(--dark);
+}
+
+.btn-edit-category:hover {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-delete-category {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-delete-category:hover {
+    background: #a71d2a;
+}
+
+/* ============================================ */
+/* 📱 Responsive محسّن */
+/* ============================================ */
+@media (max-width: 768px) {
+    .category-item {
+        flex-wrap: wrap;
+    }
+    
+    .category-actions {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .category-actions button {
+        flex: 1;
+    }
+    
+    .custom-select-options {
+        max-height: 250px;
+    }
+    
+    .icon-suggestions {
+        gap: 5px;
+    }
+    
+    .icon-suggestion {
+        font-size: 1.3rem;
+        padding: 6px;
+        min-width: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .category-icon-display {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+    
+    .category-name {
+        font-size: 1rem;
+    }
+    
+    .category-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
