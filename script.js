@@ -105,7 +105,6 @@ function loadMenuFromFirebase() {
 // ============================================
 // 🚀 نظام تحميل الصور الذكي المتسلسل
 // ============================================
-
 class SmartSequentialImageLoader {
     constructor() {
         this.queue = [];
@@ -1148,7 +1147,7 @@ function openSupport() {
 }
 
 // ============================================
-// 📢 جلب الإعلانات من Firebase (قراءة فقط - الوقت الفعلي)
+// 📢 جلب الإعلانات من Firebase
 // ============================================
 function displayAds() {
     const adsContainer = document.getElementById('adsContainer');
@@ -1156,7 +1155,6 @@ function displayAds() {
     
     adsContainer.innerHTML = '<p class="loading-text" style="color: #fff; text-align: center; grid-column: 1/-1;">جاري تحميل العروض...</p>';
     
-    // التحقق من توفر Firebase
     if (typeof firebase === 'undefined' || !firebase.database) {
         setTimeout(() => {
             if (typeof firebase !== 'undefined' && firebase.database) {
@@ -1180,7 +1178,6 @@ function displayAds() {
                 return;
             }
             
-            // عكس الترتيب لعرض الأحدث أولاً
             const sortedKeys = Object.keys(ads).reverse();
             
             sortedKeys.forEach(key => {
@@ -1196,7 +1193,6 @@ function displayAds() {
                 adsContainer.appendChild(adElement);
             });
             
-            // إعادة مراقبة الصور الجديدة إذا وجدت
             if (smartImageLoader) {
                 const newLazyImages = adsContainer.querySelectorAll('.lazy-image:not(.loaded):not(.loading)');
                 newLazyImages.forEach(img => {
@@ -1219,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchstart', function(){}, {passive: true});
 
     // ============================================
-    // 🔥 تهيئة Firebase (Database فقط - بدون Storage)
+    // 🔥 تهيئة Firebase
     // ============================================
     const firebaseConfig = {
         apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
@@ -1230,16 +1226,14 @@ document.addEventListener('DOMContentLoaded', function() {
         appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
     };
     
-    // تحميل Firebase SDK فقط للـ Database (بدون Storage لتسريع الموقع)
     const firebaseScript = document.createElement('script');
     firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     document.head.appendChild(firebaseScript);
     
+    // ✅ تم إصلاح الخطأ: استخدام firebaseDbScript بدلاً من firebaseStorageScript
     const firebaseDbScript = document.createElement('script');
     firebaseDbScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
     document.head.appendChild(firebaseDbScript);
-    
-    // لا نحتاج لتحميل firebase-storage-compat.js
 
     // ============================================
     // 📌 الشريط العلوي الثابت
@@ -1280,9 +1274,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const navButtons = document.querySelectorAll('nav.sections-nav button');
     const menuSections = document.querySelectorAll('section.menu-section');
-    const menuItems = document.querySelectorAll('.menu-item');
     
-    // زر السلة العائم
     const floatingCartBtn = document.getElementById('floatingCartBtn');
     if (floatingCartBtn) {
         floatingCartBtn.addEventListener('click', function(e) {
@@ -1291,49 +1283,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // زر الموقع الجغرافي
     const getLocationBtn = document.getElementById('getLocationBtn');
     if (getLocationBtn) {
         getLocationBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             await requestLocationAndUpdate();
-        });
-    }
-
-    // النقر على بطاقات المنتجات
-    menuItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            openProductModal(this);
-        });
-    });
-
-    // أزرار نافذة المنتج
-    const modalQtyDecrease = document.getElementById('modalQtyDecrease');
-    const modalQtyIncrease = document.getElementById('modalQtyIncrease');
-    const modalAddToCartBtn = document.getElementById('modalAddToCartBtn');
-    
-    if (modalQtyDecrease) {
-        modalQtyDecrease.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            changeModalQuantity(-1);
-        });
-    }
-    
-    if (modalQtyIncrease) {
-        modalQtyIncrease.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            changeModalQuantity(1);
-        });
-    }
-    
-    if (modalAddToCartBtn) {
-        modalAddToCartBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            addCurrentProductToCart();
         });
     }
 
@@ -1392,18 +1346,18 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeLocationSystem();
 
     // ============================================
-    // 📢 بدء جلب الإعلانات من Firebase
+    // ✅ تم الإصلاح: استخدام firebaseDbScript.onload
     // ============================================
-    firebaseStorageScript.onload = function() {
+    firebaseDbScript.onload = function() {
         setTimeout(() => {
-        if (typeof firebase !== 'undefined') {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                console.log('✅ تم تهيئة Firebase بنجاح');
-                displayAds();
-                loadMenuFromFirebase(); // 🆕 تحميل المنيو ديناميكياً
-            } catch (error) {
-                console.error('خطأ في تهيئة Firebase:', error);
+            if (typeof firebase !== 'undefined') {
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log('✅ تم تهيئة Firebase بنجاح');
+                    displayAds();
+                    loadMenuFromFirebase();
+                } catch (error) {
+                    console.error('خطأ في تهيئة Firebase:', error);
                 }
             }
         }, 500);
