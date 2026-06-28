@@ -1,10 +1,10 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي من Firebase (مُصحّح)
+// 🍽️ تحميل المنيو الديناميكي من Firebase (النسخة المُصحّحة)
 // ============================================
 
 /**
- * 🆕 الدالة الرئيسية: تحميل الأقسام والأصناف من Firebase
- * وتوليد HTML ديناميكياً للأقسام الجديدة
+ * الدالة الرئيسية: تحميل الأقسام والأصناف من Firebase
+ * وإعادة بناء أقسام HTML بالكامل
  */
 function loadMenuFromFirebase() {
     if (typeof firebase === 'undefined' || !firebase.database) {
@@ -14,7 +14,7 @@ function loadMenuFromFirebase() {
     
     console.log('🔍 بدء تحميل المنيو من Firebase...');
     
-    // 1️⃣ أولاً: تحميل الأقسام من /categories
+    // الاستماع للتغييرات في الأقسام والأصناف
     firebase.database().ref('categories').orderByChild('order').on('value', (categoriesSnapshot) => {
         const categories = categoriesSnapshot.val();
         
@@ -23,7 +23,7 @@ function loadMenuFromFirebase() {
             return;
         }
         
-        // 2️⃣ بناء مصفوفة الأقسام مرتبة
+        // بناء مصفوفة الأقسام مرتبة
         const categoriesArray = Object.keys(categories).map(key => ({
             id: key,
             ...categories[key]
@@ -31,10 +31,10 @@ function loadMenuFromFirebase() {
         
         console.log(`✅ تم تحميل ${categoriesArray.length} قسم`);
         
-        // 3️⃣ إنشاء/تحديث أقسام HTML
-        syncSectionsWithCategories(categoriesArray);
+        // 🆕 إعادة بناء أقسام HTML بالكامل
+        rebuildMenuSections(categoriesArray);
         
-        // 4️⃣ ثانياً: تحميل الأصناف من /menu
+        // الاستماع للأصناف
         firebase.database().ref('menu').on('value', (menuSnapshot) => {
             const menuItems = menuSnapshot.val();
             
@@ -43,15 +43,15 @@ function loadMenuFromFirebase() {
                 return;
             }
             
-            // 5️⃣ توزيع الأصناف على الأقسام
+            // توزيع الأصناف على الأقسام
             populateMenuItems(categoriesArray, menuItems);
             
-            // 6️⃣ إعادة مراقبة الصور الجديدة
+            // إعادة مراقبة الصور
             if (smartImageLoader) {
                 smartImageLoader.observeAllImages();
             }
             
-            // 7️⃣ إعادة ربط النقر على البطاقات
+            // إعادة ربط النقر
             reattachClickHandlers();
             
         }, (error) => {
@@ -64,67 +64,42 @@ function loadMenuFromFirebase() {
 }
 
 /**
- * 🆕 مزامنة أقسام HTML مع الأقسام في Firebase
- * ينشئ الأقسام الجديدة ويحذف الأقسام المحذوفة
+ * 🆕 إعادة بناء أقسام HTML بالكامل من الصفر
+ * هذا يضمن الترتيب الصحيح دائماً
  */
-function syncSectionsWithCategories(categoriesArray) {
+function rebuildMenuSections(categoriesArray) {
     const mainElement = document.querySelector('main');
     if (!mainElement) return;
     
-    // الحصول على جميع الأقسام الحالية في HTML
-    const existingSections = mainElement.querySelectorAll('.menu-section[data-category]');
-    const existingCategoriesMap = new Map();
+    // حذف جميع أقسام المنيو القديمة
+    const oldSections = mainElement.querySelectorAll('.menu-section[data-category]');
+    oldSections.forEach(section => section.remove());
     
-    existingSections.forEach(section => {
-        const categoryName = section.getAttribute('data-category');
-        existingCategoriesMap.set(categoryName, section);
-    });
+    console.log(`🗑️ تم حذف ${oldSections.length} قسم قديم`);
     
-    // الحصول على جميع أسماء الأقسام من Firebase
-    const firebaseCategoryNames = new Set(categoriesArray.map(c => c.name));
+    // الحصول على العنصر المرجعي (قبل قسم فريق تعلولة)
+    const teamSection = mainElement.querySelector('#team');
+    const referenceElement = teamSection || mainElement.querySelector('#support') || mainElement.querySelector('#social');
     
-    // 🆕 حذف الأقسام من HTML التي لم تعد في Firebase
-    existingCategoriesMap.forEach((section, categoryName) => {
-        if (!firebaseCategoryNames.has(categoryName)) {
-            console.log(`🗑️ حذف قسم غير موجود: ${categoryName}`);
-            section.remove();
-        }
-    });
-    
-    // 🆕 إنشاء الأقسام الجديدة من Firebase
+    // إنشاء أقسام جديدة بالترتيب الصحيح
     categoriesArray.forEach((category, index) => {
-        if (!existingCategoriesMap.has(category.name)) {
-            console.log(`✨ إنشاء قسم جديد: ${category.name}`);
-            const newSection = createSectionElement(category, index);
-            
-            // إدراج القسم في المكان الصحيح (بعد قسم الإعلانات)
-            const adsSection = mainElement.querySelector('#ads');
-            const teamSection = mainElement.querySelector('#team');
-            
-            if (teamSection) {
-                mainElement.insertBefore(newSection, teamSection);
-            } else if (adsSection && adsSection.nextSibling) {
-                // إدراج بعد آخر قسم menu-section موجود
-                const allMenuSections = mainElement.querySelectorAll('.menu-section');
-                if (allMenuSections.length > 0) {
-                    const lastMenuSection = allMenuSections[allMenuSections.length - 1];
-                    mainElement.insertBefore(newSection, lastMenuSection.nextSibling);
-                } else {
-                    mainElement.insertBefore(newSection, teamSection);
-                }
-            }
+        const newSection = createSectionElement(category, index);
+        
+        if (referenceElement) {
+            mainElement.insertBefore(newSection, referenceElement);
+        } else {
+            mainElement.appendChild(newSection);
         }
     });
     
-    // 🆕 إعادة ترتيب الأقسام حسب order
-    reorderSections(categoriesArray);
+    console.log(`✨ تم إنشاء ${categoriesArray.length} قسم جديد`);
     
-    // 🆕 تحديث شريط التنقل
+    // تحديث أزرار التنقل
     updateNavigationButtons(categoriesArray);
 }
 
 /**
- * 🆕 إنشاء عنصر section جديد من بيانات القسم
+ * إنشاء عنصر section جديد
  */
 function createSectionElement(category, index) {
     const section = document.createElement('section');
@@ -141,30 +116,7 @@ function createSectionElement(category, index) {
 }
 
 /**
- * 🆕 إعادة ترتيب الأقسام حسب order
- */
-function reorderSections(categoriesArray) {
-    const mainElement = document.querySelector('main');
-    if (!mainElement) return;
-    
-    const teamSection = mainElement.querySelector('#team');
-    const supportSection = mainElement.querySelector('#support');
-    const socialSection = mainElement.querySelector('#social');
-    
-    // جمع جميع الأقسام menu-section
-    const menuSections = Array.from(mainElement.querySelectorAll('.menu-section[data-category]'));
-    
-    // ترتيبها حسب categoriesArray
-    categoriesArray.forEach(category => {
-        const section = menuSections.find(s => s.getAttribute('data-category') === category.name);
-        if (section && teamSection) {
-            mainElement.insertBefore(section, teamSection);
-        }
-    });
-}
-
-/**
- * 🆕 تحديث أزرار التنقل لتتوافق مع الأقسام
+ * تحديث أزرار التنقل
  */
 function updateNavigationButtons(categoriesArray) {
     const navElement = document.getElementById('sectionsNav');
@@ -174,7 +126,7 @@ function updateNavigationButtons(categoriesArray) {
     navElement.innerHTML = '';
     
     // إنشاء أزرار جديدة
-    categoriesArray.forEach((category, index) => {
+    categoriesArray.forEach((category) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.setAttribute('data-section', `sec-${category.id}`);
@@ -197,10 +149,12 @@ function updateNavigationButtons(categoriesArray) {
         
         navElement.appendChild(button);
     });
+    
+    console.log(`🔘 تم تحديث ${categoriesArray.length} زر تنقل`);
 }
 
 /**
- * 🆕 توزيع الأصناف على الأقسام
+ * توزيع الأصناف على الأقسام
  */
 function populateMenuItems(categoriesArray, menuItems) {
     // تفريغ جميع حاويات menu-items
@@ -269,15 +223,9 @@ function populateMenuItems(categoriesArray, menuItems) {
 }
 
 /**
- * 🆕 إعادة ربط معالجات النقر على البطاقات
+ * إعادة ربط معالجات النقر على البطاقات
  */
 function reattachClickHandlers() {
-    document.querySelectorAll('.menu-item').forEach(item => {
-        // إزالة المعالجات القديمة
-        item.replaceWith(item.cloneNode(true));
-    });
-    
-    // إضافة المعالجات الجديدة
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
@@ -601,19 +549,9 @@ function initSmartImageLoading() {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             smartImageLoader = new SmartSequentialImageLoader();
-            console.log('✅ نظام تحميل الصور الذكي المتسلسل جاهز');
         });
     } else {
         smartImageLoader = new SmartSequentialImageLoader();
-        console.log('✅ نظام تحميل الصور الذكي المتسلسل جاهز');
-    }
-    
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        setInterval(() => {
-            if (smartImageLoader) {
-                console.log('📊 إحصائيات الصور:', smartImageLoader.getStats());
-            }
-        }, 10000);
     }
 }
 
@@ -1397,9 +1335,6 @@ function displayAds() {
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchstart', function(){}, {passive: true});
 
-    // ============================================
-    // 🔥 تهيئة Firebase
-    // ============================================
     const firebaseConfig = {
         apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
         authDomain: "talola-food.firebaseapp.com",
@@ -1417,9 +1352,6 @@ document.addEventListener('DOMContentLoaded', function() {
     firebaseDbScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
     document.head.appendChild(firebaseDbScript);
 
-    // ============================================
-    // 📌 الشريط العلوي الثابت
-    // ============================================
     const topStickyBar = document.getElementById('topStickyBar');
     const mainHeader = document.getElementById('mainHeader');
     
@@ -1450,13 +1382,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    // ============================================
-    // 🎯 العناصر الأخرى
-    // ============================================
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-    const menuSections = document.querySelectorAll('section.menu-section');
-    
     const floatingCartBtn = document.getElementById('floatingCartBtn');
+    
     if (floatingCartBtn) {
         floatingCartBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -1472,7 +1400,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // زر العودة للأعلى
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) {
             if (window.pageYOffset > 300) {
@@ -1489,17 +1416,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // مراقب الأنيميشن
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => { 
-            if (entry.isIntersecting) entry.target.classList.add('animate-in'); 
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    
-    menuSections.forEach(s => observer.observe(s));
-    document.querySelectorAll('section.info-section').forEach(s => observer.observe(s));
-
-    // إغلاق النوافذ عند النقر خارجها
     window.addEventListener('click', function(event) {
         if (event.target === document.getElementById('cartModal')) closeCartModal();
         if (event.target === document.getElementById('orderReviewModal')) closeOrderReview();
@@ -1507,14 +1423,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === document.getElementById('productModal')) closeProductModal();
     });
 
-    // التهيئة الأولية
     updateCartUI();
     initLocationIcon();
     initializeLocationSystem();
 
-    // ============================================
-    // ✅ تهيئة Firebase وتحميل المنيو
-    // ============================================
     firebaseDbScript.onload = function() {
         setTimeout(() => {
             if (typeof firebase !== 'undefined') {
@@ -1522,7 +1434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     firebase.initializeApp(firebaseConfig);
                     console.log('✅ تم تهيئة Firebase بنجاح');
                     displayAds();
-                    loadMenuFromFirebase(); // 🆕 تحميل المنيو الديناميكي
+                    loadMenuFromFirebase();
                 } catch (error) {
                     console.error('خطأ في تهيئة Firebase:', error);
                 }
