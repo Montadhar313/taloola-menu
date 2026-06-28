@@ -52,7 +52,7 @@
 </header>
 
 <!-- ============================================ -->
-<!-- 📌 الشريط العلوي الثابت (بدون زر السلة) -->
+<!-- 📌 الشريط العلوي الثابت -->
 <!-- ============================================ -->
 <div id="topStickyBar" class="top-sticky-bar">
     <div class="top-bar-logo">
@@ -61,10 +61,11 @@
     </div>
     
     <div class="top-bar-actions">
-        <button id="adminLoginBtn" class="top-bar-btn admin-top-btn" title="تسجيل الدخول">
+        <!-- 🆕 زر المسؤول - يوجه إلى لوحة التحكم المنفصلة -->
+        <a href="admin/admin.html" class="top-bar-btn admin-top-btn" title="لوحة التحكم">
             <i class="fas fa-user-shield"></i>
             <span class="btn-label">المسؤول</span>
-        </button>
+        </a>
     </div>
 </div>
 
@@ -879,56 +880,6 @@
         <div id="locationModalInfo" class="location-modal-info" style="display: none;">
             <p><i class="fas fa-check-circle"></i> تم تحديد موقعك بنجاح</p>
             <p class="location-coords" id="locationCoords"></p>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================ -->
-<!-- 🔐 نافذة تسجيل دخول المسؤول -->
-<!-- ============================================ -->
-<div id="adminAuthModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeAuthModal()">&times;</span>
-        <h2>تسجيل دخول المسؤول</h2>
-        <input type="text" id="adminUsername" placeholder="اسم المستخدم" autocomplete="username">
-        <input type="password" id="adminPassword" placeholder="كلمة المرور" autocomplete="current-password">
-        <button id="adminLoginSubmit">دخول</button>
-    </div>
-</div>
-
-<!-- ============================================ -->
-<!-- ⚙️ لوحة تحكم المسؤول -->
-<!-- ============================================ -->
-<div id="adminPanel" class="admin-panel">
-    <div class="admin-panel-content">
-        <span class="close-admin-panel" id="closeAdminPanel">&times;</span>
-        <h2>لوحة تحكم المسؤول</h2>
-        
-        <div class="admin-section">
-            <h3>إنشاء إعلان جديد</h3>
-            <input type="text" id="adTitle" placeholder="عنوان الإعلان">
-            <textarea id="adDescription" placeholder="وصف الإعلان"></textarea>
-            <input type="text" id="adPrice" placeholder="السعر (اختياري)">
-            <input type="text" id="adDuration" placeholder="المدة (اختياري)">
-            <select id="adTemplate">
-                <option value="red">النموذج الأحمر</option>
-                <option value="yellow">النموذج الأصفر</option>
-            </select>
-            <div class="file-upload">
-                <label for="adImage" class="file-upload-label">
-                    <i class="fas fa-upload"></i> اختر صورة للإعلان
-                </label>
-                <input type="file" id="adImage" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                <div class="file-upload-preview" id="imagePreview">
-                    <span>معاينة الصورة</span>
-                </div>
-            </div>
-            <button onclick="createAd()">إنشاء الإعلان</button>
-        </div>
-        
-        <div class="admin-section">
-            <h3>الإعلانات الحالية</h3>
-            <div id="currentAds"></div>
         </div>
     </div>
 </div>
