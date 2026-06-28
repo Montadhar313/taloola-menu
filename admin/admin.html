@@ -40,10 +40,13 @@
                     <i class="fas fa-bullhorn"></i>
                     <span>إدارة الإعلانات</span>
                 </button>
-                <!-- ✅ تم تفعيل زر إدارة المنيو -->
                 <button class="nav-btn" data-tab="menu">
                     <i class="fas fa-utensils"></i>
                     <span>إدارة المنيو</span>
+                </button>
+                <button class="nav-btn" data-tab="categories">
+                    <i class="fas fa-folder"></i>
+                    <span>إدارة الأقسام</span>
                 </button>
                 <button class="nav-btn" data-tab="orders" disabled title="قريباً">
                     <i class="fas fa-receipt"></i>
@@ -156,7 +159,7 @@
                 </div>
             </section>
 
-            <!-- ✅ تبويب المنيو (مُفعّل بالكامل) -->
+            <!-- تبويب المنيو -->
             <section id="tab-menu" class="tab-content">
                 <div class="page-header">
                     <div class="header-content">
@@ -181,34 +184,28 @@
                     </div>
                 </div>
 
-                <!-- فلترة حسب القسم -->
+                <!-- فلترة حسب القسم - محسّن مع البحث -->
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-filter"></i> فلترة الأصناف</h2>
                     </div>
-                    <div class="filter-chips" id="categoryFilters">
-                        <button class="chip active" data-filter="all">الكل</button>
-                        <button class="chip" data-filter="بركر">🍔 بركر</button>
-                        <button class="chip" data-filter="زنكر">🍗 زنكر</button>
-                        <button class="chip" data-filter="ريزو">🌯 ريزو</button>
-                        <button class="chip" data-filter="صاج">🥙 صاج</button>
-                        <button class="chip" data-filter="كنتاكي">🍗 كنتاكي</button>
-                        <button class="chip" data-filter="ستربس">🍟 ستربس</button>
-                        <button class="chip" data-filter="سندويتشات">🥪 سندويتشات</button>
-                        <button class="chip" data-filter="اطباق">🍽️ اطباق</button>
-                        <button class="chip" data-filter="دايت">🥗 دايت</button>
-                        <button class="chip" data-filter="الفنكر">🤲 الفنكر</button>
-                        <button class="chip" data-filter="الجكن فرايز">🍟 الجكن فرايز</button>
-                        <button class="chip" data-filter="الصوصات">🌶️ الصوصات</button>
-                        <button class="chip" data-filter="مشروبات غازية">🥤 مشروبات</button>
-                        <button class="chip" data-filter="مقبلات">🥕 مقبلات</button>
+                    <div class="filter-section">
+                        <!-- شريط البحث -->
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="menuSearch" placeholder="ابحث عن صنف...">
+                        </div>
+                        <!-- Chips الأقسام -->
+                        <div class="filter-chips" id="categoryFilters">
+                            <button class="chip active" data-filter="all">الكل</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- نموذج إضافة صنف جديد -->
+                <!-- نموذج إضافة/تعديل صنف -->
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة/تعديل صنف</h2>
+                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> <span id="menuFormTitle">إضافة صنف جديد</span></h2>
                         <p class="card-subtitle">أضف صنفاً جديداً أو عدّل صنفاً موجوداً</p>
                     </div>
                     <form id="menuForm" class="ad-form">
@@ -222,25 +219,24 @@
                             </div>
                             <div class="form-group">
                                 <label for="menuItemCategory">
-                                    <i class="fas fa-list"></i> القسم <span class="required">*</span>
+                                    <i class="fas fa-folder"></i> القسم <span class="required">*</span>
                                 </label>
-                                <select id="menuItemCategory" required>
-                                    <option value="">اختر القسم</option>
-                                    <option value="بركر">🍔 بركر</option>
-                                    <option value="زنكر">🍗 زنكر</option>
-                                    <option value="ريزو">🌯 ريزو</option>
-                                    <option value="صاج">🥙 صاج</option>
-                                    <option value="كنتاكي">🍗 كنتاكي</option>
-                                    <option value="ستربس">🍟 ستربس</option>
-                                    <option value="سندويتشات">🥪 سندويتشات</option>
-                                    <option value="اطباق">🍽️ اطباق</option>
-                                    <option value="دايت">🥗 دايت</option>
-                                    <option value="الفنكر">🤲 الفنكر</option>
-                                    <option value="الجكن فرايز">🍟 الجكن فرايز</option>
-                                    <option value="الصوصات">🌶️ الصوصات</option>
-                                    <option value="مشروبات غازية">🥤 مشروبات غازية</option>
-                                    <option value="مقبلات">🥕 مقبلات</option>
-                                </select>
+                                <!-- Dropdown محسّن مع البحث -->
+                                <div class="custom-select-wrapper">
+                                    <div class="custom-select" id="menuItemCategorySelect">
+                                        <div class="custom-select-selected">
+                                            <span class="selected-text">اختر القسم</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </div>
+                                        <div class="custom-select-options">
+                                            <input type="text" class="custom-select-search" placeholder="🔍 ابحث عن قسم...">
+                                            <div class="custom-select-list" id="categoryOptionsList">
+                                                <!-- سيتم ملؤها ديناميكياً -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="menuItemCategory" required>
+                                </div>
                             </div>
                         </div>
                         <div class="form-grid">
@@ -276,7 +272,10 @@
                         </div>
                         <div class="form-actions">
                             <button type="submit" id="saveMenuItemBtn" class="btn-primary btn-lg">
-                                <i class="fas fa-save"></i> حفظ الصنف
+                                <i class="fas fa-save"></i> <span id="saveMenuItemText">حفظ الصنف</span>
+                            </button>
+                            <button type="button" id="cancelEditBtn" class="btn-secondary" style="display: none;">
+                                <i class="fas fa-times"></i> إلغاء التعديل
                             </button>
                             <button type="reset" id="resetMenuForm" class="btn-secondary">
                                 <i class="fas fa-undo"></i> مسح النموذج
@@ -295,6 +294,105 @@
                         <div class="loading-state">
                             <i class="fas fa-spinner fa-spin fa-3x"></i>
                             <p>جاري تحميل الأصناف...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 🆕 تبويب إدارة الأقسام -->
+            <section id="tab-categories" class="tab-content">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-folder"></i> إدارة الأقسام</h1>
+                        <p>أضف، عدّل، أو احذف أقسام المنيو ورتّبها حسب الأولوية</p>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-folder-open"></i>
+                            <div class="stat-info">
+                                <span class="stat-number" id="totalCategoriesCount">0</span>
+                                <span class="stat-label">قسم</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- نموذج إضافة قسم -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> <span id="categoryFormTitle">إضافة قسم جديد</span></h2>
+                        <p class="card-subtitle">أضف قسماً جديداً للمنيو مع تحديد الأيقونة والترتيب</p>
+                    </div>
+                    <form id="categoryForm" class="ad-form">
+                        <input type="hidden" id="categoryId">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="categoryName">
+                                    <i class="fas fa-tag"></i> اسم القسم <span class="required">*</span>
+                                </label>
+                                <input type="text" id="categoryName" required placeholder="مثال: برجر، ساندويتشات...">
+                            </div>
+                            <div class="form-group">
+                                <label for="categoryOrder">
+                                    <i class="fas fa-sort-numeric-down"></i> الترتيب (الأولوية)
+                                </label>
+                                <input type="number" id="categoryOrder" min="0" placeholder="0 = يظهر أولاً">
+                                <small class="form-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    الأقسام ذات الرقم الأصغر تظهر أولاً في المنيو
+                                </small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoryIcon">
+                                <i class="fas fa-icons"></i> الأيقونة (emoji أو رمز)
+                            </label>
+                            <div class="icon-picker">
+                                <input type="text" id="categoryIcon" placeholder="🍔 أو 🥪 أو 🍟...">
+                                <div class="icon-suggestions">
+                                    <span class="icon-suggestion" data-icon="🍔">🍔</span>
+                                    <span class="icon-suggestion" data-icon="🍗">🍗</span>
+                                    <span class="icon-suggestion" data-icon="🌯">🌯</span>
+                                    <span class="icon-suggestion" data-icon="🥙">🥙</span>
+                                    <span class="icon-suggestion" data-icon="🥪">🥪</span>
+                                    <span class="icon-suggestion" data-icon="🍟">🍟</span>
+                                    <span class="icon-suggestion" data-icon="🌶️">🌶️</span>
+                                    <span class="icon-suggestion" data-icon="🥤">🥤</span>
+                                    <span class="icon-suggestion" data-icon="🥕">🥕</span>
+                                    <span class="icon-suggestion" data-icon="🥗">🥗</span>
+                                    <span class="icon-suggestion" data-icon="🍕">🍕</span>
+                                    <span class="icon-suggestion" data-icon="🍜">🍜</span>
+                                    <span class="icon-suggestion" data-icon="🍝">🍝</span>
+                                    <span class="icon-suggestion" data-icon="🥘">🥘</span>
+                                    <span class="icon-suggestion" data-icon="🍱">🍱</span>
+                                    <span class="icon-suggestion" data-icon="🍙">🍙</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="saveCategoryBtn" class="btn-primary btn-lg">
+                                <i class="fas fa-save"></i> <span id="saveCategoryText">حفظ القسم</span>
+                            </button>
+                            <button type="button" id="cancelEditCategoryBtn" class="btn-secondary" style="display: none;">
+                                <i class="fas fa-times"></i> إلغاء التعديل
+                            </button>
+                            <button type="reset" id="resetCategoryForm" class="btn-secondary">
+                                <i class="fas fa-undo"></i> مسح النموذج
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- قائمة الأقسام -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-list"></i> الأقسام الحالية</h2>
+                        <p class="card-subtitle">اسحب الأقسام لإعادة ترتيبها</p>
+                    </div>
+                    <div id="categoriesList" class="categories-list">
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin fa-3x"></i>
+                            <p>جاري تحميل الأقسام...</p>
                         </div>
                     </div>
                 </div>
