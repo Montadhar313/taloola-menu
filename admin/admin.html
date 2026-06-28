@@ -40,10 +40,10 @@
                     <i class="fas fa-bullhorn"></i>
                     <span>إدارة الإعلانات</span>
                 </button>
-                <button class="nav-btn" data-tab="menu" disabled title="قريباً">
+                <!-- ✅ تم تفعيل زر إدارة المنيو -->
+                <button class="nav-btn" data-tab="menu">
                     <i class="fas fa-utensils"></i>
                     <span>إدارة المنيو</span>
-                    <span class="badge">قريباً</span>
                 </button>
                 <button class="nav-btn" data-tab="orders" disabled title="قريباً">
                     <i class="fas fa-receipt"></i>
@@ -120,7 +120,7 @@
                             </div>
                             <small class="form-hint">
                                 <i class="fas fa-info-circle"></i>
-                                أدخل رابط صورة من الإنترنت (مثل: Imgur, Google Drive, أو أي استضافة صور)
+                                أدخل رابط صورة من الإنترنت (مثل: Imgur, Google Drive، أو أي استضافة صور)
                             </small>
                             <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
                                 <img id="imagePreview" class="image-preview">
@@ -156,158 +156,156 @@
                 </div>
             </section>
 
-           
-            <!-- تبويب المنيو (مُفعّل) -->
-<section id="tab-menu" class="tab-content">
-    <div class="page-header">
-        <div class="header-content">
-            <h1><i class="fas fa-utensils"></i> إدارة المنيو</h1>
-            <p>أضف، عدّل، أو احذف أصناف المنيو وتحكم في توفرها</p>
-        </div>
-        <div class="header-stats">
-            <div class="stat-card">
-                <i class="fas fa-utensils"></i>
-                <div class="stat-info">
-                    <span class="stat-number" id="totalMenuCount">0</span>
-                    <span class="stat-label">صنف</span>
+            <!-- ✅ تبويب المنيو (مُفعّل بالكامل) -->
+            <section id="tab-menu" class="tab-content">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-utensils"></i> إدارة المنيو</h1>
+                        <p>أضف، عدّل، أو احذف أصناف المنيو وتحكم في توفرها</p>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-utensils"></i>
+                            <div class="stat-info">
+                                <span class="stat-number" id="totalMenuCount">0</span>
+                                <span class="stat-label">صنف</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="stat-info">
+                                <span class="stat-number" id="activeMenuCount">0</span>
+                                <span class="stat-label">متوفر</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <i class="fas fa-check-circle"></i>
-                <div class="stat-info">
-                    <span class="stat-number" id="activeMenuCount">0</span>
-                    <span class="stat-label">متوفر</span>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- فلترة حسب القسم -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title"><i class="fas fa-filter"></i> فلترة الأصناف</h2>
-        </div>
-        <div class="filter-chips" id="categoryFilters">
-            <button class="chip active" data-filter="all">الكل</button>
-            <button class="chip" data-filter="بركر">🍔 بركر</button>
-            <button class="chip" data-filter="زنكر">🍗 زنكر</button>
-            <button class="chip" data-filter="ريزو">🌯 ريزو</button>
-            <button class="chip" data-filter="صاج">🥙 صاج</button>
-            <button class="chip" data-filter="كنتاكي">🍗 كنتاكي</button>
-            <button class="chip" data-filter="ستربس">🍟 ستربس</button>
-            <button class="chip" data-filter="سندويتشات">🥪 سندويتشات</button>
-            <button class="chip" data-filter="اطباق">🍽️ اطباق</button>
-            <button class="chip" data-filter="دايت">🥗 دايت</button>
-            <button class="chip" data-filter="الفنكر">🤲 الفنكر</button>
-            <button class="chip" data-filter="الجكن فرايز">🍟 الجكن فرايز</button>
-            <button class="chip" data-filter="الصوصات">🌶️ الصوصات</button>
-            <button class="chip" data-filter="مشروبات غازية">🥤 مشروبات</button>
-            <button class="chip" data-filter="مقبلات">🥕 مقبلات</button>
-        </div>
-    </div>
+                <!-- فلترة حسب القسم -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-filter"></i> فلترة الأصناف</h2>
+                    </div>
+                    <div class="filter-chips" id="categoryFilters">
+                        <button class="chip active" data-filter="all">الكل</button>
+                        <button class="chip" data-filter="بركر">🍔 بركر</button>
+                        <button class="chip" data-filter="زنكر">🍗 زنكر</button>
+                        <button class="chip" data-filter="ريزو">🌯 ريزو</button>
+                        <button class="chip" data-filter="صاج">🥙 صاج</button>
+                        <button class="chip" data-filter="كنتاكي">🍗 كنتاكي</button>
+                        <button class="chip" data-filter="ستربس">🍟 ستربس</button>
+                        <button class="chip" data-filter="سندويتشات">🥪 سندويتشات</button>
+                        <button class="chip" data-filter="اطباق">🍽️ اطباق</button>
+                        <button class="chip" data-filter="دايت">🥗 دايت</button>
+                        <button class="chip" data-filter="الفنكر">🤲 الفنكر</button>
+                        <button class="chip" data-filter="الجكن فرايز">🍟 الجكن فرايز</button>
+                        <button class="chip" data-filter="الصوصات">🌶️ الصوصات</button>
+                        <button class="chip" data-filter="مشروبات غازية">🥤 مشروبات</button>
+                        <button class="chip" data-filter="مقبلات">🥕 مقبلات</button>
+                    </div>
+                </div>
 
-    <!-- نموذج إضافة صنف جديد -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة صنف جديد</h2>
-            <p class="card-subtitle">أضف صنفاً جديداً إلى المنيو</p>
-        </div>
-        <form id="menuForm" class="ad-form">
-            <input type="hidden" id="menuItemId">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="menuItemName">
-                        <i class="fas fa-utensils"></i> اسم الصنف <span class="required">*</span>
-                    </label>
-                    <input type="text" id="menuItemName" required placeholder="مثال: بركر كلاسك">
+                <!-- نموذج إضافة صنف جديد -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة/تعديل صنف</h2>
+                        <p class="card-subtitle">أضف صنفاً جديداً أو عدّل صنفاً موجوداً</p>
+                    </div>
+                    <form id="menuForm" class="ad-form">
+                        <input type="hidden" id="menuItemId">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="menuItemName">
+                                    <i class="fas fa-utensils"></i> اسم الصنف <span class="required">*</span>
+                                </label>
+                                <input type="text" id="menuItemName" required placeholder="مثال: بركر كلاسك">
+                            </div>
+                            <div class="form-group">
+                                <label for="menuItemCategory">
+                                    <i class="fas fa-list"></i> القسم <span class="required">*</span>
+                                </label>
+                                <select id="menuItemCategory" required>
+                                    <option value="">اختر القسم</option>
+                                    <option value="بركر">🍔 بركر</option>
+                                    <option value="زنكر">🍗 زنكر</option>
+                                    <option value="ريزو">🌯 ريزو</option>
+                                    <option value="صاج">🥙 صاج</option>
+                                    <option value="كنتاكي">🍗 كنتاكي</option>
+                                    <option value="ستربس">🍟 ستربس</option>
+                                    <option value="سندويتشات">🥪 سندويتشات</option>
+                                    <option value="اطباق">🍽️ اطباق</option>
+                                    <option value="دايت">🥗 دايت</option>
+                                    <option value="الفنكر">🤲 الفنكر</option>
+                                    <option value="الجكن فرايز">🍟 الجكن فرايز</option>
+                                    <option value="الصوصات">🌶️ الصوصات</option>
+                                    <option value="مشروبات غازية">🥤 مشروبات غازية</option>
+                                    <option value="مقبلات">🥕 مقبلات</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="menuItemPrice">
+                                    <i class="fas fa-tag"></i> السعر (د.ع) <span class="required">*</span>
+                                </label>
+                                <input type="number" id="menuItemPrice" required placeholder="مثال: 3000">
+                            </div>
+                            <div class="form-group">
+                                <label for="menuItemImage">
+                                    <i class="fas fa-link"></i> رابط الصورة (من GitHub)
+                                </label>
+                                <input type="url" id="menuItemImage" placeholder="https://raw.githubusercontent.com/.../image.png">
+                                <small class="form-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    استخدم الرابط من: raw.githubusercontent.com/montadhar313/taloola-menu/
+                                </small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="menuItemDescription">
+                                <i class="fas fa-align-right"></i> الوصف (اختياري)
+                            </label>
+                            <textarea id="menuItemDescription" rows="2" placeholder="وصف مختصر للصنف..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="menuItemAvailable" checked>
+                                <span class="toggle-switch"></span>
+                                <span>متوفر للطلب</span>
+                            </label>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="saveMenuItemBtn" class="btn-primary btn-lg">
+                                <i class="fas fa-save"></i> حفظ الصنف
+                            </button>
+                            <button type="reset" id="resetMenuForm" class="btn-secondary">
+                                <i class="fas fa-undo"></i> مسح النموذج
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group">
-                    <label for="menuItemCategory">
-                        <i class="fas fa-list"></i> القسم <span class="required">*</span>
-                    </label>
-                    <select id="menuItemCategory" required>
-                        <option value="">اختر القسم</option>
-                        <option value="بركر">🍔 بركر</option>
-                        <option value="زنكر">🍗 زنكر</option>
-                        <option value="ريزو">🌯 ريزو</option>
-                        <option value="صاج">🥙 صاج</option>
-                        <option value="كنتاكي">🍗 كنتاكي</option>
-                        <option value="ستربس">🍟 ستربس</option>
-                        <option value="سندويتشات">🥪 سندويتشات</option>
-                        <option value="اطباق">🍽️ اطباق</option>
-                        <option value="دايت">🥗 دايت</option>
-                        <option value="الفنكر">🤲 الفنكر</option>
-                        <option value="الجكن فرايز">🍟 الجكن فرايز</option>
-                        <option value="الصوصات">🌶️ الصوصات</option>
-                        <option value="مشروبات غازية">🥤 مشروبات غازية</option>
-                        <option value="مقبلات">🥕 مقبلات</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="menuItemPrice">
-                        <i class="fas fa-tag"></i> السعر (د.ع) <span class="required">*</span>
-                    </label>
-                    <input type="number" id="menuItemPrice" required placeholder="مثال: 3000">
-                </div>
-                <div class="form-group">
-                    <label for="menuItemImage">
-                        <i class="fas fa-link"></i> رابط الصورة (من GitHub)
-                    </label>
-                    <input type="url" id="menuItemImage" placeholder="https://raw.githubusercontent.com/.../image.png">
-                    <small class="form-hint">
-                        <i class="fas fa-info-circle"></i>
-                        استخدم الرابط من: raw.githubusercontent.com/montadhar313/taloola-menu/
-                    </small>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="menuItemDescription">
-                    <i class="fas fa-align-right"></i> الوصف (اختياري)
-                </label>
-                <textarea id="menuItemDescription" rows="2" placeholder="وصف مختصر للصنف..."></textarea>
-            </div>
-            <div class="form-group">
-                <label class="toggle-label">
-                    <input type="checkbox" id="menuItemAvailable" checked>
-                    <span class="toggle-switch"></span>
-                    <span>متوفر للطلب</span>
-                </label>
-            </div>
-            <div class="form-actions">
-                <button type="submit" id="saveMenuItemBtn" class="btn-primary btn-lg">
-                    <i class="fas fa-save"></i> حفظ الصنف
-                </button>
-                <button type="reset" class="btn-secondary">
-                    <i class="fas fa-undo"></i> مسح النموذج
-                </button>
-            </div>
-        </form>
-    </div>
 
-    <!-- قائمة الأصناف -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title"><i class="fas fa-list"></i> أصناف المنيو</h2>
-            <p class="card-subtitle">جميع الأصناف المسجلة في المنيو</p>
-        </div>
-        <div id="menuList" class="menu-grid">
-            <div class="loading-state">
-                <i class="fas fa-spinner fa-spin fa-3x"></i>
-                <p>جاري تحميل الأصناف...</p>
-            </div>
-        </div>
-    </div>
-</section>
-            
+                <!-- قائمة الأصناف -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-list"></i> أصناف المنيو</h2>
+                        <p class="card-subtitle">جميع الأصناف المسجلة في المنيو</p>
+                    </div>
+                    <div id="menuList" class="menu-grid">
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin fa-3x"></i>
+                            <p>جاري تحميل الأصناف...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- إشعارات Toast -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Firebase SDK (Database فقط - بدون Storage) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="admin.js"></script>
