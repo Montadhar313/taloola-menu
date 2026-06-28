@@ -19,36 +19,49 @@ const GITHUB_IMAGES_BASE = 'https://raw.githubusercontent.com/montadhar313/taloo
 // 🔐 نظام المصادقة
 // ============================================
 const ADMIN_PASSWORD = "TaloolaAdmin@2024";
-const loginScreen = document.getElementById('loginScreen');
-const dashboard = document.getElementById('dashboard');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
 
-if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-    showDashboard();
-}
-
-loginBtn.addEventListener('click', () => {
-    const password = document.getElementById('adminPassword').value;
-    if (password === ADMIN_PASSWORD) {
-        sessionStorage.setItem('isAdminLoggedIn', 'true');
-        showDashboard();
-    } else {
-        loginError.textContent = 'كلمة المرور غير صحيحة!';
-        setTimeout(() => loginError.textContent = '', 3000);
+document.addEventListener('DOMContentLoaded', () => {
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboard = document.getElementById('dashboard');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginError = document.getElementById('loginError');
+    
+    if (!loginScreen || !dashboard || !loginBtn) {
+        console.error('❌ عناصر صفحة الدخول غير موجودة');
+        return;
     }
-});
-
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-        sessionStorage.removeItem('isAdminLoggedIn');
-        location.reload();
+    
+    if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+        showDashboard();
+    }
+    
+    loginBtn.addEventListener('click', () => {
+        const password = document.getElementById('adminPassword').value;
+        if (password === ADMIN_PASSWORD) {
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
+            showDashboard();
+        } else {
+            if (loginError) loginError.textContent = 'كلمة المرور غير صحيحة!';
+            setTimeout(() => { if (loginError) loginError.textContent = ''; }, 3000);
+        }
+    });
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                sessionStorage.removeItem('isAdminLoggedIn');
+                location.reload();
+            }
+        });
     }
 });
 
 function showDashboard() {
-    loginScreen.style.display = 'none';
-    dashboard.style.display = 'flex';
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboard = document.getElementById('dashboard');
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (dashboard) dashboard.style.display = 'flex';
     loadAds();
     loadCategories();
     loadMenuItems();
@@ -57,97 +70,117 @@ function showDashboard() {
 // ============================================
 // 📑 إدارة التبويبات
 // ============================================
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        if (this.disabled) return;
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.disabled) return;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            const targetTab = document.getElementById('tab-' + this.dataset.tab);
+            if (targetTab) targetTab.classList.add('active');
+        });
     });
 });
 
 // ============================================
 // 📢 إدارة الإعلانات
 // ============================================
-const adForm = document.getElementById('adForm');
-const adsList = document.getElementById('adsList');
-const imageUrlInput = document.getElementById('imageUrl');
-const previewBtn = document.getElementById('previewBtn');
-const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-const imagePreview = document.getElementById('imagePreview');
-const removeImageBtn = document.getElementById('removeImageBtn');
-const totalAdsCount = document.getElementById('totalAdsCount');
-
-previewBtn.addEventListener('click', () => {
-    const url = imageUrlInput.value.trim();
-    if (!url) return showToast('الرجاء إدخال رابط الصورة أولاً', 'error');
-    try { new URL(url); } catch (e) { return showToast('الرابط غير صالح', 'error'); }
-    imagePreview.src = url;
-    imagePreviewContainer.style.display = 'block';
-});
-
-removeImageBtn.addEventListener('click', () => {
-    imageUrlInput.value = '';
-    imagePreview.src = '';
-    imagePreviewContainer.style.display = 'none';
-});
-
-adForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const saveBtn = document.getElementById('saveAdBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
-
-    const title = document.getElementById('adTitle').value.trim();
-    const description = document.getElementById('adDescription').value.trim();
-    const price = document.getElementById('adPrice').value.trim();
-    const imageUrl = imageUrlInput.value.trim();
-
-    if (imageUrl) {
-        try { new URL(imageUrl); } catch (e) {
-            showToast('رابط الصورة غير صالح', 'error');
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
-            return;
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    const adForm = document.getElementById('adForm');
+    const imageUrlInput = document.getElementById('imageUrl');
+    const previewBtn = document.getElementById('previewBtn');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    
+    if (!adForm || !imageUrlInput) return;
+    
+    if (previewBtn) {
+        previewBtn.addEventListener('click', () => {
+            const url = imageUrlInput.value.trim();
+            if (!url) return showToast('الرجاء إدخال رابط الصورة أولاً', 'error');
+            try { new URL(url); } catch (e) { return showToast('الرابط غير صالح', 'error'); }
+            if (imagePreview) imagePreview.src = url;
+            if (imagePreviewContainer) imagePreviewContainer.style.display = 'block';
+        });
     }
-
-    try {
-        const newAd = {
-            title, description,
-            price: price || '',
-            imageUrl: imageUrl || '',
-            template: 'red',
-            timestamp: Date.now(),
-            date: new Date().toLocaleDateString('ar-EG')
-        };
-        await db.ref('ads').push(newAd);
-        showToast('تم نشر الإعلان بنجاح!', 'success');
-        adForm.reset();
-        imagePreviewContainer.style.display = 'none';
-    } catch (error) {
-        // 🆕 معالجة أخطاء Firebase
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-            console.error('PERMISSION_DENIED: تأكد من تحديث قواعد Firebase في Firebase Console');
-        } else {
-            showToast('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
-        }
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
+    
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', () => {
+            imageUrlInput.value = '';
+            if (imagePreview) imagePreview.src = '';
+            if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+        });
     }
-});
-
-adForm.addEventListener('reset', () => {
-    setTimeout(() => {
-        imagePreviewContainer.style.display = 'none';
-        imagePreview.src = '';
-    }, 10);
+    
+    adForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveAdBtn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        }
+        
+        const title = document.getElementById('adTitle').value.trim();
+        const description = document.getElementById('adDescription').value.trim();
+        const price = document.getElementById('adPrice').value.trim();
+        const imageUrl = imageUrlInput.value.trim();
+        
+        if (imageUrl) {
+            try { new URL(imageUrl); } catch (e) {
+                showToast('رابط الصورة غير صالح', 'error');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
+                }
+                return;
+            }
+        }
+        
+        try {
+            const newAd = {
+                title, description,
+                price: price || '',
+                imageUrl: imageUrl || '',
+                template: 'red',
+                timestamp: Date.now(),
+                date: new Date().toLocaleDateString('ar-EG')
+            };
+            await db.ref('ads').push(newAd);
+            showToast('تم نشر الإعلان بنجاح!', 'success');
+            adForm.reset();
+            if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+        } catch (error) {
+            if (error.code === 'PERMISSION_DENIED') {
+                showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+            } else {
+                showToast('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+            }
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
+            }
+        }
+    });
+    
+    if (adForm) {
+        adForm.addEventListener('reset', () => {
+            setTimeout(() => {
+                if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+                if (imagePreview) imagePreview.src = '';
+            }, 10);
+        });
+    }
 });
 
 function loadAds() {
+    const adsList = document.getElementById('adsList');
+    const totalAdsCount = document.getElementById('totalAdsCount');
+    
+    if (!adsList) return;
+    
     db.ref('ads').orderByChild('timestamp').on('value', (snapshot) => {
         adsList.innerHTML = '';
         const ads = snapshot.val();
@@ -158,11 +191,11 @@ function loadAds() {
                     <h3>لا توجد إعلانات</h3>
                     <p>أضف أول إعلان لبدء عرض العروض الخاصة</p>
                 </div>`;
-            totalAdsCount.textContent = '0';
+            if (totalAdsCount) totalAdsCount.textContent = '0';
             return;
         }
         const sortedAds = Object.keys(ads).reverse();
-        totalAdsCount.textContent = sortedAds.length;
+        if (totalAdsCount) totalAdsCount.textContent = sortedAds.length;
         sortedAds.forEach(key => {
             const ad = ads[key];
             const card = document.createElement('div');
@@ -181,11 +214,7 @@ function loadAds() {
             adsList.appendChild(card);
         });
     }, (error) => {
-        // 🆕 معالجة أخطاء القراءة
         console.error('خطأ في تحميل الإعلانات:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        }
     });
 }
 
@@ -196,7 +225,7 @@ window.deleteAd = async function(key) {
         showToast('تم حذف الإعلان بنجاح', 'success');
     } catch (error) {
         if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+            showToast('⚠️ خطأ في الصلاحيات!', 'error');
         } else {
             showToast('فشل الحذف: ' + error.message, 'error');
         }
@@ -204,57 +233,102 @@ window.deleteAd = async function(key) {
 };
 
 // ============================================
-// 📂 إدارة الأقسام (Categories)
+// 📂 إدارة الأقسام (Categories) - مُصحّح
 // ============================================
 let allCategories = [];
-let editingCategoryId = null;
 
-const categoryForm = document.getElementById('categoryForm');
-const categoriesList = document.getElementById('categoriesList');
-const totalCategoriesCount = document.getElementById('totalCategoriesCount');
-
-// البيانات الأولية للأقسام
-const SEED_CATEGORIES = [
-    { name: 'بركر', icon: '🍔', order: 0 },
-    { name: 'زنكر', icon: '🍗', order: 1 },
-    { name: 'ريزو', icon: '🌯', order: 2 },
-    { name: 'صاج', icon: '🥙', order: 3 },
-    { name: 'كنتاكي', icon: '🍗', order: 4 },
-    { name: 'ستربس', icon: '🍟', order: 5 },
-    { name: 'سندويتشات', icon: '🥪', order: 6 },
-    { name: 'اطباق', icon: '🍽️', order: 7 },
-    { name: 'دايت', icon: '🥗', order: 8 },
-    { name: 'الفنكر', icon: '🤲', order: 9 },
-    { name: 'الجكن فرايز', icon: '🍟', order: 10 },
-    { name: 'الصوصات', icon: '🌶️', order: 11 },
-    { name: 'مشروبات غازية', icon: '🥤', order: 12 },
-    { name: 'مقبلات', icon: '🥕', order: 13 }
-];
-
-// Seed الأقسام الأولية
-async function seedCategories() {
-    try {
-        const snapshot = await db.ref('categories').once('value');
-        if (!snapshot.val()) {
-            console.log('🌱 Seed: إضافة الأقسام الأولية...');
-            for (const cat of SEED_CATEGORIES) {
-                await db.ref('categories').push(cat);
-            }
-            console.log(`✅ تم إضافة ${SEED_CATEGORIES.length} قسم`);
-            showToast(`تم إضافة ${SEED_CATEGORIES.length} قسم افتراضي`, 'success');
-        }
-    } catch (error) {
-        console.error('خطأ في Seed الأقسام:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        }
-    }
-}
-
-// تحميل الأقسام
-function loadCategories() {
-    seedCategories();
+document.addEventListener('DOMContentLoaded', () => {
+    const categoryForm = document.getElementById('categoryForm');
+    if (!categoryForm) return;
     
+    categoryForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveCategoryBtn');
+        const saveBtnText = document.getElementById('saveCategoryText');
+        
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            if (saveBtnText) saveBtnText.textContent = 'جاري الحفظ...';
+        }
+        
+        const id = document.getElementById('categoryId').value;
+        const name = document.getElementById('categoryName').value.trim();
+        const icon = document.getElementById('categoryIcon').value.trim() || '📁';
+        const order = parseInt(document.getElementById('categoryOrder').value) || allCategories.length;
+        
+        if (!name) {
+            showToast('الرجاء إدخال اسم القسم', 'error');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                if (saveBtnText) saveBtnText.textContent = 'حفظ القسم';
+            }
+            return;
+        }
+        
+        try {
+            const categoryData = { name, icon, order };
+            
+            if (id) {
+                await db.ref('categories/' + id).update(categoryData);
+                showToast('تم تحديث القسم بنجاح', 'success');
+            } else {
+                await db.ref('categories').push(categoryData);
+                showToast('تم إضافة القسم بنجاح', 'success');
+            }
+            
+            resetCategoryForm();
+        } catch (error) {
+            console.error('خطأ في حفظ القسم:', error);
+            if (error.code === 'PERMISSION_DENIED') {
+                showToast('⚠️ خطأ في الصلاحيات!', 'error');
+            } else {
+                showToast('حدث خطأ: ' + error.message, 'error');
+            }
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                if (saveBtnText) saveBtnText.textContent = 'حفظ القسم';
+            }
+        }
+    });
+});
+
+function loadCategories() {
+    const categoriesList = document.getElementById('categoriesList');
+    const totalCategoriesCount = document.getElementById('totalCategoriesCount');
+    
+    if (!categoriesList) {
+        console.error('❌ عنصر categoriesList غير موجود');
+        return;
+    }
+    
+    // Seed الأقسام الأولية
+    db.ref('categories').once('value').then(snapshot => {
+        if (!snapshot.val()) {
+            const SEED_CATEGORIES = [
+                { name: 'بركر', icon: '🍔', order: 0 },
+                { name: 'زنكر', icon: '🍗', order: 1 },
+                { name: 'ريزو', icon: '🌯', order: 2 },
+                { name: 'صاج', icon: '🥙', order: 3 },
+                { name: 'كنتاكي', icon: '🍗', order: 4 },
+                { name: 'ستربس', icon: '🍟', order: 5 },
+                { name: 'سندويتشات', icon: '🥪', order: 6 },
+                { name: 'اطباق', icon: '🍽️', order: 7 },
+                { name: 'دايت', icon: '🥗', order: 8 },
+                { name: 'الفنكر', icon: '🤲', order: 9 },
+                { name: 'الجكن فرايز', icon: '🍟', order: 10 },
+                { name: 'الصوصات', icon: '🌶️', order: 11 },
+                { name: 'مشروبات غازية', icon: '🥤', order: 12 },
+                { name: 'مقبلات', icon: '🥕', order: 13 }
+            ];
+            
+            Promise.all(SEED_CATEGORIES.map(cat => db.ref('categories').push(cat)))
+                .then(() => showToast(`تم إضافة ${SEED_CATEGORIES.length} قسم افتراضي`, 'success'))
+                .catch(err => console.error('خطأ في Seed:', err));
+        }
+    });
+    
+    // الاستماع المستمر للتغييرات
     db.ref('categories').orderByChild('order').on('value', (snapshot) => {
         categoriesList.innerHTML = '';
         allCategories = [];
@@ -267,7 +341,7 @@ function loadCategories() {
                     <h3>لا توجد أقسام</h3>
                     <p>أضف أول قسم للمنيو</p>
                 </div>`;
-            totalCategoriesCount.textContent = '0';
+            if (totalCategoriesCount) totalCategoriesCount.textContent = '0';
             updateCategoryDropdown();
             return;
         }
@@ -278,19 +352,18 @@ function loadCategories() {
         
         allCategories.sort((a, b) => (a.order || 0) - (b.order || 0));
         
-        totalCategoriesCount.textContent = allCategories.length;
+        if (totalCategoriesCount) totalCategoriesCount.textContent = allCategories.length;
         renderCategories();
         updateCategoryDropdown();
     }, (error) => {
         console.error('خطأ في تحميل الأقسام:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        }
     });
 }
 
-// عرض الأقسام
 function renderCategories() {
+    const categoriesList = document.getElementById('categoriesList');
+    if (!categoriesList) return;
+    
     categoriesList.innerHTML = '';
     
     if (allCategories.length === 0) {
@@ -298,7 +371,6 @@ function renderCategories() {
             <div class="empty-state">
                 <i class="fas fa-folder-open fa-3x"></i>
                 <h3>لا توجد أقسام</h3>
-                <p>أضف أول قسم للمنيو</p>
             </div>`;
         return;
     }
@@ -329,7 +401,6 @@ function renderCategories() {
             </div>
         `;
         
-        // Drag & Drop events
         item.addEventListener('dragstart', handleDragStart);
         item.addEventListener('dragover', handleDragOver);
         item.addEventListener('drop', handleDrop);
@@ -341,7 +412,6 @@ function renderCategories() {
     });
 }
 
-// Drag & Drop handlers
 let draggedItem = null;
 
 function handleDragStart(e) {
@@ -357,9 +427,7 @@ function handleDragOver(e) {
 
 function handleDragEnter(e) {
     e.preventDefault();
-    if (this !== draggedItem) {
-        this.classList.add('drag-over');
-    }
+    if (this !== draggedItem) this.classList.add('drag-over');
 }
 
 function handleDragLeave() {
@@ -378,23 +446,16 @@ async function handleDrop(e) {
     const draggedIndex = allCategories.findIndex(c => c.id === draggedId);
     const targetIndex = allCategories.findIndex(c => c.id === targetId);
     
-    // إعادة ترتيب
     const [movedItem] = allCategories.splice(draggedIndex, 1);
     allCategories.splice(targetIndex, 0, movedItem);
     
     try {
-        // تحديث الترتيب في Firebase
         for (let i = 0; i < allCategories.length; i++) {
             await db.ref('categories/' + allCategories[i].id + '/order').set(i);
         }
         showToast('تم تحديث ترتيب الأقسام', 'success');
     } catch (error) {
-        console.error('خطأ في تحديث الترتيب:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        } else {
-            showToast('فشل تحديث الترتيب: ' + error.message, 'error');
-        }
+        showToast('فشل تحديث الترتيب: ' + error.message, 'error');
     }
 }
 
@@ -405,170 +466,141 @@ function handleDragEnd() {
     });
 }
 
-// نموذج القسم
-categoryForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const saveBtn = document.getElementById('saveCategoryBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
-    
-    const id = document.getElementById('categoryId').value;
-    const name = document.getElementById('categoryName').value.trim();
-    const icon = document.getElementById('categoryIcon').value.trim() || '📁';
-    const order = parseInt(document.getElementById('categoryOrder').value) || allCategories.length;
-    
-    if (!name) {
-        showToast('الرجاء إدخال اسم القسم', 'error');
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> <span id="saveCategoryText">حفظ القسم</span>';
-        return;
-    }
-    
-    try {
-        const categoryData = { name, icon, order };
-        
-        if (id) {
-            // تعديل
-            await db.ref('categories/' + id).update(categoryData);
-            showToast('تم تحديث القسم بنجاح', 'success');
-        } else {
-            // إضافة
-            await db.ref('categories').push(categoryData);
-            showToast('تم إضافة القسم بنجاح', 'success');
-        }
-        
-        resetCategoryForm();
-    } catch (error) {
-        console.error('خطأ في حفظ القسم:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        } else {
-            showToast('حدث خطأ: ' + error.message, 'error');
-        }
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> <span id="saveCategoryText">حفظ القسم</span>';
-    }
-});
-
-// تعديل قسم
 window.editCategory = function(id) {
     const cat = allCategories.find(c => c.id === id);
     if (!cat) return;
     
-    document.getElementById('categoryId').value = cat.id;
-    document.getElementById('categoryName').value = cat.name;
-    document.getElementById('categoryIcon').value = cat.icon || '';
-    document.getElementById('categoryOrder').value = cat.order !== undefined ? cat.order : '';
+    const categoryId = document.getElementById('categoryId');
+    const categoryName = document.getElementById('categoryName');
+    const categoryIcon = document.getElementById('categoryIcon');
+    const categoryOrder = document.getElementById('categoryOrder');
+    const categoryFormTitle = document.getElementById('categoryFormTitle');
+    const saveCategoryText = document.getElementById('saveCategoryText');
+    const cancelEditCategoryBtn = document.getElementById('cancelEditCategoryBtn');
     
-    document.getElementById('categoryFormTitle').textContent = 'تعديل القسم';
-    document.getElementById('saveCategoryText').textContent = 'حفظ التعديلات';
-    document.getElementById('cancelEditCategoryBtn').style.display = 'inline-flex';
+    if (categoryId) categoryId.value = cat.id;
+    if (categoryName) categoryName.value = cat.name;
+    if (categoryIcon) categoryIcon.value = cat.icon || '';
+    if (categoryOrder) categoryOrder.value = cat.order !== undefined ? cat.order : '';
+    if (categoryFormTitle) categoryFormTitle.textContent = 'تعديل القسم';
+    if (saveCategoryText) saveCategoryText.textContent = 'حفظ التعديلات';
+    if (cancelEditCategoryBtn) cancelEditCategoryBtn.style.display = 'inline-flex';
     
-    document.getElementById('categoryForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const categoryForm = document.getElementById('categoryForm');
+    if (categoryForm) categoryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
-// حذف قسم
 window.deleteCategory = async function(id) {
     const cat = allCategories.find(c => c.id === id);
     if (!cat) return;
     
     try {
-        // التحقق من وجود أصناف في هذا القسم
         const menuSnapshot = await db.ref('menu').orderByChild('category').equalTo(cat.name).once('value');
         const itemsInCategory = menuSnapshot.val();
         
         let confirmMsg = `هل أنت متأكد من حذف قسم "${cat.name}"؟`;
         if (itemsInCategory) {
             const count = Object.keys(itemsInCategory).length;
-            confirmMsg += `\n\n⚠️ تحذير: يوجد ${count} صنف في هذا القسم. سيتم حذفها أيضاً!`;
+            confirmMsg += `\n\n⚠️ تحذير: يوجد ${count} صنف في هذا القسم!`;
         }
         
         if (!confirm(confirmMsg)) return;
         
-        // حذف الأصناف في القسم أولاً
         if (itemsInCategory) {
             for (const key of Object.keys(itemsInCategory)) {
                 await db.ref('menu/' + key).remove();
             }
         }
         
-        // حذف القسم
         await db.ref('categories/' + id).remove();
         showToast('تم حذف القسم بنجاح', 'success');
     } catch (error) {
-        console.error('خطأ في حذف القسم:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        } else {
-            showToast('فشل الحذف: ' + error.message, 'error');
-        }
+        showToast('فشل الحذف: ' + error.message, 'error');
     }
 };
 
 function resetCategoryForm() {
-    document.getElementById('categoryForm').reset();
-    document.getElementById('categoryId').value = '';
-    document.getElementById('categoryFormTitle').textContent = 'إضافة قسم جديد';
-    document.getElementById('saveCategoryText').textContent = 'حفظ القسم';
-    document.getElementById('cancelEditCategoryBtn').style.display = 'none';
+    const categoryForm = document.getElementById('categoryForm');
+    const categoryId = document.getElementById('categoryId');
+    const categoryFormTitle = document.getElementById('categoryFormTitle');
+    const saveCategoryText = document.getElementById('saveCategoryText');
+    const cancelEditCategoryBtn = document.getElementById('cancelEditCategoryBtn');
+    
+    if (categoryForm) categoryForm.reset();
+    if (categoryId) categoryId.value = '';
+    if (categoryFormTitle) categoryFormTitle.textContent = 'إضافة قسم جديد';
+    if (saveCategoryText) saveCategoryText.textContent = 'حفظ القسم';
+    if (cancelEditCategoryBtn) cancelEditCategoryBtn.style.display = 'none';
     document.querySelectorAll('.icon-suggestion').forEach(s => s.classList.remove('selected'));
 }
 
-document.getElementById('resetCategoryForm').addEventListener('click', resetCategoryForm);
-document.getElementById('cancelEditCategoryBtn').addEventListener('click', resetCategoryForm);
-
-// Icon suggestions
-document.querySelectorAll('.icon-suggestion').forEach(suggestion => {
-    suggestion.addEventListener('click', function() {
-        document.getElementById('categoryIcon').value = this.dataset.icon;
-        document.querySelectorAll('.icon-suggestion').forEach(s => s.classList.remove('selected'));
-        this.classList.add('selected');
+document.addEventListener('DOMContentLoaded', () => {
+    const resetCategoryFormBtn = document.getElementById('resetCategoryForm');
+    const cancelEditCategoryBtn = document.getElementById('cancelEditCategoryBtn');
+    
+    if (resetCategoryFormBtn) resetCategoryFormBtn.addEventListener('click', resetCategoryForm);
+    if (cancelEditCategoryBtn) cancelEditCategoryBtn.addEventListener('click', resetCategoryForm);
+    
+    document.querySelectorAll('.icon-suggestion').forEach(suggestion => {
+        suggestion.addEventListener('click', function() {
+            const categoryIcon = document.getElementById('categoryIcon');
+            if (categoryIcon) categoryIcon.value = this.dataset.icon;
+            document.querySelectorAll('.icon-suggestion').forEach(s => s.classList.remove('selected'));
+            this.classList.add('selected');
+        });
     });
 });
 
 // ============================================
 // 🎯 Custom Select (Dropdown محسّن)
 // ============================================
-const customSelect = document.getElementById('menuItemCategorySelect');
-const selectedText = customSelect.querySelector('.selected-text');
-const optionsList = document.getElementById('categoryOptionsList');
-const searchInput = customSelect.querySelector('.custom-select-search');
-const hiddenInput = document.getElementById('menuItemCategory');
-
-// فتح/إغلاق الـ dropdown
-customSelect.querySelector('.custom-select-selected').addEventListener('click', (e) => {
-    e.stopPropagation();
-    customSelect.classList.toggle('open');
-    if (customSelect.classList.contains('open')) {
-        searchInput.focus();
-    }
-});
-
-// إغلاق عند النقر خارج الـ dropdown
-document.addEventListener('click', (e) => {
-    if (!customSelect.contains(e.target)) {
-        customSelect.classList.remove('open');
-    }
-});
-
-// البحث في الأقسام
-searchInput.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase().trim();
-    const options = optionsList.querySelectorAll('.custom-select-option');
+document.addEventListener('DOMContentLoaded', () => {
+    const customSelect = document.getElementById('menuItemCategorySelect');
+    if (!customSelect) return;
     
-    options.forEach(option => {
-        const name = option.querySelector('.option-name').textContent.toLowerCase();
-        if (name.includes(searchTerm)) {
-            option.style.display = 'flex';
-        } else {
-            option.style.display = 'none';
+    const selectedText = customSelect.querySelector('.selected-text');
+    const optionsList = document.getElementById('categoryOptionsList');
+    const searchInput = customSelect.querySelector('.custom-select-search');
+    const hiddenInput = document.getElementById('menuItemCategory');
+    
+    const selectedDiv = customSelect.querySelector('.custom-select-selected');
+    if (selectedDiv) {
+        selectedDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customSelect.classList.toggle('open');
+            if (customSelect.classList.contains('open') && searchInput) {
+                searchInput.focus();
+            }
+        });
+    }
+    
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            customSelect.classList.remove('open');
         }
     });
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const options = optionsList.querySelectorAll('.custom-select-option');
+            
+            options.forEach(option => {
+                const name = option.querySelector('.option-name').textContent.toLowerCase();
+                option.style.display = name.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+    }
 });
 
-// تحديث قائمة الأقسام في الـ dropdown
 function updateCategoryDropdown() {
+    const optionsList = document.getElementById('categoryOptionsList');
+    const customSelect = document.getElementById('menuItemCategorySelect');
+    const selectedText = customSelect ? customSelect.querySelector('.selected-text') : null;
+    const hiddenInput = document.getElementById('menuItemCategory');
+    
+    if (!optionsList) return;
+    
     optionsList.innerHTML = '';
     
     allCategories.forEach(cat => {
@@ -582,29 +614,26 @@ function updateCategoryDropdown() {
         
         option.addEventListener('click', function() {
             const value = this.getAttribute('data-value');
-            hiddenInput.value = value;
-            selectedText.textContent = value;
-            
-            // تحديث الأيقونة المعروضة
-            const icon = this.querySelector('.option-icon').textContent;
-            if (!selectedText.querySelector('.selected-icon')) {
-                const iconSpan = document.createElement('span');
-                iconSpan.className = 'selected-icon';
-                selectedText.insertBefore(iconSpan, selectedText.firstChild);
+            if (hiddenInput) hiddenInput.value = value;
+            if (selectedText) {
+                selectedText.textContent = value;
+                const icon = this.querySelector('.option-icon').textContent;
+                let iconSpan = selectedText.querySelector('.selected-icon');
+                if (!iconSpan) {
+                    iconSpan = document.createElement('span');
+                    iconSpan.className = 'selected-icon';
+                    selectedText.insertBefore(iconSpan, selectedText.firstChild);
+                }
+                iconSpan.textContent = icon;
             }
-            selectedText.querySelector('.selected-icon').textContent = icon;
             
-            // تحديد الخيار المحدد
-            optionsList.querySelectorAll('.custom-select-option').forEach(o => {
-                o.classList.remove('selected');
-            });
+            optionsList.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
             this.classList.add('selected');
             
-            customSelect.classList.remove('open');
-            searchInput.value = '';
-            optionsList.querySelectorAll('.custom-select-option').forEach(o => {
-                o.style.display = 'flex';
-            });
+            if (customSelect) customSelect.classList.remove('open');
+            const searchInput = document.querySelector('.custom-select-search');
+            if (searchInput) searchInput.value = '';
+            optionsList.querySelectorAll('.custom-select-option').forEach(o => o.style.display = 'flex');
         });
         
         optionsList.appendChild(option);
@@ -618,81 +647,122 @@ let allMenuItems = [];
 let currentFilter = 'all';
 let currentSearch = '';
 
-const menuForm = document.getElementById('menuForm');
-const menuList = document.getElementById('menuList');
-const totalMenuCount = document.getElementById('totalMenuCount');
-const activeMenuCount = document.getElementById('activeMenuCount');
-const menuSearch = document.getElementById('menuSearch');
-
-// Seed المنتجات
-const SEED_MENU_ITEMS = [
-    { name: 'بركر كلاسك', category: 'بركر', price: 3000, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر لحم طازج', available: true, order: 0 },
-    { name: 'بركر مدخن', category: 'بركر', price: 3500, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر مدخن', available: true, order: 1 },
-    { name: 'بركر بالجبن', category: 'بركر', price: 3500, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر بالجبنة', available: true, order: 2 },
-    { name: 'بركر سبايسي', category: 'بركر', price: 3500, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر حار', available: true, order: 3 },
-    { name: 'زنكر كلاسك', category: 'زنكر', price: 2500, image: GITHUB_IMAGES_BASE + 'ZENGER.png', description: 'زنكر دجاج مقرمش', available: true, order: 0 },
-    { name: 'زنكر مكسيكانو', category: 'زنكر', price: 3000, image: GITHUB_IMAGES_BASE + 'ZENGER.png', description: 'زنكر مكسيكي', available: true, order: 1 },
-    { name: 'زنكر مدخن', category: 'زنكر', price: 3000, image: GITHUB_IMAGES_BASE + 'ZENGER.png', description: 'زنكر مدخن', available: true, order: 2 },
-    { name: 'ريزو كلاسك', category: 'ريزو', price: 4000, image: GITHUB_IMAGES_BASE + 'RIZO.png', description: 'شاورما دجاج', available: true, order: 0 },
-    { name: 'ريزو بالجبن', category: 'ريزو', price: 4500, image: GITHUB_IMAGES_BASE + 'RIZO.png', description: 'ريزو بالجبنة', available: true, order: 1 },
-    { name: 'ريزو سبايسي', category: 'ريزو', price: 4500, image: GITHUB_IMAGES_BASE + 'RIZO.png', description: 'ريزو حار', available: true, order: 2 },
-    { name: 'ريزو مدخن', category: 'ريزو', price: 4500, image: GITHUB_IMAGES_BASE + 'RIZO.png', description: 'ريزو مدخن', available: true, order: 3 },
-    { name: 'صاج كنتاكي', category: 'صاج', price: 2000, image: GITHUB_IMAGES_BASE + 'SAJ_K.png', description: 'صاج دجاج كنتاكي', available: true, order: 0 },
-    { name: 'صاج كريل', category: 'صاج', price: 1500, image: GITHUB_IMAGES_BASE + 'SAJ_G.png', description: 'صاج كريل', available: true, order: 1 },
-    { name: 'كنتاكي 3 قطع', category: 'كنتاكي', price: 6500, image: GITHUB_IMAGES_BASE + 'KNTAKE.png', description: '3 قطع دجاج', available: true, order: 0 },
-    { name: 'كنتاكي 5 قطع', category: 'كنتاكي', price: 10000, image: GITHUB_IMAGES_BASE + 'KNTAKE.png', description: '5 قطع دجاج', available: true, order: 1 },
-    { name: 'كنتاكي 10 قطع', category: 'كنتاكي', price: 18000, image: GITHUB_IMAGES_BASE + 'KNTAKE.png', description: '10 قطع دجاج', available: true, order: 2 },
-    { name: 'ستربس 4 قطع', category: 'ستربس', price: 6000, image: GITHUB_IMAGES_BASE + 'STRIPS.png', description: '4 قطع ستربس', available: true, order: 0 },
-    { name: 'ستربس 6 قطع', category: 'ستربس', price: 8500, image: GITHUB_IMAGES_BASE + 'STRIPS.png', description: '6 قطع ستربس', available: true, order: 1 },
-    { name: 'ستربس 12 قطعة', category: 'ستربس', price: 14500, image: GITHUB_IMAGES_BASE + 'STRIPS.png', description: '12 قطعة ستربس', available: true, order: 2 },
-    { name: 'سندويتش تعلولة', category: 'سندويتشات', price: 2000, image: GITHUB_IMAGES_BASE + 'S_TALOLA.png', description: 'سندويتش خاص', available: true, order: 0 },
-    { name: 'فلر', category: 'سندويتشات', price: 2500, image: GITHUB_IMAGES_BASE + 'FALAR.png', description: 'سندويتش فلر', available: true, order: 1 },
-    { name: 'طبق تعلولة', category: 'اطباق', price: 2500, image: GITHUB_IMAGES_BASE + 'T_TALOLA.png', description: 'طبق خاص', available: true, order: 0 },
-    { name: 'وجبة دايت', category: 'دايت', price: 4500, image: GITHUB_IMAGES_BASE + 'DAET.png', description: 'وجبة صحية', available: true, order: 0 },
-    { name: 'فنكر كلاسك صغير', category: 'الفنكر', price: 1500, image: GITHUB_IMAGES_BASE + 'FINGR.png', description: 'فنكر صغير', available: true, order: 0 },
-    { name: 'فنكر بالجبن صغير', category: 'الفنكر', price: 2000, image: GITHUB_IMAGES_BASE + 'FINGR.png', description: 'فنكر بالجبنة صغير', available: true, order: 1 },
-    { name: 'فنكر سبايسي صغير', category: 'الفنكر', price: 2000, image: GITHUB_IMAGES_BASE + 'FINGR.png', description: 'فنكر حار صغير', available: true, order: 2 },
-    { name: 'فنكر كلاسك كبير', category: 'الفنكر', price: 2500, image: GITHUB_IMAGES_BASE + 'FINGR.png', description: 'فنكر كبير', available: true, order: 3 },
-    { name: 'فنكر بالجبن كبير', category: 'الفنكر', price: 3000, image: GITHUB_IMAGES_BASE + 'FINGR.png', description: 'فنكر بالجبنة كبير', available: true, order: 4 },
-    { name: 'فنكر سبايسي كبير', category: 'الفنكر', price: 3000, image: GITHUB_IMAGES_BASE + 'FINGR.png', description: 'فنكر حار كبير', available: true, order: 5 },
-    { name: 'جكن فرايز صغير', category: 'الجكن فرايز', price: 2500, image: GITHUB_IMAGES_BASE + 'CHEKEN.png', description: 'بطاطس مع دجاج صغير', available: true, order: 0 },
-    { name: 'جكن فرايز كبير', category: 'الجكن فرايز', price: 4000, image: GITHUB_IMAGES_BASE + 'CHEKEN.png', description: 'بطاطس مع دجاج كبير', available: true, order: 1 },
-    { name: 'باربيكيو', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'BARBQ.png', description: 'صوص باربيكيو', available: true, order: 0 },
-    { name: 'ثومية', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'THOM.png', description: 'صوص ثومية', available: true, order: 1 },
-    { name: 'بافلو', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'SPAYSY.png', description: 'صوص بافلو', available: true, order: 2 },
-    { name: 'هاني ماستر', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'HANE.png', description: 'صوص هاني ماستر', available: true, order: 3 },
-    { name: 'كوكتيل', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'KOKTEL.png', description: 'صوص كوكتيل', available: true, order: 4 },
-    { name: 'شيدر', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'SHADER.png', description: 'صوص شيدر', available: true, order: 5 },
-    { name: 'روستر', category: 'الصوصات', price: 250, image: GITHUB_IMAGES_BASE + 'ROSTER.png', description: 'صوص روستر', available: true, order: 6 },
-    { name: 'كولا', category: 'مشروبات غازية', price: 500, image: GITHUB_IMAGES_BASE + 'COLA.png', description: 'كولا منعشة', available: true, order: 0 },
-    { name: 'فانتا', category: 'مشروبات غازية', price: 500, image: GITHUB_IMAGES_BASE + 'FANTA.png', description: 'فانتا برتقال', available: true, order: 1 },
-    { name: 'سبرايت', category: 'مشروبات غازية', price: 500, image: GITHUB_IMAGES_BASE + 'SPRITE.png', description: 'سبرايت ليمون', available: true, order: 2 },
-    { name: 'ماعون مقبلات صغير', category: 'مقبلات', price: 1500, image: GITHUB_IMAGES_BASE + 'MO_1.png', description: 'ماعون مقبلات صغير', available: true, order: 0 },
-    { name: 'ماعون مقبلات كبير', category: 'مقبلات', price: 2000, image: GITHUB_IMAGES_BASE + 'MO_1.png', description: 'ماعون مقبلات كبير', available: true, order: 1 }
-];
-
-async function seedMenuItems() {
-    try {
-        const snapshot = await db.ref('menu').once('value');
-        if (!snapshot.val()) {
-            console.log('🌱 Seed: إضافة المنتجات الأولية...');
-            for (const item of SEED_MENU_ITEMS) {
-                await db.ref('menu').push(item);
+document.addEventListener('DOMContentLoaded', () => {
+    const menuForm = document.getElementById('menuForm');
+    if (!menuForm) return;
+    
+    menuForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveMenuItemBtn');
+        const saveBtnText = document.getElementById('saveMenuItemText');
+        
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            if (saveBtnText) saveBtnText.textContent = 'جاري الحفظ...';
+        }
+        
+        const id = document.getElementById('menuItemId').value;
+        const name = document.getElementById('menuItemName').value.trim();
+        const category = document.getElementById('menuItemCategory').value;
+        const price = parseInt(document.getElementById('menuItemPrice').value);
+        const image = document.getElementById('menuItemImage').value.trim();
+        const description = document.getElementById('menuItemDescription').value.trim();
+        const available = document.getElementById('menuItemAvailable').checked;
+        
+        if (!category) {
+            showToast('الرجاء اختيار القسم', 'error');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                if (saveBtnText) saveBtnText.textContent = 'حفظ الصنف';
             }
-            console.log(`✅ تم إضافة ${SEED_MENU_ITEMS.length} منتج`);
-            showToast(`تم إضافة ${SEED_MENU_ITEMS.length} منتج افتراضي`, 'success');
+            return;
         }
-    } catch (error) {
-        console.error('خطأ في Seed المنتجات:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        
+        if (image) {
+            try { new URL(image); } catch (e) {
+                showToast('رابط الصورة غير صالح', 'error');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    if (saveBtnText) saveBtnText.textContent = 'حفظ الصنف';
+                }
+                return;
+            }
         }
+        
+        const itemData = {
+            name, category, price,
+            image: image || '',
+            description: description || '',
+            available,
+            updatedAt: Date.now()
+        };
+        
+        try {
+            if (id) {
+                await db.ref('menu/' + id).update(itemData);
+                showToast('تم تحديث الصنف بنجاح', 'success');
+            } else {
+                itemData.order = allMenuItems.length;
+                itemData.createdAt = Date.now();
+                await db.ref('menu').push(itemData);
+                showToast('تم إضافة الصنف بنجاح', 'success');
+            }
+            resetMenuForm();
+        } catch (error) {
+            if (error.code === 'PERMISSION_DENIED') {
+                showToast('⚠️ خطأ في الصلاحيات!', 'error');
+            } else {
+                showToast('حدث خطأ: ' + error.message, 'error');
+            }
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                if (saveBtnText) saveBtnText.textContent = 'حفظ الصنف';
+            }
+        }
+    });
+    
+    const menuSearch = document.getElementById('menuSearch');
+    if (menuSearch) {
+        menuSearch.addEventListener('input', function() {
+            currentSearch = this.value.trim();
+            renderMenuItems();
+        });
     }
-}
+    
+    const resetMenuFormBtn = document.getElementById('resetMenuForm');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    if (resetMenuFormBtn) resetMenuFormBtn.addEventListener('click', resetMenuForm);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', resetMenuForm);
+});
 
 function loadMenuItems() {
-    seedMenuItems();
+    const menuList = document.getElementById('menuList');
+    const totalMenuCount = document.getElementById('totalMenuCount');
+    const activeMenuCount = document.getElementById('activeMenuCount');
     
+    if (!menuList) return;
+    
+    // Seed المنتجات الأولية
+    db.ref('menu').once('value').then(snapshot => {
+        if (!snapshot.val()) {
+            const SEED_MENU_ITEMS = [
+                { name: 'بركر كلاسك', category: 'بركر', price: 3000, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر لحم طازج', available: true, order: 0 },
+                { name: 'بركر مدخن', category: 'بركر', price: 3500, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر مدخن', available: true, order: 1 },
+                { name: 'بركر بالجبن', category: 'بركر', price: 3500, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر بالجبنة', available: true, order: 2 },
+                { name: 'بركر سبايسي', category: 'بركر', price: 3500, image: GITHUB_IMAGES_BASE + 'BRGER.png', description: 'برغر حار', available: true, order: 3 },
+                { name: 'زنكر كلاسك', category: 'زنكر', price: 2500, image: GITHUB_IMAGES_BASE + 'ZENGER.png', description: 'زنكر دجاج مقرمش', available: true, order: 0 },
+                { name: 'زنكر مكسيكانو', category: 'زنكر', price: 3000, image: GITHUB_IMAGES_BASE + 'ZENGER.png', description: 'زنكر مكسيكي', available: true, order: 1 },
+                { name: 'زنكر مدخن', category: 'زنكر', price: 3000, image: GITHUB_IMAGES_BASE + 'ZENGER.png', description: 'زنكر مدخن', available: true, order: 2 }
+            ];
+            
+            Promise.all(SEED_MENU_ITEMS.map(item => db.ref('menu').push(item)))
+                .then(() => showToast(`تم إضافة ${SEED_MENU_ITEMS.length} منتج افتراضي`, 'success'))
+                .catch(err => console.error('خطأ في Seed:', err));
+        }
+    });
+    
+    // الاستماع المستمر للتغييرات
     db.ref('menu').on('value', (snapshot) => {
         menuList.innerHTML = '';
         allMenuItems = [];
@@ -703,10 +773,9 @@ function loadMenuItems() {
                 <div class="empty-state" style="grid-column: 1/-1;">
                     <i class="fas fa-utensils fa-3x"></i>
                     <h3>لا توجد أصناف</h3>
-                    <p>أضف أول صنف للمنيو</p>
                 </div>`;
-            totalMenuCount.textContent = '0';
-            activeMenuCount.textContent = '0';
+            if (totalMenuCount) totalMenuCount.textContent = '0';
+            if (activeMenuCount) activeMenuCount.textContent = '0';
             return;
         }
         
@@ -716,29 +785,27 @@ function loadMenuItems() {
         
         allMenuItems.sort((a, b) => (a.order || 0) - (b.order || 0));
         
-        totalMenuCount.textContent = allMenuItems.length;
-        activeMenuCount.textContent = allMenuItems.filter(i => i.available).length;
+        if (totalMenuCount) totalMenuCount.textContent = allMenuItems.length;
+        if (activeMenuCount) activeMenuCount.textContent = allMenuItems.filter(i => i.available).length;
         
         renderMenuItems();
     }, (error) => {
         console.error('خطأ في تحميل المنيو:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        }
     });
 }
 
 function renderMenuItems() {
+    const menuList = document.getElementById('menuList');
+    if (!menuList) return;
+    
     menuList.innerHTML = '';
     
     let filteredItems = allMenuItems;
     
-    // تطبيق الفلتر
     if (currentFilter !== 'all') {
         filteredItems = filteredItems.filter(i => i.category === currentFilter);
     }
     
-    // تطبيق البحث
     if (currentSearch) {
         const search = currentSearch.toLowerCase();
         filteredItems = filteredItems.filter(i => 
@@ -752,7 +819,6 @@ function renderMenuItems() {
             <div class="empty-state" style="grid-column: 1/-1;">
                 <i class="fas fa-search fa-3x"></i>
                 <h3>لا توجد نتائج</h3>
-                <p>جرب البحث بكلمات مختلفة</p>
             </div>`;
         return;
     }
@@ -791,148 +857,34 @@ function renderMenuItems() {
     });
 }
 
-// Chips الفلترة
-function setupCategoryFilters() {
-    const filterContainer = document.getElementById('categoryFilters');
-    
-    // تحديث chips عند تحميل الأقسام
-    db.ref('categories').orderByChild('order').on('value', (snapshot) => {
-        const categories = snapshot.val();
-        if (!categories) return;
-        
-        // إزالة chips القديمة (عدا "الكل")
-        filterContainer.querySelectorAll('.chip:not([data-filter="all"])').forEach(c => c.remove());
-        
-        Object.keys(categories).forEach(key => {
-            const cat = categories[key];
-            const chip = document.createElement('button');
-            chip.className = 'chip';
-            chip.setAttribute('data-filter', cat.name);
-            chip.innerHTML = `${cat.icon || '📁'} ${cat.name}`;
-            
-            chip.addEventListener('click', function() {
-                filterContainer.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                currentFilter = this.getAttribute('data-filter');
-                renderMenuItems();
-            });
-            
-            filterContainer.appendChild(chip);
-        });
-    });
-    
-    // زر "الكل"
-    filterContainer.querySelector('[data-filter="all"]').addEventListener('click', function() {
-        filterContainer.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        currentFilter = 'all';
-        renderMenuItems();
-    });
-}
-
-setupCategoryFilters();
-
-// البحث
-menuSearch.addEventListener('input', function() {
-    currentSearch = this.value.trim();
-    renderMenuItems();
-});
-
-// نموذج المنيو
-menuForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const saveBtn = document.getElementById('saveMenuItemBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
-    
-    const id = document.getElementById('menuItemId').value;
-    const name = document.getElementById('menuItemName').value.trim();
-    const category = document.getElementById('menuItemCategory').value;
-    const price = parseInt(document.getElementById('menuItemPrice').value);
-    const image = document.getElementById('menuItemImage').value.trim();
-    const description = document.getElementById('menuItemDescription').value.trim();
-    const available = document.getElementById('menuItemAvailable').checked;
-    
-    if (!category) {
-        showToast('الرجاء اختيار القسم', 'error');
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الصنف</span>';
-        return;
-    }
-    
-    if (image) {
-        try { new URL(image); } catch (e) {
-            showToast('رابط الصورة غير صالح', 'error');
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الصنف</span>';
-            return;
-        }
-    }
-    
-    const itemData = {
-        name, category, price,
-        image: image || '',
-        description: description || '',
-        available,
-        updatedAt: Date.now()
-    };
-    
-    try {
-        if (id) {
-            await db.ref('menu/' + id).update(itemData);
-            showToast('تم تحديث الصنف بنجاح', 'success');
-        } else {
-            itemData.order = allMenuItems.length;
-            itemData.createdAt = Date.now();
-            await db.ref('menu').push(itemData);
-            showToast('تم إضافة الصنف بنجاح', 'success');
-        }
-        resetMenuForm();
-    } catch (error) {
-        console.error('خطأ في حفظ الصنف:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        } else {
-            showToast('حدث خطأ: ' + error.message, 'error');
-        }
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> <span id="saveMenuItemText">حفظ الصنف</span>';
-    }
-});
-
 window.editMenuItem = function(id) {
     const item = allMenuItems.find(i => i.id === id);
     if (!item) return;
     
-    document.getElementById('menuItemId').value = item.id;
-    document.getElementById('menuItemName').value = item.name;
-    document.getElementById('menuItemCategory').value = item.category;
+    const menuItemId = document.getElementById('menuItemId');
+    const menuItemName = document.getElementById('menuItemName');
+    const menuItemCategory = document.getElementById('menuItemCategory');
+    const menuItemPrice = document.getElementById('menuItemPrice');
+    const menuItemImage = document.getElementById('menuItemImage');
+    const menuItemDescription = document.getElementById('menuItemDescription');
+    const menuItemAvailable = document.getElementById('menuItemAvailable');
+    const menuFormTitle = document.getElementById('menuFormTitle');
+    const saveMenuItemText = document.getElementById('saveMenuItemText');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
     
-    // تحديث الـ dropdown
-    const selectedTextEl = customSelect.querySelector('.selected-text');
-    selectedTextEl.textContent = item.category;
-    const cat = allCategories.find(c => c.name === item.category);
-    if (cat) {
-        if (!selectedTextEl.querySelector('.selected-icon')) {
-            const iconSpan = document.createElement('span');
-            iconSpan.className = 'selected-icon';
-            selectedTextEl.insertBefore(iconSpan, selectedTextEl.firstChild);
-        }
-        selectedTextEl.querySelector('.selected-icon').textContent = cat.icon || '📁';
-    }
+    if (menuItemId) menuItemId.value = item.id;
+    if (menuItemName) menuItemName.value = item.name;
+    if (menuItemCategory) menuItemCategory.value = item.category;
+    if (menuItemPrice) menuItemPrice.value = item.price;
+    if (menuItemImage) menuItemImage.value = item.image || '';
+    if (menuItemDescription) menuItemDescription.value = item.description || '';
+    if (menuItemAvailable) menuItemAvailable.checked = item.available;
+    if (menuFormTitle) menuFormTitle.textContent = 'تعديل الصنف';
+    if (saveMenuItemText) saveMenuItemText.textContent = 'حفظ التعديلات';
+    if (cancelEditBtn) cancelEditBtn.style.display = 'inline-flex';
     
-    document.getElementById('menuItemPrice').value = item.price;
-    document.getElementById('menuItemImage').value = item.image || '';
-    document.getElementById('menuItemDescription').value = item.description || '';
-    document.getElementById('menuItemAvailable').checked = item.available;
-    
-    document.getElementById('menuFormTitle').textContent = 'تعديل الصنف';
-    document.getElementById('saveMenuItemText').textContent = 'حفظ التعديلات';
-    document.getElementById('cancelEditBtn').style.display = 'inline-flex';
-    
-    document.getElementById('menuForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    showToast('قم بتعديل البيانات ثم اضغط حفظ', 'success');
+    const menuForm = document.getElementById('menuForm');
+    if (menuForm) menuForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 window.toggleAvailability = async function(id, newValue) {
@@ -940,12 +892,7 @@ window.toggleAvailability = async function(id, newValue) {
         await db.ref('menu/' + id + '/available').set(newValue);
         showToast(newValue ? 'تم إظهار الصنف' : 'تم إخفاء الصنف', 'success');
     } catch (error) {
-        console.error('خطأ في تحديث التوفر:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        } else {
-            showToast('فشل التحديث: ' + error.message, 'error');
-        }
+        showToast('فشل التحديث: ' + error.message, 'error');
     }
 };
 
@@ -958,37 +905,39 @@ window.deleteMenuItem = async function(id) {
         await db.ref('menu/' + id).remove();
         showToast('تم حذف الصنف بنجاح', 'success');
     } catch (error) {
-        console.error('خطأ في حذف الصنف:', error);
-        if (error.code === 'PERMISSION_DENIED') {
-            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
-        } else {
-            showToast('فشل الحذف: ' + error.message, 'error');
-        }
+        showToast('فشل الحذف: ' + error.message, 'error');
     }
 };
 
 function resetMenuForm() {
-    document.getElementById('menuForm').reset();
-    document.getElementById('menuItemId').value = '';
-    document.getElementById('menuFormTitle').textContent = 'إضافة صنف جديد';
-    document.getElementById('saveMenuItemText').textContent = 'حفظ الصنف';
-    document.getElementById('cancelEditBtn').style.display = 'none';
+    const menuForm = document.getElementById('menuForm');
+    const menuItemId = document.getElementById('menuItemId');
+    const menuFormTitle = document.getElementById('menuFormTitle');
+    const saveMenuItemText = document.getElementById('saveMenuItemText');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
     
-    // إعادة تعيين الـ dropdown
-    const selectedTextEl = customSelect.querySelector('.selected-text');
-    selectedTextEl.textContent = 'اختر القسم';
-    const icon = selectedTextEl.querySelector('.selected-icon');
-    if (icon) icon.remove();
+    if (menuForm) menuForm.reset();
+    if (menuItemId) menuItemId.value = '';
+    if (menuFormTitle) menuFormTitle.textContent = 'إضافة صنف جديد';
+    if (saveMenuItemText) saveMenuItemText.textContent = 'حفظ الصنف';
+    if (cancelEditBtn) cancelEditBtn.style.display = 'none';
+    
+    const customSelect = document.getElementById('menuItemCategorySelect');
+    if (customSelect) {
+        const selectedText = customSelect.querySelector('.selected-text');
+        if (selectedText) selectedText.textContent = 'اختر القسم';
+        const icon = selectedText ? selectedText.querySelector('.selected-icon') : null;
+        if (icon) icon.remove();
+    }
 }
-
-document.getElementById('resetMenuForm').addEventListener('click', resetMenuForm);
-document.getElementById('cancelEditBtn').addEventListener('click', resetMenuForm);
 
 // ============================================
 // 🔔 Toast
 // ============================================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
