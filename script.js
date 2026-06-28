@@ -1115,14 +1115,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchstart', function(){}, {passive: true});
 
     // ============================================
-    // 🔥 تهيئة Firebase (قراءة فقط)
+    // 🔥 تهيئة Firebase (Database فقط - بدون Storage)
     // ============================================
     const firebaseConfig = {
         apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
         authDomain: "talola-food.firebaseapp.com",
         databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
         projectId: "talola-food",
-        storageBucket: "talola-food.firebasestorage.app",
         messagingSenderId: "440585170470",
         appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
     };
@@ -1135,9 +1134,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const firebaseDbScript = document.createElement('script');
     firebaseDbScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
     document.head.appendChild(firebaseDbScript);
-
-    // تهيئة نظام تحميل الصور الذكي
-    initSmartImageLoading();
+    
+    // لا نحتاج لتحميل firebase-storage-compat.js
 
     // ============================================
     // 📌 الشريط العلوي الثابت
