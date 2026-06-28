@@ -1,11 +1,7 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي من Firebase (النسخة المُصحّحة)
+// 🍽️ تحميل المنيو الديناميكي من Firebase (النسخة النهائية المُصحّحة)
 // ============================================
 
-/**
- * الدالة الرئيسية: تحميل الأقسام والأصناف من Firebase
- * وإعادة بناء أقسام HTML بالكامل
- */
 function loadMenuFromFirebase() {
     if (typeof firebase === 'undefined' || !firebase.database) {
         setTimeout(loadMenuFromFirebase, 500);
@@ -14,7 +10,6 @@ function loadMenuFromFirebase() {
     
     console.log('🔍 بدء تحميل المنيو من Firebase...');
     
-    // الاستماع للتغييرات في الأقسام والأصناف
     firebase.database().ref('categories').orderByChild('order').on('value', (categoriesSnapshot) => {
         const categories = categoriesSnapshot.val();
         
@@ -23,7 +18,6 @@ function loadMenuFromFirebase() {
             return;
         }
         
-        // بناء مصفوفة الأقسام مرتبة
         const categoriesArray = Object.keys(categories).map(key => ({
             id: key,
             ...categories[key]
@@ -31,10 +25,8 @@ function loadMenuFromFirebase() {
         
         console.log(`✅ تم تحميل ${categoriesArray.length} قسم`);
         
-        // 🆕 إعادة بناء أقسام HTML بالكامل
         rebuildMenuSections(categoriesArray);
         
-        // الاستماع للأصناف
         firebase.database().ref('menu').on('value', (menuSnapshot) => {
             const menuItems = menuSnapshot.val();
             
@@ -43,16 +35,15 @@ function loadMenuFromFirebase() {
                 return;
             }
             
-            // توزيع الأصناف على الأقسام
             populateMenuItems(categoriesArray, menuItems);
             
-            // إعادة مراقبة الصور
-            if (smartImageLoader) {
-                smartImageLoader.observeAllImages();
-            }
-            
-            // إعادة ربط النقر
-            reattachClickHandlers();
+            // 🆕 انتظار قليل قبل إعادة مراقبة الصور
+            setTimeout(() => {
+                if (smartImageLoader) {
+                    smartImageLoader.observeAllImages();
+                }
+                reattachClickHandlers();
+            }, 100);
             
         }, (error) => {
             console.error('❌ خطأ في تحميل الأصناف:', error);
@@ -61,6 +52,245 @@ function loadMenuFromFirebase() {
     }, (error) => {
         console.error('❌ خطأ في تحميل الأقسام:', error);
     });
+}
+
+/**
+ * 🆕 إعادة بناء أقسام HTML مع الحفاظ على جميع التنسيقات
+ */
+function rebuildMenuSections(categoriesArray) {
+    const mainElement = document.querySelector('main');
+    if (!mainElement) {
+        console.error('❌ عنصر main غير موجود');
+        return;
+    }
+    
+    // حذف جميع أقسام المنيو القديمة
+    const oldSections = mainElement.querySelectorAll('.menu-section[data-category]');
+    oldSections.forEach(section => section.remove());
+    
+    console.log(`🗑️ تم حذف ${oldSections.length} قسم قديم`);
+    
+    // الحصول على العنصر المرجعي
+    const teamSection = mainElement.querySelector('#team');
+    const referenceElement = teamSection || mainElement.querySelector('#support') || mainElement.querySelector('#social');
+    
+    // 🆕 إنشاء أقسام جديدة مع جميع التنسيقات الضرورية
+    categoriesArray.forEach((category, index) => {
+        const newSection = document.createElement('section');
+        newSection.className = 'menu-section animate-in'; // 🆕 إضافة animate-in
+        newSection.id = `sec-${category.id}`;
+        newSection.setAttribute('data-category', category.name);
+        
+        // 🆕 إضافة أنماط inline لضمان الظهور
+        newSection.style.cssText = `
+            display: block;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.6s ease forwards;
+        `;
+        
+        newSection.innerHTML = `
+            <h3 style="color: #fff; font-size: 1.5rem; margin-bottom: 20px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                ${category.icon || '📁'} ${category.name}
+            </h3>
+            <div class="menu-items" style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+                padding: 10px;
+            "></div>
+        `;
+        
+        if (referenceElement) {
+            mainElement.insertBefore(newSection, referenceElement);
+        } else {
+            mainElement.appendChild(newSection);
+        }
+    });
+    
+    console.log(`✨ تم إنشاء ${categoriesArray.length} قسم جديد`);
+    
+    updateNavigationButtons(categoriesArray);
+}
+
+/**
+ * تحديث أزرار التنقل
+ */
+function updateNavigationButtons(categoriesArray) {
+    const navElement = document.getElementById('sectionsNav');
+    if (!navElement) return;
+    
+    navElement.innerHTML = '';
+    
+    categoriesArray.forEach((category) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('data-section', `sec-${category.id}`);
+        button.textContent = `${category.icon || ''} ${category.name}`;
+        
+        button.addEventListener('click', function() {
+            const targetSection = document.getElementById(`sec-${category.id}`);
+            if (targetSection) {
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // تمييز الزر النشط
+                navElement.querySelectorAll('button').forEach(b => {
+                    b.style.background = 'var(--main-yellow)';
+                    b.style.color = '#000';
+                });
+                this.style.background = '#ffffff';
+                this.style.color = 'var(--main-red)';
+            }
+        });
+        
+        navElement.appendChild(button);
+    });
+    
+    console.log(`🔘 تم تحديث ${categoriesArray.length} زر تنقل`);
+}
+
+/**
+ * 🆕 توزيع الأصناف مع ضمان العرض الصحيح
+ */
+function populateMenuItems(categoriesArray, menuItems) {
+    // تفريغ جميع حاويات menu-items
+    document.querySelectorAll('.menu-section .menu-items').forEach(container => {
+        container.innerHTML = '';
+    });
+    
+    const itemsArray = Object.keys(menuItems).map(key => ({
+        id: key,
+        ...menuItems[key]
+    })).sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    let itemsAdded = 0;
+    
+    itemsArray.forEach(item => {
+        if (item.available === false) return;
+        
+        const section = document.querySelector(`.menu-section[data-category="${item.category}"]`);
+        if (!section) {
+            console.warn(`⚠️ القسم "${item.category}" غير موجود - تم تجاهل "${item.name}"`);
+            return;
+        }
+        
+        const itemsContainer = section.querySelector('.menu-items');
+        if (!itemsContainer) return;
+        
+        const menuElement = document.createElement('div');
+        menuElement.className = 'menu-item';
+        menuElement.setAttribute('data-name', item.name);
+        menuElement.setAttribute('data-price', item.price);
+        menuElement.setAttribute('data-image', item.image || '');
+        menuElement.setAttribute('data-description', item.description || 'منتج لذيذ من مطعم تعلولة');
+        
+        // 🆕 إضافة أنماط inline لضمان الظهور
+        menuElement.style.cssText = `
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        `;
+        
+        menuElement.innerHTML = `
+            <div class="item-image" style="
+                position: relative;
+                width: 100%;
+                height: 200px;
+                overflow: hidden;
+                background: #f5f5f5;
+            ">
+                <div class="image-skeleton" style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                    background-size: 200% 100%;
+                    animation: shimmer 1.5s infinite;
+                "></div>
+                <img data-src="${item.image || ''}" 
+                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                     alt="${item.name}" 
+                     class="lazy-image" 
+                     decoding="async" 
+                     width="400" 
+                     height="400"
+                     style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        opacity: 0;
+                        transition: opacity 0.4s ease;
+                     ">
+            </div>
+            <div style="padding: 15px; flex: 1; display: flex; flex-direction: column;">
+                <h4 style="
+                    color: #1a1a1a;
+                    font-size: 1.1rem;
+                    margin-bottom: 8px;
+                    font-weight: 700;
+                ">${item.name}</h4>
+                <p class="price" style="
+                    color: var(--main-red, #c70301);
+                    font-size: 1.25rem;
+                    font-weight: 800;
+                    margin-top: auto;
+                ">${item.price.toLocaleString('ar-EG')} د.ع</p>
+            </div>
+        `;
+        
+        itemsContainer.appendChild(menuElement);
+        itemsAdded++;
+    });
+    
+    // إخفاء الأقسام الفارغة
+    document.querySelectorAll('.menu-section[data-category]').forEach(section => {
+        const itemsContainer = section.querySelector('.menu-items');
+        if (itemsContainer && itemsContainer.children.length === 0) {
+            section.style.display = 'none';
+        } else {
+            section.style.display = 'block';
+        }
+    });
+    
+    console.log(`✅ تم توزيع ${itemsAdded} صنف على الأقسام`);
+}
+
+/**
+ * 🆕 إعادة ربط معالجات النقر بشكل آمن
+ */
+function reattachClickHandlers() {
+    // استخدام event delegation بدلاً من إضافة handlers متعددة
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+    
+    // إزالة الـ listener القديم إذا كان موجوداً
+    if (mainElement._menuClickHandler) {
+        mainElement.removeEventListener('click', mainElement._menuClickHandler);
+    }
+    
+    // إضافة listener جديد باستخدام delegation
+    mainElement._menuClickHandler = function(e) {
+        const menuItem = e.target.closest('.menu-item');
+        if (menuItem) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof openProductModal === 'function') {
+                openProductModal(menuItem);
+            }
+        }
+    };
+    
+    mainElement.addEventListener('click', mainElement._menuClickHandler);
 }
 
 /**
