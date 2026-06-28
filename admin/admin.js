@@ -127,7 +127,13 @@ adForm.addEventListener('submit', async function(e) {
         adForm.reset();
         imagePreviewContainer.style.display = 'none';
     } catch (error) {
-        showToast('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+        // 🆕 معالجة أخطاء Firebase
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+            console.error('PERMISSION_DENIED: تأكد من تحديث قواعد Firebase في Firebase Console');
+        } else {
+            showToast('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+        }
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
@@ -174,6 +180,12 @@ function loadAds() {
                 </div>`;
             adsList.appendChild(card);
         });
+    }, (error) => {
+        // 🆕 معالجة أخطاء القراءة
+        console.error('خطأ في تحميل الإعلانات:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        }
     });
 }
 
@@ -183,7 +195,11 @@ window.deleteAd = async function(key) {
         await db.ref('ads/' + key).remove();
         showToast('تم حذف الإعلان بنجاح', 'success');
     } catch (error) {
-        showToast('فشل الحذف: ' + error.message, 'error');
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('فشل الحذف: ' + error.message, 'error');
+        }
     }
 };
 
@@ -217,14 +233,21 @@ const SEED_CATEGORIES = [
 
 // Seed الأقسام الأولية
 async function seedCategories() {
-    const snapshot = await db.ref('categories').once('value');
-    if (!snapshot.val()) {
-        console.log('🌱 Seed: إضافة الأقسام الأولية...');
-        for (const cat of SEED_CATEGORIES) {
-            await db.ref('categories').push(cat);
+    try {
+        const snapshot = await db.ref('categories').once('value');
+        if (!snapshot.val()) {
+            console.log('🌱 Seed: إضافة الأقسام الأولية...');
+            for (const cat of SEED_CATEGORIES) {
+                await db.ref('categories').push(cat);
+            }
+            console.log(`✅ تم إضافة ${SEED_CATEGORIES.length} قسم`);
+            showToast(`تم إضافة ${SEED_CATEGORIES.length} قسم افتراضي`, 'success');
         }
-        console.log(`✅ تم إضافة ${SEED_CATEGORIES.length} قسم`);
-        showToast(`تم إضافة ${SEED_CATEGORIES.length} قسم افتراضي`, 'success');
+    } catch (error) {
+        console.error('خطأ في Seed الأقسام:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        }
     }
 }
 
@@ -258,6 +281,11 @@ function loadCategories() {
         totalCategoriesCount.textContent = allCategories.length;
         renderCategories();
         updateCategoryDropdown();
+    }, (error) => {
+        console.error('خطأ في تحميل الأقسام:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        }
     });
 }
 
@@ -354,12 +382,20 @@ async function handleDrop(e) {
     const [movedItem] = allCategories.splice(draggedIndex, 1);
     allCategories.splice(targetIndex, 0, movedItem);
     
-    // تحديث الترتيب في Firebase
-    for (let i = 0; i < allCategories.length; i++) {
-        await db.ref('categories/' + allCategories[i].id + '/order').set(i);
+    try {
+        // تحديث الترتيب في Firebase
+        for (let i = 0; i < allCategories.length; i++) {
+            await db.ref('categories/' + allCategories[i].id + '/order').set(i);
+        }
+        showToast('تم تحديث ترتيب الأقسام', 'success');
+    } catch (error) {
+        console.error('خطأ في تحديث الترتيب:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('فشل تحديث الترتيب: ' + error.message, 'error');
+        }
     }
-    
-    showToast('تم تحديث ترتيب الأقسام', 'success');
 }
 
 function handleDragEnd() {
@@ -381,6 +417,13 @@ categoryForm.addEventListener('submit', async function(e) {
     const icon = document.getElementById('categoryIcon').value.trim() || '📁';
     const order = parseInt(document.getElementById('categoryOrder').value) || allCategories.length;
     
+    if (!name) {
+        showToast('الرجاء إدخال اسم القسم', 'error');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> <span id="saveCategoryText">حفظ القسم</span>';
+        return;
+    }
+    
     try {
         const categoryData = { name, icon, order };
         
@@ -396,7 +439,12 @@ categoryForm.addEventListener('submit', async function(e) {
         
         resetCategoryForm();
     } catch (error) {
-        showToast('حدث خطأ: ' + error.message, 'error');
+        console.error('خطأ في حفظ القسم:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('حدث خطأ: ' + error.message, 'error');
+        }
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="fas fa-save"></i> <span id="saveCategoryText">حفظ القسم</span>';
@@ -417,7 +465,6 @@ window.editCategory = function(id) {
     document.getElementById('saveCategoryText').textContent = 'حفظ التعديلات';
     document.getElementById('cancelEditCategoryBtn').style.display = 'inline-flex';
     
-    // التمرير لأعلى النموذج
     document.getElementById('categoryForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
@@ -426,19 +473,19 @@ window.deleteCategory = async function(id) {
     const cat = allCategories.find(c => c.id === id);
     if (!cat) return;
     
-    // التحقق من وجود أصناف في هذا القسم
-    const menuSnapshot = await db.ref('menu').orderByChild('category').equalTo(cat.name).once('value');
-    const itemsInCategory = menuSnapshot.val();
-    
-    let confirmMsg = `هل أنت متأكد من حذف قسم "${cat.name}"؟`;
-    if (itemsInCategory) {
-        const count = Object.keys(itemsInCategory).length;
-        confirmMsg += `\n\n⚠️ تحذير: يوجد ${count} صنف في هذا القسم. سيتم حذفها أيضاً!`;
-    }
-    
-    if (!confirm(confirmMsg)) return;
-    
     try {
+        // التحقق من وجود أصناف في هذا القسم
+        const menuSnapshot = await db.ref('menu').orderByChild('category').equalTo(cat.name).once('value');
+        const itemsInCategory = menuSnapshot.val();
+        
+        let confirmMsg = `هل أنت متأكد من حذف قسم "${cat.name}"؟`;
+        if (itemsInCategory) {
+            const count = Object.keys(itemsInCategory).length;
+            confirmMsg += `\n\n⚠️ تحذير: يوجد ${count} صنف في هذا القسم. سيتم حذفها أيضاً!`;
+        }
+        
+        if (!confirm(confirmMsg)) return;
+        
         // حذف الأصناف في القسم أولاً
         if (itemsInCategory) {
             for (const key of Object.keys(itemsInCategory)) {
@@ -450,7 +497,12 @@ window.deleteCategory = async function(id) {
         await db.ref('categories/' + id).remove();
         showToast('تم حذف القسم بنجاح', 'success');
     } catch (error) {
-        showToast('فشل الحذف: ' + error.message, 'error');
+        console.error('خطأ في حذف القسم:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('فشل الحذف: ' + error.message, 'error');
+        }
     }
 };
 
@@ -620,14 +672,21 @@ const SEED_MENU_ITEMS = [
 ];
 
 async function seedMenuItems() {
-    const snapshot = await db.ref('menu').once('value');
-    if (!snapshot.val()) {
-        console.log('🌱 Seed: إضافة المنتجات الأولية...');
-        for (const item of SEED_MENU_ITEMS) {
-            await db.ref('menu').push(item);
+    try {
+        const snapshot = await db.ref('menu').once('value');
+        if (!snapshot.val()) {
+            console.log('🌱 Seed: إضافة المنتجات الأولية...');
+            for (const item of SEED_MENU_ITEMS) {
+                await db.ref('menu').push(item);
+            }
+            console.log(`✅ تم إضافة ${SEED_MENU_ITEMS.length} منتج`);
+            showToast(`تم إضافة ${SEED_MENU_ITEMS.length} منتج افتراضي`, 'success');
         }
-        console.log(`✅ تم إضافة ${SEED_MENU_ITEMS.length} منتج`);
-        showToast(`تم إضافة ${SEED_MENU_ITEMS.length} منتج افتراضي`, 'success');
+    } catch (error) {
+        console.error('خطأ في Seed المنتجات:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        }
     }
 }
 
@@ -661,6 +720,11 @@ function loadMenuItems() {
         activeMenuCount.textContent = allMenuItems.filter(i => i.available).length;
         
         renderMenuItems();
+    }, (error) => {
+        console.error('خطأ في تحميل المنيو:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        }
     });
 }
 
@@ -825,7 +889,12 @@ menuForm.addEventListener('submit', async function(e) {
         }
         resetMenuForm();
     } catch (error) {
-        showToast('حدث خطأ: ' + error.message, 'error');
+        console.error('خطأ في حفظ الصنف:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('حدث خطأ: ' + error.message, 'error');
+        }
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="fas fa-save"></i> <span id="saveMenuItemText">حفظ الصنف</span>';
@@ -871,7 +940,12 @@ window.toggleAvailability = async function(id, newValue) {
         await db.ref('menu/' + id + '/available').set(newValue);
         showToast(newValue ? 'تم إظهار الصنف' : 'تم إخفاء الصنف', 'success');
     } catch (error) {
-        showToast('فشل التحديث: ' + error.message, 'error');
+        console.error('خطأ في تحديث التوفر:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('فشل التحديث: ' + error.message, 'error');
+        }
     }
 };
 
@@ -884,7 +958,12 @@ window.deleteMenuItem = async function(id) {
         await db.ref('menu/' + id).remove();
         showToast('تم حذف الصنف بنجاح', 'success');
     } catch (error) {
-        showToast('فشل الحذف: ' + error.message, 'error');
+        console.error('خطأ في حذف الصنف:', error);
+        if (error.code === 'PERMISSION_DENIED') {
+            showToast('⚠️ خطأ في الصلاحيات! يرجى تحديث قواعد Firebase', 'error');
+        } else {
+            showToast('فشل الحذف: ' + error.message, 'error');
+        }
     }
 };
 
