@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-
     <!-- شاشة تسجيل الدخول -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
@@ -17,7 +16,7 @@
             <p class="login-subtitle">أدخل كلمة المرور للوصول إلى لوحة الإدارة</p>
             <div class="input-group">
                 <i class="fas fa-lock"></i>
-                <input type="password" id="adminPassword" placeholder="كلمة المرور" autocomplete="current-password">
+                <input type="password" id="adminPassword" placeholder="كلمة المرور">
             </div>
             <button id="loginBtn" class="btn-primary">
                 <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
@@ -36,11 +35,7 @@
                 <p class="sidebar-subtitle">لوحة الإدارة</p>
             </div>
             <nav class="sidebar-nav">
-                <button class="nav-btn active" data-tab="ads">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>إدارة الإعلانات</span>
-                </button>
-                <button class="nav-btn" data-tab="menu">
+                <button class="nav-btn active" data-tab="menu">
                     <i class="fas fa-utensils"></i>
                     <span>إدارة المنيو</span>
                 </button>
@@ -48,10 +43,13 @@
                     <i class="fas fa-folder"></i>
                     <span>إدارة الأقسام</span>
                 </button>
-                <button class="nav-btn" data-tab="orders" disabled title="قريباً">
-                    <i class="fas fa-receipt"></i>
-                    <span>الطلبات</span>
-                    <span class="badge">قريباً</span>
+                <button class="nav-btn" data-tab="theme">
+                    <i class="fas fa-palette"></i>
+                    <span>الثيم والألوان</span>
+                </button>
+                <button class="nav-btn" data-tab="ads">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>الإعلانات</span>
                 </button>
             </nav>
             <div class="sidebar-footer">
@@ -64,107 +62,12 @@
 
         <!-- المحتوى الرئيسي -->
         <main class="main-content">
-            <!-- تبويب الإعلانات -->
-            <section id="tab-ads" class="tab-content active">
-                <div class="page-header">
-                    <div class="header-content">
-                        <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات والعروض</h1>
-                        <p>أضف عروضاً خاصة تظهر لعملائك في المنيو الإلكتروني مباشرة</p>
-                    </div>
-                    <div class="header-stats">
-                        <div class="stat-card">
-                            <i class="fas fa-ad"></i>
-                            <div class="stat-info">
-                                <span class="stat-number" id="totalAdsCount">0</span>
-                                <span class="stat-label">إعلان نشط</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- نموذج إضافة إعلان -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
-                        <p class="card-subtitle">أضف عرضاً جديداً يظهر في قسم العروض الخاصة</p>
-                    </div>
-                    <form id="adForm" class="ad-form">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="adTitle">
-                                    <i class="fas fa-heading"></i> عنوان الإعلان <span class="required">*</span>
-                                </label>
-                                <input type="text" id="adTitle" required placeholder="مثال: عرض البرجر المزدوج">
-                            </div>
-                            <div class="form-group">
-                                <label for="adPrice">
-                                    <i class="fas fa-tag"></i> السعر (اختياري)
-                                </label>
-                                <input type="number" id="adPrice" placeholder="مثال: 5000">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="adDescription">
-                                <i class="fas fa-align-right"></i> وصف الإعلان <span class="required">*</span>
-                            </label>
-                            <textarea id="adDescription" required rows="3" placeholder="اكتب وصفاً جذاباً للعرض..."></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="imageUrl">
-                                <i class="fas fa-link"></i> رابط صورة الإعلان (اختياري)
-                            </label>
-                            <div class="url-input-group">
-                                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
-                                <button type="button" id="previewBtn" class="btn-secondary" title="معاينة الصورة">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <small class="form-hint">
-                                <i class="fas fa-info-circle"></i>
-                                أدخل رابط صورة من الإنترنت (مثل: Imgur, Google Drive، أو أي استضافة صور)
-                            </small>
-                            <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
-                                <img id="imagePreview" class="image-preview">
-                                <button type="button" id="removeImageBtn" class="btn-remove-image" title="إزالة الصورة">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
-                                <i class="fas fa-save"></i> حفظ ونشر الإعلان
-                            </button>
-                            <button type="reset" class="btn-secondary">
-                                <i class="fas fa-undo"></i> مسح النموذج
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- قائمة الإعلانات الحالية -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات النشطة حالياً</h2>
-                        <p class="card-subtitle">جميع الإعلانات المعروضة حالياً في المنيو</p>
-                    </div>
-                    <div id="adsList" class="ads-grid">
-                        <div class="loading-state">
-                            <i class="fas fa-spinner fa-spin fa-3x"></i>
-                            <p>جاري تحميل الإعلانات...</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- تبويب المنيو -->
-            <section id="tab-menu" class="tab-content">
+            <!-- تبويب إدارة المنيو -->
+            <section id="tab-menu" class="tab-content active">
                 <div class="page-header">
                     <div class="header-content">
                         <h1><i class="fas fa-utensils"></i> إدارة المنيو</h1>
-                        <p>أضف، عدّل، أو احذف أصناف المنيو وتحكم في توفرها</p>
+                        <p>أضف، عدّل، أو احذف أصناف المنيو</p>
                     </div>
                     <div class="header-stats">
                         <div class="stat-card">
@@ -184,18 +87,16 @@
                     </div>
                 </div>
 
-                <!-- فلترة حسب القسم - محسّن مع البحث -->
+                <!-- فلترة حسب القسم -->
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-filter"></i> فلترة الأصناف</h2>
                     </div>
                     <div class="filter-section">
-                        <!-- شريط البحث -->
                         <div class="search-box">
                             <i class="fas fa-search"></i>
                             <input type="text" id="menuSearch" placeholder="ابحث عن صنف...">
                         </div>
-                        <!-- Chips الأقسام -->
                         <div class="filter-chips" id="categoryFilters">
                             <button class="chip active" data-filter="all">الكل</button>
                         </div>
@@ -206,7 +107,6 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-plus-circle"></i> <span id="menuFormTitle">إضافة صنف جديد</span></h2>
-                        <p class="card-subtitle">أضف صنفاً جديداً أو عدّل صنفاً موجوداً</p>
                     </div>
                     <form id="menuForm" class="ad-form">
                         <input type="hidden" id="menuItemId">
@@ -215,13 +115,12 @@
                                 <label for="menuItemName">
                                     <i class="fas fa-utensils"></i> اسم الصنف <span class="required">*</span>
                                 </label>
-                                <input type="text" id="menuItemName" required placeholder="مثال: بركر كلاسك">
+                                <input type="text" id="menuItemName" required placeholder="مثال: برجر كلاسك">
                             </div>
                             <div class="form-group">
                                 <label for="menuItemCategory">
                                     <i class="fas fa-folder"></i> القسم <span class="required">*</span>
                                 </label>
-                                <!-- Dropdown محسّن مع البحث -->
                                 <div class="custom-select-wrapper">
                                     <div class="custom-select" id="menuItemCategorySelect">
                                         <div class="custom-select-selected">
@@ -230,9 +129,7 @@
                                         </div>
                                         <div class="custom-select-options">
                                             <input type="text" class="custom-select-search" placeholder="🔍 ابحث عن قسم...">
-                                            <div class="custom-select-list" id="categoryOptionsList">
-                                                <!-- سيتم ملؤها ديناميكياً -->
-                                            </div>
+                                            <div class="custom-select-list" id="categoryOptionsList"></div>
                                         </div>
                                     </div>
                                     <input type="hidden" id="menuItemCategory" required>
@@ -248,12 +145,12 @@
                             </div>
                             <div class="form-group">
                                 <label for="menuItemImage">
-                                    <i class="fas fa-link"></i> رابط الصورة (من GitHub)
+                                    <i class="fas fa-image"></i> رابط الصورة
                                 </label>
-                                <input type="url" id="menuItemImage" placeholder="https://raw.githubusercontent.com/.../image.png">
+                                <input type="url" id="menuItemImage" placeholder="https://example.com/image.jpg">
                                 <small class="form-hint">
                                     <i class="fas fa-info-circle"></i>
-                                    استخدم الرابط من: raw.githubusercontent.com/montadhar313/taloola-menu/
+                                    أدخل رابط صورة مباشر (مثل: Imgur, ImgBB)
                                 </small>
                             </div>
                         </div>
@@ -288,7 +185,6 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-list"></i> أصناف المنيو</h2>
-                        <p class="card-subtitle">جميع الأصناف المسجلة في المنيو</p>
                     </div>
                     <div id="menuList" class="menu-grid">
                         <div class="loading-state">
@@ -299,12 +195,12 @@
                 </div>
             </section>
 
-            <!-- 🆕 تبويب إدارة الأقسام -->
+            <!-- تبويب إدارة الأقسام -->
             <section id="tab-categories" class="tab-content">
                 <div class="page-header">
                     <div class="header-content">
                         <h1><i class="fas fa-folder"></i> إدارة الأقسام</h1>
-                        <p>أضف، عدّل، أو احذف أقسام المنيو ورتّبها حسب الأولوية</p>
+                        <p>أضف، عدّل، أو احذف أقسام المنيو ورتّبها</p>
                     </div>
                     <div class="header-stats">
                         <div class="stat-card">
@@ -321,7 +217,6 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-plus-circle"></i> <span id="categoryFormTitle">إضافة قسم جديد</span></h2>
-                        <p class="card-subtitle">أضف قسماً جديداً للمنيو مع تحديد الأيقونة والترتيب</p>
                     </div>
                     <form id="categoryForm" class="ad-form">
                         <input type="hidden" id="categoryId">
@@ -337,15 +232,11 @@
                                     <i class="fas fa-sort-numeric-down"></i> الترتيب (الأولوية)
                                 </label>
                                 <input type="number" id="categoryOrder" min="0" placeholder="0 = يظهر أولاً">
-                                <small class="form-hint">
-                                    <i class="fas fa-info-circle"></i>
-                                    الأقسام ذات الرقم الأصغر تظهر أولاً في المنيو
-                                </small>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="categoryIcon">
-                                <i class="fas fa-icons"></i> الأيقونة (emoji أو رمز)
+                                <i class="fas fa-icons"></i> الأيقونة (emoji)
                             </label>
                             <div class="icon-picker">
                                 <input type="text" id="categoryIcon" placeholder="🍔 أو 🥪 أو 🍟...">
@@ -360,12 +251,6 @@
                                     <span class="icon-suggestion" data-icon="🥤">🥤</span>
                                     <span class="icon-suggestion" data-icon="🥕">🥕</span>
                                     <span class="icon-suggestion" data-icon="🥗">🥗</span>
-                                    <span class="icon-suggestion" data-icon="🍕">🍕</span>
-                                    <span class="icon-suggestion" data-icon="🍜">🍜</span>
-                                    <span class="icon-suggestion" data-icon="🍝">🍝</span>
-                                    <span class="icon-suggestion" data-icon="🥘">🥘</span>
-                                    <span class="icon-suggestion" data-icon="🍱">🍱</span>
-                                    <span class="icon-suggestion" data-icon="🍙">🍙</span>
                                 </div>
                             </div>
                         </div>
@@ -397,13 +282,205 @@
                     </div>
                 </div>
             </section>
+
+            <!-- 🆕 تبويب الثيم والألوان -->
+            <section id="tab-theme" class="tab-content">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-palette"></i> الثيم والألوان</h1>
+                        <p>خصص ألوان وخلفية المنيو الإلكتروني</p>
+                    </div>
+                </div>
+
+                <!-- وضع العرض -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-sun"></i> وضع العرض</h2>
+                    </div>
+                    <div class="theme-options">
+                        <label class="theme-option">
+                            <input type="radio" name="themeMode" value="light" id="themeLight">
+                            <div class="theme-preview light-preview">
+                                <i class="fas fa-sun"></i>
+                                <span>الوضع المشرق</span>
+                            </div>
+                        </label>
+                        <label class="theme-option">
+                            <input type="radio" name="themeMode" value="dark" id="themeDark" checked>
+                            <div class="theme-preview dark-preview">
+                                <i class="fas fa-moon"></i>
+                                <span>الوضع الداكن</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- الألوان الرئيسية -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-palette"></i> الألوان الرئيسية</h2>
+                    </div>
+                    <div class="color-options">
+                        <div class="color-option">
+                            <label for="primaryColor">
+                                <i class="fas fa-fill-drip"></i> اللون الأساسي
+                            </label>
+                            <div class="color-input-wrapper">
+                                <input type="color" id="primaryColor" value="#c70301">
+                                <input type="text" id="primaryColorText" value="#c70301">
+                            </div>
+                        </div>
+                        <div class="color-option">
+                            <label for="secondaryColor">
+                                <i class="fas fa-fill-drip"></i> اللون الثانوي
+                            </label>
+                            <div class="color-input-wrapper">
+                                <input type="color" id="secondaryColor" value="#fedb17">
+                                <input type="text" id="secondaryColorText" value="#fedb17">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الخلفية -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-image"></i> الخلفية</h2>
+                    </div>
+                    <div class="background-options">
+                        <label class="background-option">
+                            <input type="radio" name="backgroundType" value="video" id="bgVideo" checked>
+                            <div class="background-preview">
+                                <i class="fas fa-video"></i>
+                                <span>فيديو</span>
+                            </div>
+                        </label>
+                        <label class="background-option">
+                            <input type="radio" name="backgroundType" value="color" id="bgColor">
+                            <div class="background-preview">
+                                <i class="fas fa-fill-drip"></i>
+                                <span>لون محدد</span>
+                            </div>
+                        </label>
+                        <label class="background-option">
+                            <input type="radio" name="backgroundType" value="gradient" id="bgGradient">
+                            <div class="background-preview">
+                                <i class="fas fa-palette"></i>
+                                <span>تدرج لوني</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- خيارات الفيديو -->
+                    <div id="videoOptions" class="background-detail">
+                        <label for="videoUrl">رابط الفيديو</label>
+                        <input type="url" id="videoUrl" placeholder="https://example.com/video.mp4" value="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4">
+                    </div>
+                    
+                    <!-- خيارات اللون -->
+                    <div id="colorOptions" class="background-detail" style="display: none;">
+                        <label for="bgColorPicker">اختر اللون</label>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="bgColorPicker" value="#1a1a1a">
+                            <input type="text" id="bgColorText" value="#1a1a1a">
+                        </div>
+                    </div>
+                    
+                    <!-- خيارات التدرج -->
+                    <div id="gradientOptions" class="background-detail" style="display: none;">
+                        <label>ألوان التدرج</label>
+                        <div class="gradient-colors">
+                            <input type="color" id="gradientColor1" value="#1a1a1a">
+                            <input type="color" id="gradientColor2" value="#2c2c2c">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- حفظ الإعدادات -->
+                <div class="card">
+                    <button id="saveThemeBtn" class="btn-primary btn-lg">
+                        <i class="fas fa-save"></i> حفظ الإعدادات
+                    </button>
+                    <button id="resetThemeBtn" class="btn-secondary">
+                        <i class="fas fa-undo"></i> إعادة تعيين
+                    </button>
+                </div>
+            </section>
+
+            <!-- تبويب الإعلانات -->
+            <section id="tab-ads" class="tab-content">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات</h1>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-ad"></i>
+                            <div class="stat-info">
+                                <span class="stat-number" id="totalAdsCount">0</span>
+                                <span class="stat-label">إعلان</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
+                    </div>
+                    <form id="adForm" class="ad-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="adTitle">
+                                    <i class="fas fa-heading"></i> العنوان <span class="required">*</span>
+                                </label>
+                                <input type="text" id="adTitle" required placeholder="عنوان الإعلان">
+                            </div>
+                            <div class="form-group">
+                                <label for="adPrice">
+                                    <i class="fas fa-tag"></i> السعر (اختياري)
+                                </label>
+                                <input type="number" id="adPrice" placeholder="مثال: 5000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="adDescription">
+                                <i class="fas fa-align-right"></i> الوصف <span class="required">*</span>
+                            </label>
+                            <textarea id="adDescription" required rows="3" placeholder="وصف الإعلان..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="adImageUrl">
+                                <i class="fas fa-image"></i> رابط الصورة (اختياري)
+                            </label>
+                            <input type="url" id="adImageUrl" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
+                                <i class="fas fa-save"></i> حفظ الإعلان
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات الحالية</h2>
+                    </div>
+                    <div id="adsList" class="ads-grid">
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin fa-3x"></i>
+                            <p>جاري تحميل الإعلانات...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- إشعارات Toast -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="admin.js"></script>
