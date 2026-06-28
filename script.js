@@ -1109,17 +1109,26 @@ document.addEventListener('DOMContentLoaded', function() {
     function getHeaderOffset() {
         return mainHeader ? mainHeader.offsetHeight - 50 : 200;
     }
-    
+
     function handleScroll() {
-        if (!topStickyBar) return;
-        
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        const headerOffset = getHeaderOffset();
-        
-        if (scrollY > headerOffset) {
-            topStickyBar.classList.add('visible');
-        } else {
-            topStickyBar.classList.remove('visible');
+    if (!topStickyBar) return;
+    
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const headerOffset = getHeaderOffset();
+    const sectionsNav = document.getElementById('sectionsNav');
+    
+    if (scrollY > headerOffset) {
+        topStickyBar.classList.add('visible');
+        // 🆕 إلصاق شريط التنقل تحت الشريط العلوي
+        if (sectionsNav) {
+            sectionsNav.classList.add('stuck-under-bar');
+        }
+    } else {
+        topStickyBar.classList.remove('visible');
+        // 🆕 إعادة شريط التنقل لموقعه الأصلي
+        if (sectionsNav) {
+            sectionsNav.classList.remove('stuck-under-bar');
+            }
         }
     }
     
