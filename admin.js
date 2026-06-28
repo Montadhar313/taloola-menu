@@ -1,286 +1,219 @@
-// بيانات المسؤول
-const ADMIN_CREDENTIALS = {
-    username: "aluky",
-    password: "aluky121212"
+// ============================================
+// ⚙️ إعدادات Firebase
+// ============================================
+const firebaseConfig = {
+    apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
+    authDomain: "talola-food.firebaseapp.com",
+    databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
+    projectId: "talola-food",
+    storageBucket: "talola-food.firebasestorage.app", // تأكد من صحة هذا الرابط من Firebase Console
+    messagingSenderId: "440585170470",
+    appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
 };
 
-// تحميل الإعلانات الحالية
-async function loadCurrentAds() {
-    const currentAds = document.getElementById('currentAds');
-    
-    if (!currentAds) return;
-    
-    currentAds.innerHTML = '<p>جاري تحميل الإعلانات...</p>';
-    
-    try {
-        // جلب الإعلانات من جدول Supabase
-        const { data: ads, error } = await supabase
-            .from('ads')
-            .select('*')
-            .order('created_at', { ascending: false });
-        
-        if (error) {
-            console.error('Error loading ads:', error);
-            currentAds.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
-            return;
-        }
-        
-        if (!ads || ads.length === 0) {
-            currentAds.innerHTML = '<p>لا توجد إعلانات حالية</p>';
-            return;
-        }
-        
-        currentAds.innerHTML = '';
-        
-        ads.forEach((ad) => {
-            const adElement = document.createElement('div');
-            adElement.className = 'ad-card';
-            adElement.innerHTML = `
-                ${ad.image_url ? `
-                    <div class="ad-image">
-                        <img src="${ad.image_url}" alt="${ad.title}">
-                    </div>
-                ` : ''}
-                <h4>${ad.title}</h4>
-                <p>${ad.description}</p>
-                ${ad.price ? `<p class="ad-price">السعر: ${ad.price}</p>` : ''}
-                ${ad.duration ? `<p class="ad-duration">المدة: ${ad.duration}</p>` : ''}
-                <p><small>تم الإنشاء: ${new Date(ad.created_at).toLocaleDateString('ar-EG')}</small></p>
-                <div class="ad-actions">
-                    <button onclick="deleteAd('${ad.id}', '${ad.image_url}')">حذف</button>
-                </div>
-            `;
-            currentAds.appendChild(adElement);
-        });
-    } catch (error) {
-        console.error('Error loading ads:', error);
-        currentAds.innerHTML = '<p>حدث خطأ أثناء تحميل الإعلانات</p>';
-    }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const storage = firebase.storage();
+
+// ============================================
+// 🔐 نظام المصادقة (بسيط للوحة التحكم)
+// ============================================
+const ADMIN_PASSWORD = "TaloolaAdmin@2024"; // قم بتغييرها لكلمة مرور قوية
+const loginScreen = document.getElementById('loginScreen');
+const dashboard = document.getElementById('dashboard');
+const loginBtn = document.getElementById('loginBtn');
+const loginError = document.getElementById('loginError');
+
+// التحقق من الجلسة المحفوظة
+if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+    showDashboard();
 }
 
-// إنشاء إعلان جديد
-async function createAd() {
+loginBtn.addEventListener('click', () => {
+    const password = document.getElementById('adminPassword').value;
+    if (password === ADMIN_PASSWORD) {
+        sessionStorage.setItem('isAdminLoggedIn', 'true');
+        showDashboard();
+    } else {
+        loginError.textContent = 'كلمة المرور غير صحيحة!';
+        setTimeout(() => loginError.textContent = '', 3000);
+    }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('isAdminLoggedIn');
+    location.reload();
+});
+
+function showDashboard() {
+    loginScreen.style.display = 'none';
+    dashboard.style.display = 'flex';
+    loadAds();
+}
+
+// ============================================
+// 📑 إدارة التبويبات
+// ============================================
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        if (this.disabled) return;
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+    });
+});
+
+// ============================================
+// 📢 إدارة الإعلانات (CRUD)
+// ============================================
+const adForm = document.getElementById('adForm');
+const adsList = document.getElementById('adsList');
+const fileUploadArea = document.getElementById('fileUploadArea');
+const adImageInput = document.getElementById('adImage');
+const imagePreview = document.getElementById('imagePreview');
+let uploadedImageUrl = '';
+
+// رفع الصورة
+fileUploadArea.addEventListener('click', () => adImageInput.click());
+fileUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); fileUploadArea.style.borderColor = '#c70301'; });
+fileUploadArea.addEventListener('dragleave', () => { fileUploadArea.style.borderColor = '#ddd'; });
+fileUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileUploadArea.style.borderColor = '#ddd';
+    if (e.dataTransfer.files.length) {
+        adImageInput.files = e.dataTransfer.files;
+        previewFile(e.dataTransfer.files[0]);
+    }
+});
+
+adImageInput.addEventListener('change', function() {
+    if (this.files.length) previewFile(this.files[0]);
+});
+
+function previewFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+// حفظ الإعلان
+adForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const saveBtn = document.getElementById('saveAdBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
     const title = document.getElementById('adTitle').value;
     const description = document.getElementById('adDescription').value;
     const price = document.getElementById('adPrice').value;
-    const duration = document.getElementById('adDuration').value;
-    const template = document.getElementById('adTemplate').value;
-    const imageFile = document.getElementById('adImage').files[0];
-    
-    if (!title || !description) {
-        alert('الرجاء ملء الحقول الإلزامية (العنوان والوصف)');
-        return;
-    }
-    
-    let imageUrl = '';
-    
-    // رفع الصورة إلى Supabase Storage إذا تم اختيارها
-    if (imageFile) {
-        try {
-            // إظهار مؤشر التحميل
-            const createButton = document.querySelector('#adminPanel .admin-section button');
-            const originalText = createButton.textContent;
-            createButton.textContent = 'جاري رفع الصورة...';
-            createButton.disabled = true;
-            
-            const fileName = `ads/${Date.now()}_${imageFile.name.replace(/\s+/g, '_')}`;
-            
-            console.log('بدء رفع الصورة:', fileName);
-            
-            // رفع الملف إلى Supabase Storage
-            const { data, error } = await supabase.storage
-                .from('images')
-                .upload(fileName, imageFile, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-            
-            if (error) {
-                console.error('Supabase upload error:', error);
-                throw error;
-            }
-            
-            console.log('تم رفع الصورة بنجاح:', data);
-            
-            // الحصول على رابط الصورة
-            const { data: urlData } = supabase.storage
-                .from('images')
-                .getPublicUrl(fileName);
-            
-            imageUrl = urlData.publicUrl;
-            console.log('رابط الصورة:', imageUrl);
-            
-            // إعادة حالة الزر إلى الطبيعي
-            createButton.textContent = originalText;
-            createButton.disabled = false;
-            
-        } catch (error) {
-            console.error('Error uploading image:', error);
-            
-            // إعادة حالة الزر إلى الطبيعي
-            const createButton = document.querySelector('#adminPanel .admin-section button');
-            createButton.textContent = 'إنشاء الإعلان';
-            createButton.disabled = false;
-            
-            alert(`حدث خطأ أثناء رفع الصورة: ${error.message}`);
-            return;
-        }
-    }
-    
-    const newAd = {
-        title,
-        description,
-        price,
-        duration,
-        template,
-        image_url: imageUrl
-    };
-    
-    // إضافة الإعلان إلى Supabase
+    const imageFile = adImageInput.files[0];
+
     try {
-        const { data, error } = await supabase
-            .from('ads')
-            .insert([newAd])
-            .select();
+        let imageUrl = '';
         
-        if (error) {
-            console.error('Error saving ad:', error);
-            alert('حدث خطأ أثناء حفظ الإعلان');
+        // رفع الصورة إذا وجدت
+        if (imageFile) {
+            const storageRef = storage.ref().child('ads/' + Date.now() + '_' + imageFile.name);
+            const snapshot = await storageRef.put(imageFile);
+            imageUrl = await snapshot.ref.getDownloadURL();
+        }
+
+        // حفظ في قاعدة البيانات
+        const newAd = {
+            title,
+            description,
+            price: price || '',
+            imageUrl,
+            template: 'red',
+            timestamp: Date.now(),
+            date: new Date().toLocaleDateString('ar-EG')
+        };
+
+        await db.ref('ads').push(newAd);
+        
+        showToast('تم نشر الإعلان بنجاح!', 'success');
+        adForm.reset();
+        imagePreview.style.display = 'none';
+        uploadedImageUrl = '';
+        
+    } catch (error) {
+        console.error(error);
+        showToast('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ ونشر الإعلان';
+    }
+});
+
+// جلب وعرض الإعلانات
+function loadAds() {
+    db.ref('ads').orderByChild('timestamp').on('value', (snapshot) => {
+        adsList.innerHTML = '';
+        const ads = snapshot.val();
+        
+        if (!ads) {
+            adsList.innerHTML = '<p class="loading-text">لا توجد إعلانات حالياً. أضف أول إعلان!</p>';
             return;
         }
+
+        // عكس الترتيب لعرض الأحدث أولاً
+        const sortedAds = Object.keys(ads).reverse();
         
-        alert('تم إنشاء الإعلان بنجاح!');
-        clearAdForm();
-        loadCurrentAds();
-        
-        // تحديث عرض الإعلانات للزوار
-        if (typeof window.displayAds === 'function') {
-            window.displayAds();
-        }
-    } catch (error) {
-        console.error('Error saving ad:', error);
-        alert('حدث خطأ أثناء حفظ الإعلان');
-    }
-}
-
-// حذف إعلان
-async function deleteAd(id, imageUrl) {
-    if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
-        try {
-            // حذف الإعلان من قاعدة البيانات
-            const { error } = await supabase
-                .from('ads')
-                .delete()
-                .eq('id', id);
-            
-            if (error) {
-                console.error('Error deleting ad:', error);
-                throw error;
-            }
-            
-            // حذف الصورة من Supabase Storage إذا كانت موجودة
-            if (imageUrl) {
-                try {
-                    // استخراج اسم الملف من الرابط
-                    const urlParts = imageUrl.split('/');
-                    const fileName = urlParts[urlParts.length - 1];
-                    const fullPath = `ads/${fileName}`;
-                    
-                    // حذف الملف من Supabase Storage
-                    const { error } = await supabase.storage
-                        .from('images')
-                        .remove([fullPath]);
-                    
-                    if (error) {
-                        console.error('Error deleting image:', error);
-                    }
-                } catch (error) {
-                    console.error('Error deleting image from storage:', error);
-                }
-            }
-            
-            alert('تم حذف الإعلان بنجاح');
-            loadCurrentAds();
-            
-            // تحديث عرض الإعلانات للزوار
-            if (typeof window.displayAds === 'function') {
-                window.displayAds();
-            }
-        } catch (error) {
-            console.error('Error deleting ad:', error);
-            alert('حدث خطأ أثناء حذف الإعلان');
-        }
-    }
-}
-
-// مسح نموذج الإعلان
-function clearAdForm() {
-    document.getElementById('adTitle').value = '';
-    document.getElementById('adDescription').value = '';
-    document.getElementById('adPrice').value = '';
-    document.getElementById('adDuration').value = '';
-    document.getElementById('adTemplate').value = 'red';
-    document.getElementById('adImage').value = '';
-    document.getElementById('imagePreview').innerHTML = '<span>معاينة الصورة</span>';
-}
-
-// تهيئة الصفحة عند التحميل
-document.addEventListener('DOMContentLoaded', function() {
-    // عناصر DOM
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const adminLoginSubmit = document.getElementById('adminLoginSubmit');
-    const adminPanel = document.getElementById('adminPanel');
-    const closeAdminPanel = document.getElementById('closeAdminPanel');
-    const adminAuthModal = document.getElementById('adminAuthModal');
-    // 🆕 التحقق من HTTPS لأندرويد
-    if (detectOS() === 'android' && window.location.protocol !== 'https:') {
-        console.warn('⚠ الموقع يجب أن يكون على HTTPS ليعمل تحديد الموقع في أندرويد');
-    }
-    // فتح نافذة تسجيل دخول المسؤول
-    if (adminLoginBtn) {
-        adminLoginBtn.addEventListener('click', () => {
-            if (adminAuthModal) {
-                adminAuthModal.style.display = 'flex';
-            }
+        sortedAds.forEach(key => {
+            const ad = ads[key];
+            const card = document.createElement('div');
+            card.className = 'ad-card';
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteAd('${key}', '${ad.imageUrl}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+                ${ad.imageUrl ? `<img src="${ad.imageUrl}" alt="${ad.title}">` : ''}
+                <div class="ad-card-content">
+                    <h4>${ad.title}</h4>
+                    <p>${ad.description}</p>
+                    ${ad.price ? `<div class="price">${ad.price} د.ع</div>` : ''}
+                    <small style="color: #999; display: block; margin-top: 10px;">${ad.date}</small>
+                </div>
+            `;
+            adsList.appendChild(card);
         });
-    }
-    
-    // تسجيل دخول المسؤول
-    if (adminLoginSubmit) {
-        adminLoginSubmit.addEventListener('click', () => {
-            const username = document.getElementById('adminUsername').value;
-            const password = document.getElementById('adminPassword').value;
-            
-            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-                if (adminAuthModal) {
-                    adminAuthModal.style.display = 'none';
-                }
-                if (adminPanel) {
-                    adminPanel.style.display = 'flex';
-                }
-                loadCurrentAds();
-            } else {
-                alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-            }
-        });
-    }
-    
-    // إغلاق لوحة التحكم
-    if (closeAdminPanel) {
-        closeAdminPanel.addEventListener('click', () => {
-            if (adminPanel) {
-                adminPanel.style.display = 'none';
-            }
-        });
-    }
-    
-    // إغلاق النوافذ عند النقر خارجها
-    window.addEventListener('click', function(event) {
-        if (event.target === adminPanel) {
-            adminPanel.style.display = 'none';
-        }
-        if (event.target === adminAuthModal) {
-            adminAuthModal.style.display = 'none';
-        }
     });
-});
+}
+
+// حذف الإعلان
+window.deleteAd = async function(key, imageUrl) {
+    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
+    
+    try {
+        await db.ref('ads/' + key).remove();
+        if (imageUrl) {
+            await storage.refFromURL(imageUrl).delete();
+        }
+        showToast('تم حذف الإعلان بنجاح', 'success');
+    } catch (error) {
+        showToast('فشل الحذف: ' + error.message, 'error');
+    }
+};
+
+// ============================================
+// 🔔 نظام الإشعارات (Toast)
+// ============================================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
