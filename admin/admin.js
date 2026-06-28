@@ -14,6 +14,29 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // ============================================
+// 🛡️ دالة مساعدة آمنة لقراءة قيم العناصر
+// ============================================
+function safeGetValue(elementId, defaultValue = '') {
+    const el = document.getElementById(elementId);
+    return el ? (el.value || defaultValue) : defaultValue;
+}
+
+function safeGetChecked(name, defaultValue = '') {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : defaultValue;
+}
+
+function safeSetChecked(elementId, shouldBeChecked) {
+    const el = document.getElementById(elementId);
+    if (el) el.checked = shouldBeChecked;
+}
+
+function safeSetValue(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) el.value = value;
+}
+
+// ============================================
 // 🔐 نظام المصادقة
 // ============================================
 const ADMIN_PASSWORD = "TaloolaAdmin@2024";
@@ -57,10 +80,13 @@ function showDashboard() {
     const dashboard = document.getElementById('dashboard');
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboard) dashboard.style.display = 'flex';
+    
     loadCategories();
     loadMenuItems();
     loadAds();
     loadThemeSettings();
+    loadOrderCounter();
+    loadOrders();
 }
 
 // ============================================
@@ -79,17 +105,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// 🎨 إدارة الثيم والألوان
+// 🎨 إدارة الثيم والألوان - النسخة الآمنة
 // ============================================
 let currentTheme = {
     mode: 'dark',
     primaryColor: '#c70301',
     secondaryColor: '#fedb17',
+    textColor: '#ffffff',
+    headingColor: '#ffffff',
+    descriptionColor: '#cccccc',
+    priceColor: '#fedb17',
+    fontFamily: "'Cairo', sans-serif",
+    fontSize: 16,
     backgroundType: 'video',
     videoUrl: 'https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4',
+    imageUrl: '',
     bgColor: '#1a1a1a',
     gradientColor1: '#1a1a1a',
-    gradientColor2: '#2c2c2c'
+    gradientColor2: '#2c2c2c',
+    gradientDirection: '135deg',
+    overlayOpacity: 60,
+    itemImageBg: 'transparent',
+    itemImageBgColor: '#ffffff'
 };
 
 function loadThemeSettings() {
@@ -98,68 +135,117 @@ function loadThemeSettings() {
         if (theme) {
             currentTheme = { ...currentTheme, ...theme };
             applyThemeToUI();
+            console.log('✅ تم تحميل الثيم:', currentTheme);
         }
+    }).catch(error => {
+        console.warn('⚠️ لا يمكن تحميل إعدادات الثيم:', error);
     });
 }
 
 function applyThemeToUI() {
-    // تطبيق وضع العرض
-    document.getElementById('themeLight').checked = currentTheme.mode === 'light';
-    document.getElementById('themeDark').checked = currentTheme.mode === 'dark';
+    // الوضع - بأمان
+    safeSetChecked('themeLight', currentTheme.mode === 'light');
+    safeSetChecked('themeDark', currentTheme.mode === 'dark');
+    safeSetChecked('themeGray', currentTheme.mode === 'gray');
     
-    // تطبيق الألوان
-    document.getElementById('primaryColor').value = currentTheme.primaryColor;
-    document.getElementById('primaryColorText').value = currentTheme.primaryColor;
-    document.getElementById('secondaryColor').value = currentTheme.secondaryColor;
-    document.getElementById('secondaryColorText').value = currentTheme.secondaryColor;
+    // الألوان الرئيسية
+    safeSetValue('primaryColor', currentTheme.primaryColor);
+    safeSetValue('primaryColorText', currentTheme.primaryColor);
+    safeSetValue('secondaryColor', currentTheme.secondaryColor);
+    safeSetValue('secondaryColorText', currentTheme.secondaryColor);
     
-    // تطبيق الخلفية
-    document.getElementById('bgVideo').checked = currentTheme.backgroundType === 'video';
-    document.getElementById('bgColor').checked = currentTheme.backgroundType === 'color';
-    document.getElementById('bgGradient').checked = currentTheme.backgroundType === 'gradient';
+    // ألوان النصوص
+    safeSetValue('textColor', currentTheme.textColor);
+    safeSetValue('textColorText', currentTheme.textColor);
+    safeSetValue('headingColor', currentTheme.headingColor);
+    safeSetValue('headingColorText', currentTheme.headingColor);
+    safeSetValue('descriptionColor', currentTheme.descriptionColor);
+    safeSetValue('descriptionColorText', currentTheme.descriptionColor);
+    safeSetValue('priceColor', currentTheme.priceColor);
+    safeSetValue('priceColorText', currentTheme.priceColor);
     
-    document.getElementById('videoUrl').value = currentTheme.videoUrl;
-    document.getElementById('bgColorPicker').value = currentTheme.bgColor;
-    document.getElementById('bgColorText').value = currentTheme.bgColor;
-    document.getElementById('gradientColor1').value = currentTheme.gradientColor1;
-    document.getElementById('gradientColor2').value = currentTheme.gradientColor2;
+    // الخط
+    safeSetValue('fontFamily', currentTheme.fontFamily);
+    safeSetValue('fontSize', currentTheme.fontSize);
+    const fontSizeValueEl = document.getElementById('fontSizeValue');
+    if (fontSizeValueEl) fontSizeValueEl.textContent = (currentTheme.fontSize || 16) + 'px';
+    
+    // الخلفية
+    safeSetChecked('bgVideo', currentTheme.backgroundType === 'video');
+    safeSetChecked('bgImage', currentTheme.backgroundType === 'image');
+    safeSetChecked('bgColor', currentTheme.backgroundType === 'color');
+    safeSetChecked('bgGradient', currentTheme.backgroundType === 'gradient');
+    
+    safeSetValue('videoUrl', currentTheme.videoUrl || '');
+    safeSetValue('imageUrl', currentTheme.imageUrl || '');
+    safeSetValue('bgColorPicker', currentTheme.bgColor);
+    safeSetValue('bgColorText', currentTheme.bgColor);
+    safeSetValue('gradientColor1', currentTheme.gradientColor1);
+    safeSetValue('gradientColor2', currentTheme.gradientColor2);
+    safeSetValue('gradientDirection', currentTheme.gradientDirection || '135deg');
+    
+    safeSetValue('overlayOpacity', currentTheme.overlayOpacity || 60);
+    const overlayValueEl = document.getElementById('overlayOpacityValue');
+    if (overlayValueEl) overlayValueEl.textContent = (currentTheme.overlayOpacity || 60) + '%';
+    
+    // خلفية صور العناصر
+    safeSetChecked('imgBgTransparent', currentTheme.itemImageBg === 'transparent');
+    safeSetChecked('imgBgWhite', currentTheme.itemImageBg === 'white');
+    safeSetChecked('imgBgPrimary', currentTheme.itemImageBg === 'primary');
+    safeSetChecked('imgBgCustom', currentTheme.itemImageBg === 'custom');
+    safeSetValue('itemImageBgColor', currentTheme.itemImageBgColor || '#ffffff');
+    safeSetValue('itemImageBgColorText', currentTheme.itemImageBgColor || '#ffffff');
     
     updateBackgroundOptionsVisibility();
+    updateImageBgOptionsVisibility();
 }
 
 function updateBackgroundOptionsVisibility() {
-    document.getElementById('videoOptions').style.display = currentTheme.backgroundType === 'video' ? 'block' : 'none';
-    document.getElementById('colorOptions').style.display = currentTheme.backgroundType === 'color' ? 'block' : 'none';
-    document.getElementById('gradientOptions').style.display = currentTheme.backgroundType === 'gradient' ? 'block' : 'none';
+    const videoOpts = document.getElementById('videoOptions');
+    const imageOpts = document.getElementById('imageOptions');
+    const colorOpts = document.getElementById('colorOptions');
+    const gradientOpts = document.getElementById('gradientOptions');
+    
+    if (videoOpts) videoOpts.style.display = currentTheme.backgroundType === 'video' ? 'block' : 'none';
+    if (imageOpts) imageOpts.style.display = currentTheme.backgroundType === 'image' ? 'block' : 'none';
+    if (colorOpts) colorOpts.style.display = currentTheme.backgroundType === 'color' ? 'block' : 'none';
+    if (gradientOpts) gradientOpts.style.display = currentTheme.backgroundType === 'gradient' ? 'block' : 'none';
 }
 
+function updateImageBgOptionsVisibility() {
+    const customOpts = document.getElementById('customImageBgOptions');
+    if (customOpts) customOpts.style.display = currentTheme.itemImageBg === 'custom' ? 'block' : 'none';
+}
+
+// تهيئة أحداث الثيم
 document.addEventListener('DOMContentLoaded', () => {
-    // أحداث الألوان
-    document.getElementById('primaryColor').addEventListener('input', function() {
-        document.getElementById('primaryColorText').value = this.value;
+    const colorPairs = [
+        ['primaryColor', 'primaryColorText'],
+        ['secondaryColor', 'secondaryColorText'],
+        ['textColor', 'textColorText'],
+        ['headingColor', 'headingColorText'],
+        ['descriptionColor', 'descriptionColorText'],
+        ['priceColor', 'priceColorText'],
+        ['bgColorPicker', 'bgColorText'],
+        ['itemImageBgColor', 'itemImageBgColorText']
+    ];
+    
+    colorPairs.forEach(([colorId, textId]) => {
+        const colorEl = document.getElementById(colorId);
+        const textEl = document.getElementById(textId);
+        
+        if (colorEl && textEl) {
+            colorEl.addEventListener('input', function() {
+                textEl.value = this.value;
+            });
+            textEl.addEventListener('input', function() {
+                if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                    colorEl.value = this.value;
+                }
+            });
+        }
     });
     
-    document.getElementById('primaryColorText').addEventListener('input', function() {
-        document.getElementById('primaryColor').value = this.value;
-    });
-    
-    document.getElementById('secondaryColor').addEventListener('input', function() {
-        document.getElementById('secondaryColorText').value = this.value;
-    });
-    
-    document.getElementById('secondaryColorText').addEventListener('input', function() {
-        document.getElementById('secondaryColor').value = this.value;
-    });
-    
-    document.getElementById('bgColorPicker').addEventListener('input', function() {
-        document.getElementById('bgColorText').value = this.value;
-    });
-    
-    document.getElementById('bgColorText').addEventListener('input', function() {
-        document.getElementById('bgColorPicker').value = this.value;
-    });
-    
-    // أحداث الخلفية
     document.querySelectorAll('input[name="backgroundType"]').forEach(radio => {
         radio.addEventListener('change', function() {
             currentTheme.backgroundType = this.value;
@@ -167,42 +253,135 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // حفظ الإعدادات
-    document.getElementById('saveThemeBtn').addEventListener('click', async () => {
-        currentTheme.mode = document.querySelector('input[name="themeMode"]:checked').value;
-        currentTheme.primaryColor = document.getElementById('primaryColor').value;
-        currentTheme.secondaryColor = document.getElementById('secondaryColor').value;
-        currentTheme.videoUrl = document.getElementById('videoUrl').value;
-        currentTheme.bgColor = document.getElementById('bgColorPicker').value;
-        currentTheme.gradientColor1 = document.getElementById('gradientColor1').value;
-        currentTheme.gradientColor2 = document.getElementById('gradientColor2').value;
-        
-        try {
-            await db.ref('theme').set(currentTheme);
-            showToast('✅ تم حفظ الإعدادات بنجاح', 'success');
-        } catch (error) {
-            showToast('❌ فشل حفظ الإعدادات', 'error');
-        }
+    document.querySelectorAll('input[name="itemImageBg"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            currentTheme.itemImageBg = this.value;
+            updateImageBgOptionsVisibility();
+        });
     });
     
-    // إعادة تعيين
-    document.getElementById('resetThemeBtn').addEventListener('click', () => {
-        currentTheme = {
-            mode: 'dark',
-            primaryColor: '#c70301',
-            secondaryColor: '#fedb17',
-            backgroundType: 'video',
-            videoUrl: 'https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4',
-            bgColor: '#1a1a1a',
-            gradientColor1: '#1a1a1a',
-            gradientColor2: '#2c2c2c'
-        };
-        applyThemeToUI();
-    });
+    const fontSizeSlider = document.getElementById('fontSize');
+    if (fontSizeSlider) {
+        fontSizeSlider.addEventListener('input', function() {
+            const valueEl = document.getElementById('fontSizeValue');
+            if (valueEl) valueEl.textContent = this.value + 'px';
+        });
+    }
+    
+    const overlaySlider = document.getElementById('overlayOpacity');
+    if (overlaySlider) {
+        overlaySlider.addEventListener('input', function() {
+            const valueEl = document.getElementById('overlayOpacityValue');
+            if (valueEl) valueEl.textContent = this.value + '%';
+        });
+    }
+    
+    // ✅ حفظ الإعدادات - النسخة الآمنة
+    const saveThemeBtn = document.getElementById('saveThemeBtn');
+    if (saveThemeBtn) {
+        saveThemeBtn.addEventListener('click', async () => {
+            saveThemeBtn.disabled = true;
+            const originalHTML = saveThemeBtn.innerHTML;
+            saveThemeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            
+            try {
+                // جمع البيانات بطريقة آمنة
+                currentTheme.mode = safeGetChecked('themeMode', currentTheme.mode);
+                currentTheme.primaryColor = safeGetValue('primaryColor', '#c70301');
+                currentTheme.secondaryColor = safeGetValue('secondaryColor', '#fedb17');
+                
+                currentTheme.textColor = safeGetValue('textColor', '#ffffff');
+                currentTheme.headingColor = safeGetValue('headingColor', '#ffffff');
+                currentTheme.descriptionColor = safeGetValue('descriptionColor', '#cccccc');
+                currentTheme.priceColor = safeGetValue('priceColor', '#fedb17');
+                
+                currentTheme.fontFamily = safeGetValue('fontFamily', "'Cairo', sans-serif");
+                currentTheme.fontSize = parseInt(safeGetValue('fontSize', '16')) || 16;
+                
+                currentTheme.backgroundType = safeGetChecked('backgroundType', currentTheme.backgroundType);
+                currentTheme.videoUrl = safeGetValue('videoUrl', '').trim();
+                currentTheme.imageUrl = safeGetValue('imageUrl', '').trim();
+                currentTheme.bgColor = safeGetValue('bgColorPicker', '#1a1a1a');
+                currentTheme.gradientColor1 = safeGetValue('gradientColor1', '#1a1a1a');
+                currentTheme.gradientColor2 = safeGetValue('gradientColor2', '#2c2c2c');
+                currentTheme.gradientDirection = safeGetValue('gradientDirection', '135deg');
+                currentTheme.overlayOpacity = parseInt(safeGetValue('overlayOpacity', '60')) || 60;
+                
+                currentTheme.itemImageBg = safeGetChecked('itemImageBg', 'transparent');
+                currentTheme.itemImageBgColor = safeGetValue('itemImageBgColor', '#ffffff');
+                
+                console.log('💾 جاري حفظ الثيم:', currentTheme);
+                
+                await db.ref('theme').set(currentTheme);
+                showToast('✅ تم حفظ الإعدادات بنجاح', 'success');
+                
+            } catch (error) {
+                showToast('❌ فشل حفظ الإعدادات', 'error');
+                console.error('خطأ في حفظ الثيم:', error);
+            } finally {
+                saveThemeBtn.disabled = false;
+                saveThemeBtn.innerHTML = originalHTML;
+            }
+        });
+    }
+    
+    const previewThemeBtn = document.getElementById('previewThemeBtn');
+    if (previewThemeBtn) {
+        previewThemeBtn.addEventListener('click', () => {
+            showToast('👁️ سيتم تطبيق الثيم على الصفحة الرئيسية فوراً', 'success');
+        });
+    }
+    
+    const resetThemeBtn = document.getElementById('resetThemeBtn');
+    if (resetThemeBtn) {
+        resetThemeBtn.addEventListener('click', () => {
+            if (!confirm('هل أنت متأكد من إعادة تعيين جميع الإعدادات؟')) return;
+            
+            currentTheme = {
+                mode: 'dark',
+                primaryColor: '#c70301',
+                secondaryColor: '#fedb17',
+                textColor: '#ffffff',
+                headingColor: '#ffffff',
+                descriptionColor: '#cccccc',
+                priceColor: '#fedb17',
+                fontFamily: "'Cairo', sans-serif",
+                fontSize: 16,
+                backgroundType: 'video',
+                videoUrl: 'https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4',
+                imageUrl: '',
+                bgColor: '#1a1a1a',
+                gradientColor1: '#1a1a1a',
+                gradientColor2: '#2c2c2c',
+                gradientDirection: '135deg',
+                overlayOpacity: 60,
+                itemImageBg: 'transparent',
+                itemImageBgColor: '#ffffff'
+            };
+            applyThemeToUI();
+            showToast('✅ تم إعادة تعيين الإعدادات', 'success');
+        });
+    }
 });
 
 // ============================================
-// 📂 إدارة الأقسام
+// 🔢 تحميل عداد الطلبات
+// ============================================
+function loadOrderCounter() {
+    const counterEl = document.getElementById('currentOrderNumber');
+    if (!counterEl) return;
+    
+    db.ref('orders/counter').on('value', (snapshot) => {
+        const counter = snapshot.val() || 0;
+        counterEl.textContent = counter;
+    }, (error) => {
+        console.warn('⚠️ لا يمكن تحميل عداد الطلبات:', error);
+        counterEl.textContent = '0';
+    });
+}
+
+// ============================================
+// 📂 إدارة الأقسام - مع ترتيب مُحسَّن
 // ============================================
 let allCategories = [];
 
@@ -212,7 +391,6 @@ function loadCategories() {
     
     if (!categoriesList) return;
     
-    // Seed الأقسام الأولية
     db.ref('categories').once('value').then(snapshot => {
         if (!snapshot.val()) {
             const SEED_CATEGORIES = [
@@ -257,6 +435,8 @@ function loadCategories() {
         if (totalCategoriesCount) totalCategoriesCount.textContent = allCategories.length;
         renderCategories();
         updateCategoryDropdown();
+    }, (error) => {
+        console.error('❌ خطأ في تحميل الأقسام:', error);
     });
 }
 
@@ -309,6 +489,7 @@ function handleDragStart(e) {
     draggedItem = this;
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.getAttribute('data-id'));
 }
 
 function handleDragOver(e) {
@@ -325,28 +506,66 @@ function handleDragLeave() {
     this.classList.remove('drag-over');
 }
 
+// ✅ دالة محسّنة لتحديث الترتيب - استخدام batch update
 async function handleDrop(e) {
     e.preventDefault();
     this.classList.remove('drag-over');
     
-    if (this === draggedItem) return;
+    if (this === draggedItem || !draggedItem) return;
     
     const draggedId = draggedItem.getAttribute('data-id');
     const targetId = this.getAttribute('data-id');
     
+    if (!draggedId || !targetId) {
+        showToast('❌ خطأ: معرف القسم غير صالح', 'error');
+        return;
+    }
+    
     const draggedIndex = allCategories.findIndex(c => c.id === draggedId);
     const targetIndex = allCategories.findIndex(c => c.id === targetId);
     
+    if (draggedIndex === -1 || targetIndex === -1) {
+        showToast('❌ خطأ: لم يتم العثور على القسم', 'error');
+        return;
+    }
+    
+    // تحديث المصفوفة محلياً
     const [movedItem] = allCategories.splice(draggedIndex, 1);
     allCategories.splice(targetIndex, 0, movedItem);
     
+    // إعادة التصيير فوراً (تحسين تجربة المستخدم)
+    renderCategories();
+    
+    // ✅ استخدام batch update بدلاً من loop
     try {
+        console.log('🔄 جاري تحديث الترتيب...');
+        
+        const updates = {};
         for (let i = 0; i < allCategories.length; i++) {
-            await db.ref('categories/' + allCategories[i].id + '/order').set(i);
+            updates[`${allCategories[i].id}/order`] = i;
         }
-        showToast('تم تحديث ترتيب الأقسام', 'success');
+        
+        // تنفيذ جميع التحديثات في طلب واحد
+        await db.ref('categories').update(updates);
+        
+        console.log('✅ تم تحديث ترتيب الأقسام بنجاح');
+        showToast(`✅ تم تحديث الترتيب (${allCategories.length} قسم)`, 'success');
+        
     } catch (error) {
-        showToast('فشل تحديث الترتيب', 'error');
+        console.error('❌ فشل تحديث الترتيب:', error);
+        
+        // رسالة خطأ مفصلة
+        let errorMsg = 'فشل تحديث الترتيب';
+        if (error.code === 'PERMISSION_DENIED') {
+            errorMsg = '⚠️ خطأ في الصلاحيات - تحقق من قواعد Firebase';
+        } else if (error.message) {
+            errorMsg = `❌ ${error.message}`;
+        }
+        
+        showToast(errorMsg, 'error');
+        
+        // استعادة الترتيب الأصلي
+        loadCategories();
     }
 }
 
@@ -355,21 +574,27 @@ function handleDragEnd() {
     document.querySelectorAll('.category-item').forEach(item => {
         item.classList.remove('drag-over');
     });
+    draggedItem = null;
 }
 
 window.editCategory = function(id) {
     const cat = allCategories.find(c => c.id === id);
     if (!cat) return;
     
-    document.getElementById('categoryId').value = cat.id;
-    document.getElementById('categoryName').value = cat.name;
-    document.getElementById('categoryIcon').value = cat.icon || '';
-    document.getElementById('categoryOrder').value = cat.order !== undefined ? cat.order : '';
-    document.getElementById('categoryFormTitle').textContent = 'تعديل القسم';
-    document.getElementById('saveCategoryText').textContent = 'حفظ التعديلات';
-    document.getElementById('cancelEditCategoryBtn').style.display = 'inline-flex';
+    safeSetValue('categoryId', cat.id);
+    safeSetValue('categoryName', cat.name);
+    safeSetValue('categoryIcon', cat.icon || '');
+    safeSetValue('categoryOrder', cat.order !== undefined ? cat.order : '');
     
-    document.getElementById('categoryForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const formTitle = document.getElementById('categoryFormTitle');
+    const saveText = document.getElementById('saveCategoryText');
+    const cancelBtn = document.getElementById('cancelEditCategoryBtn');
+    
+    if (formTitle) formTitle.textContent = 'تعديل القسم';
+    if (saveText) saveText.textContent = 'حفظ التعديلات';
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+    
+    document.getElementById('categoryForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 window.deleteCategory = async function(id) {
@@ -389,15 +614,17 @@ window.deleteCategory = async function(id) {
         if (!confirm(confirmMsg)) return;
         
         if (itemsInCategory) {
-            for (const key of Object.keys(itemsInCategory)) {
-                await db.ref('menu/' + key).remove();
-            }
+            const deletePromises = Object.keys(itemsInCategory).map(key => 
+                db.ref('menu/' + key).remove()
+            );
+            await Promise.all(deletePromises);
         }
         
         await db.ref('categories/' + id).remove();
         showToast('تم حذف القسم بنجاح', 'success');
     } catch (error) {
         showToast('فشل الحذف', 'error');
+        console.error('خطأ في الحذف:', error);
     }
 };
 
@@ -408,21 +635,23 @@ document.addEventListener('DOMContentLoaded', () => {
     categoryForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const saveBtn = document.getElementById('saveCategoryBtn');
+        const saveTextEl = document.getElementById('saveCategoryText');
+        
         if (saveBtn) {
             saveBtn.disabled = true;
-            document.getElementById('saveCategoryText').textContent = 'جاري الحفظ...';
+            if (saveTextEl) saveTextEl.textContent = 'جاري الحفظ...';
         }
         
-        const id = document.getElementById('categoryId').value;
-        const name = document.getElementById('categoryName').value.trim();
-        const icon = document.getElementById('categoryIcon').value.trim() || '📁';
-        const order = parseInt(document.getElementById('categoryOrder').value) || allCategories.length;
+        const id = safeGetValue('categoryId');
+        const name = safeGetValue('categoryName').trim();
+        const icon = safeGetValue('categoryIcon').trim() || '📁';
+        const order = parseInt(safeGetValue('categoryOrder')) || allCategories.length;
         
         if (!name) {
             showToast('الرجاء إدخال اسم القسم', 'error');
             if (saveBtn) {
                 saveBtn.disabled = false;
-                document.getElementById('saveCategoryText').textContent = 'حفظ القسم';
+                if (saveTextEl) saveTextEl.textContent = 'حفظ القسم';
             }
             return;
         }
@@ -441,20 +670,24 @@ document.addEventListener('DOMContentLoaded', () => {
             resetCategoryForm();
         } catch (error) {
             showToast('حدث خطأ', 'error');
+            console.error('خطأ:', error);
         } finally {
             if (saveBtn) {
                 saveBtn.disabled = false;
-                document.getElementById('saveCategoryText').textContent = 'حفظ القسم';
+                if (saveTextEl) saveTextEl.textContent = 'حفظ القسم';
             }
         }
     });
     
-    document.getElementById('resetCategoryForm').addEventListener('click', resetCategoryForm);
-    document.getElementById('cancelEditCategoryBtn').addEventListener('click', resetCategoryForm);
+    const resetBtn = document.getElementById('resetCategoryForm');
+    if (resetBtn) resetBtn.addEventListener('click', resetCategoryForm);
+    
+    const cancelBtn = document.getElementById('cancelEditCategoryBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', resetCategoryForm);
     
     document.querySelectorAll('.icon-suggestion').forEach(suggestion => {
         suggestion.addEventListener('click', function() {
-            document.getElementById('categoryIcon').value = this.dataset.icon;
+            safeSetValue('categoryIcon', this.dataset.icon);
             document.querySelectorAll('.icon-suggestion').forEach(s => s.classList.remove('selected'));
             this.classList.add('selected');
         });
@@ -462,11 +695,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function resetCategoryForm() {
-    document.getElementById('categoryForm').reset();
-    document.getElementById('categoryId').value = '';
-    document.getElementById('categoryFormTitle').textContent = 'إضافة قسم جديد';
-    document.getElementById('saveCategoryText').textContent = 'حفظ القسم';
-    document.getElementById('cancelEditCategoryBtn').style.display = 'none';
+    const form = document.getElementById('categoryForm');
+    if (form) form.reset();
+    
+    safeSetValue('categoryId', '');
+    
+    const formTitle = document.getElementById('categoryFormTitle');
+    const saveText = document.getElementById('saveCategoryText');
+    const cancelBtn = document.getElementById('cancelEditCategoryBtn');
+    
+    if (formTitle) formTitle.textContent = 'إضافة قسم جديد';
+    if (saveText) saveText.textContent = 'حفظ القسم';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    
     document.querySelectorAll('.icon-suggestion').forEach(s => s.classList.remove('selected'));
 }
 
@@ -486,21 +727,21 @@ function updateCategoryDropdown() {
         `;
         
         option.addEventListener('click', function() {
-            document.getElementById('menuItemCategory').value = this.getAttribute('data-value');
+            safeSetValue('menuItemCategory', this.getAttribute('data-value'));
             const selectedText = document.querySelector('.custom-select-selected .selected-text');
             if (selectedText) selectedText.textContent = this.getAttribute('data-value');
             
             optionsList.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
             this.classList.add('selected');
             
-            document.getElementById('menuItemCategorySelect').classList.remove('open');
+            const select = document.getElementById('menuItemCategorySelect');
+            if (select) select.classList.remove('open');
         });
         
         optionsList.appendChild(option);
     });
 }
 
-// Custom Select
 document.addEventListener('DOMContentLoaded', () => {
     const customSelect = document.getElementById('menuItemCategorySelect');
     if (!customSelect) return;
@@ -528,11 +769,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase().trim();
-            const options = optionsList.querySelectorAll('.custom-select-option');
+            const options = optionsList?.querySelectorAll('.custom-select-option') || [];
             
             options.forEach(option => {
-                const name = option.querySelector('.option-name').textContent.toLowerCase();
-                option.style.display = name.includes(searchTerm) ? 'flex' : 'none';
+                const nameEl = option.querySelector('.option-name');
+                if (nameEl) {
+                    const name = nameEl.textContent.toLowerCase();
+                    option.style.display = name.includes(searchTerm) ? 'flex' : 'none';
+                }
             });
         });
     }
@@ -552,7 +796,6 @@ function loadMenuItems() {
     
     if (!menuList) return;
     
-    // Seed المنتجات الأولية
     db.ref('menu').once('value').then(snapshot => {
         if (!snapshot.val()) {
             const SEED_MENU_ITEMS = [
@@ -587,6 +830,8 @@ function loadMenuItems() {
         if (activeMenuCount) activeMenuCount.textContent = allMenuItems.filter(i => i.available).length;
         
         renderMenuItems();
+    }, (error) => {
+        console.error('❌ خطأ في تحميل الأصناف:', error);
     });
 }
 
@@ -623,7 +868,6 @@ function renderMenuItems() {
         const card = document.createElement('div');
         card.className = `menu-card ${!item.available ? 'unavailable' : ''}`;
         
-        // 🆕 معالجة الصور - استخدام placeholder إذا كانت الصورة غير موجودة
         const imageHtml = item.image 
             ? `<img src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">`
             : `<img src="https://via.placeholder.com/300x200?text=No+Image" alt="${item.name}">`;
@@ -661,18 +905,25 @@ window.editMenuItem = function(id) {
     const item = allMenuItems.find(i => i.id === id);
     if (!item) return;
     
-    document.getElementById('menuItemId').value = item.id;
-    document.getElementById('menuItemName').value = item.name;
-    document.getElementById('menuItemCategory').value = item.category;
-    document.getElementById('menuItemPrice').value = item.price;
-    document.getElementById('menuItemImage').value = item.image || '';
-    document.getElementById('menuItemDescription').value = item.description || '';
-    document.getElementById('menuItemAvailable').checked = item.available;
-    document.getElementById('menuFormTitle').textContent = 'تعديل الصنف';
-    document.getElementById('saveMenuItemText').textContent = 'حفظ التعديلات';
-    document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+    safeSetValue('menuItemId', item.id);
+    safeSetValue('menuItemName', item.name);
+    safeSetValue('menuItemCategory', item.category);
+    safeSetValue('menuItemPrice', item.price);
+    safeSetValue('menuItemImage', item.image || '');
+    safeSetValue('menuItemDescription', item.description || '');
     
-    document.getElementById('menuForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const availableEl = document.getElementById('menuItemAvailable');
+    if (availableEl) availableEl.checked = item.available;
+    
+    const formTitle = document.getElementById('menuFormTitle');
+    const saveText = document.getElementById('saveMenuItemText');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    
+    if (formTitle) formTitle.textContent = 'تعديل الصنف';
+    if (saveText) saveText.textContent = 'حفظ التعديلات';
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+    
+    document.getElementById('menuForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 window.toggleAvailability = async function(id, newValue) {
@@ -704,24 +955,27 @@ document.addEventListener('DOMContentLoaded', () => {
     menuForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const saveBtn = document.getElementById('saveMenuItemBtn');
+        const saveTextEl = document.getElementById('saveMenuItemText');
+        
         if (saveBtn) {
             saveBtn.disabled = true;
-            document.getElementById('saveMenuItemText').textContent = 'جاري الحفظ...';
+            if (saveTextEl) saveTextEl.textContent = 'جاري الحفظ...';
         }
         
-        const id = document.getElementById('menuItemId').value;
-        const name = document.getElementById('menuItemName').value.trim();
-        const category = document.getElementById('menuItemCategory').value;
-        const price = parseInt(document.getElementById('menuItemPrice').value);
-        const image = document.getElementById('menuItemImage').value.trim();
-        const description = document.getElementById('menuItemDescription').value.trim();
-        const available = document.getElementById('menuItemAvailable').checked;
+        const id = safeGetValue('menuItemId');
+        const name = safeGetValue('menuItemName').trim();
+        const category = safeGetValue('menuItemCategory');
+        const price = parseInt(safeGetValue('menuItemPrice'));
+        const image = safeGetValue('menuItemImage').trim();
+        const description = safeGetValue('menuItemDescription').trim();
+        const availableEl = document.getElementById('menuItemAvailable');
+        const available = availableEl ? availableEl.checked : true;
         
         if (!category || !name || !price) {
             showToast('الرجاء ملء الحقول المطلوبة', 'error');
             if (saveBtn) {
                 saveBtn.disabled = false;
-                document.getElementById('saveMenuItemText').textContent = 'حفظ الصنف';
+                if (saveTextEl) saveTextEl.textContent = 'حفظ الصنف';
             }
             return;
         }
@@ -741,10 +995,11 @@ document.addEventListener('DOMContentLoaded', () => {
             resetMenuForm();
         } catch (error) {
             showToast('حدث خطأ', 'error');
+            console.error('خطأ:', error);
         } finally {
             if (saveBtn) {
                 saveBtn.disabled = false;
-                document.getElementById('saveMenuItemText').textContent = 'حفظ الصنف';
+                if (saveTextEl) saveTextEl.textContent = 'حفظ الصنف';
             }
         }
     });
@@ -757,16 +1012,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    document.getElementById('resetMenuForm').addEventListener('click', resetMenuForm);
-    document.getElementById('cancelEditBtn').addEventListener('click', resetMenuForm);
+    const resetBtn = document.getElementById('resetMenuForm');
+    if (resetBtn) resetBtn.addEventListener('click', resetMenuForm);
+    
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', resetMenuForm);
 });
 
 function resetMenuForm() {
-    document.getElementById('menuForm').reset();
-    document.getElementById('menuItemId').value = '';
-    document.getElementById('menuFormTitle').textContent = 'إضافة صنف جديد';
-    document.getElementById('saveMenuItemText').textContent = 'حفظ الصنف';
-    document.getElementById('cancelEditBtn').style.display = 'none';
+    const form = document.getElementById('menuForm');
+    if (form) form.reset();
+    
+    safeSetValue('menuItemId', '');
+    
+    const formTitle = document.getElementById('menuFormTitle');
+    const saveText = document.getElementById('saveMenuItemText');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    
+    if (formTitle) formTitle.textContent = 'إضافة صنف جديد';
+    if (saveText) saveText.textContent = 'حفظ الصنف';
+    if (cancelBtn) cancelBtn.style.display = 'none';
     
     const selectedText = document.querySelector('.custom-select-selected .selected-text');
     if (selectedText) selectedText.textContent = 'اختر القسم';
@@ -815,6 +1080,8 @@ function loadAds() {
             `;
             adsList.appendChild(card);
         });
+    }, (error) => {
+        console.error('❌ خطأ في تحميل الإعلانات:', error);
     });
 }
 
@@ -840,10 +1107,10 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
         }
         
-        const title = document.getElementById('adTitle').value.trim();
-        const description = document.getElementById('adDescription').value.trim();
-        const price = document.getElementById('adPrice').value.trim();
-        const imageUrl = document.getElementById('adImageUrl').value.trim();
+        const title = safeGetValue('adTitle').trim();
+        const description = safeGetValue('adDescription').trim();
+        const price = safeGetValue('adPrice').trim();
+        const imageUrl = safeGetValue('adImageUrl').trim();
         
         if (!title || !description) {
             showToast('الرجاء ملء الحقول المطلوبة', 'error');
@@ -894,3 +1161,457 @@ function showToast(message, type = 'success') {
         setTimeout(() => toast.remove(), 400);
     }, 3000);
 }
+
+// ============================================
+// 📋 إدارة الطلبات - النسخة المُصلَّحة
+// ============================================
+let allOrders = [];
+let currentOrderFilter = 'all';
+let lastKnownOrderTimestamp = 0;
+let newOrdersSoundEnabled = true;
+let unseenOrdersCount = 0;
+let seenOrderIds = new Set();
+let ordersListener = null;
+
+function loadSeenOrders() {
+    try {
+        const saved = localStorage.getItem('taloola_seen_orders');
+        if (saved) {
+            const ids = JSON.parse(saved);
+            seenOrderIds = new Set(ids);
+        }
+    } catch (e) {
+        console.warn('⚠️ لا يمكن تحميل الطلبات المعروضة');
+    }
+}
+
+function saveSeenOrders() {
+    try {
+        const ids = Array.from(seenOrderIds);
+        const recent = ids.slice(-200);
+        localStorage.setItem('taloola_seen_orders', JSON.stringify(recent));
+    } catch (e) {
+        console.warn('⚠️ لا يمكن حفظ الطلبات المعروضة');
+    }
+}
+
+function playNewOrderSound() {
+    if (!newOrdersSoundEnabled) return;
+    
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const playTone = (frequency, startTime, duration) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
+        
+        const now = audioContext.currentTime;
+        playTone(880, now, 0.2);
+        playTone(1320, now + 0.2, 0.3);
+        
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200, 100, 200]);
+        }
+    } catch (e) {
+        console.warn('⚠️ لا يمكن تشغيل الصوت:', e);
+    }
+}
+
+function showNewOrderNotification(order) {
+    const notification = document.createElement('div');
+    notification.className = 'new-order-notification';
+    
+    const itemsCount = order.items?.length || 0;
+    const totalItems = order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+    
+    notification.innerHTML = `
+        <div class="notification-icon">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="notification-content">
+            <h4>🛎️ طلب جديد #${order.orderNumber || '؟'}</h4>
+            <p>📞 ${order.phone || 'زبون جديد'} | 📍 ${order.area || 'غير محدد'}</p>
+            <small>💰 ${(order.total || 0).toLocaleString('ar-EG')} د.ع • ${itemsCount} صنف (${totalItems} قطعة)</small>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideOutRight 0.4s ease forwards';
+            setTimeout(() => notification.remove(), 400);
+        }
+    }, 6000);
+}
+
+function loadOrders() {
+    const ordersList = document.getElementById('ordersList');
+    const pendingCount = document.getElementById('pendingOrdersCount');
+    const completedCount = document.getElementById('completedOrdersCount');
+    const totalCount = document.getElementById('totalOrdersCount');
+    const newOrdersBadge = document.getElementById('newOrdersBadge');
+    
+    if (!ordersList) return;
+    
+    loadSeenOrders();
+    
+    if (ordersListener) {
+        db.ref('orders/list').off('value', ordersListener);
+    }
+    
+    ordersListener = db.ref('orders/list').orderByChild('timestamp').on('value', (snapshot) => {
+        const orders = snapshot.val();
+        const newOrders = [];
+        
+        if (!orders) {
+            allOrders = [];
+            if (totalCount) totalCount.textContent = '0';
+            if (pendingCount) pendingCount.textContent = '0';
+            if (completedCount) completedCount.textContent = '0';
+            if (newOrdersBadge) newOrdersBadge.style.display = 'none';
+            
+            ordersList.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-inbox fa-3x"></i>
+                    <h3>لا توجد طلبات حالياً</h3>
+                </div>
+            `;
+            return;
+        }
+        
+        allOrders = [];
+        Object.keys(orders).forEach(key => {
+            const order = { id: key, ...orders[key] };
+            allOrders.push(order);
+            
+            if (!seenOrderIds.has(key)) {
+                if (lastKnownOrderTimestamp > 0 && (order.timestamp || 0) > lastKnownOrderTimestamp) {
+                    newOrders.push(order);
+                }
+                seenOrderIds.add(key);
+            }
+        });
+        
+        allOrders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        
+        if (allOrders.length > 0) {
+            const maxTimestamp = Math.max(...allOrders.map(o => o.timestamp || 0));
+            if (maxTimestamp > lastKnownOrderTimestamp) {
+                lastKnownOrderTimestamp = maxTimestamp;
+            }
+        }
+        
+        saveSeenOrders();
+        
+        const pending = allOrders.filter(o => o.status === 'pending' || !o.status).length;
+        const completed = allOrders.filter(o => o.status === 'completed').length;
+        
+        if (totalCount) totalCount.textContent = allOrders.length;
+        if (pendingCount) pendingCount.textContent = pending;
+        if (completedCount) completedCount.textContent = completed;
+        
+        if (newOrdersBadge) {
+            if (pending > 0) {
+                newOrdersBadge.textContent = pending > 99 ? '99+' : pending;
+                newOrdersBadge.style.display = 'inline-block';
+            } else {
+                newOrdersBadge.style.display = 'none';
+            }
+        }
+        
+        if (newOrders.length > 0) {
+            unseenOrdersCount += newOrders.length;
+            updateNewOrdersBadge();
+            playNewOrderSound();
+            newOrders.forEach(order => showNewOrderNotification(order));
+            document.title = `(${unseenOrdersCount}) 🔔 لوحة تحكم تعلولة`;
+        }
+        
+        renderOrders();
+    }, (error) => {
+        console.error('❌ خطأ في تحميل الطلبات:', error);
+        ordersList.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <i class="fas fa-exclamation-circle fa-3x"></i>
+                <h3>حدث خطأ</h3>
+                <p>${error.message}</p>
+                <button onclick="loadOrders()" style="margin-top:15px; padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer;">
+                    <i class="fas fa-redo"></i> إعادة المحاولة
+                </button>
+            </div>
+        `;
+    });
+}
+
+function updateNewOrdersBadge() {
+    const liveBadge = document.getElementById('newOrdersLiveBadge');
+    const liveCount = document.getElementById('newOrdersLiveCount');
+    
+    if (liveBadge && liveCount) {
+        if (unseenOrdersCount > 0) {
+            liveCount.textContent = unseenOrdersCount > 99 ? '99+' : unseenOrdersCount;
+            liveBadge.style.display = 'inline-flex';
+            liveBadge.classList.add('pulse');
+        } else {
+            liveBadge.style.display = 'none';
+            liveBadge.classList.remove('pulse');
+        }
+    }
+}
+
+function manualRefreshOrders() {
+    const refreshBtn = document.getElementById('refreshOrdersBtn');
+    const refreshIcon = refreshBtn?.querySelector('i');
+    
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        if (refreshIcon) refreshIcon.classList.add('fa-spin');
+    }
+    
+    showToast('🔄 جاري تحديث الطلبات...', 'success');
+    
+    loadOrders();
+    loadOrderCounter();
+    
+    setTimeout(() => {
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+        }
+        showToast('✅ تم تحديث الطلبات', 'success');
+    }, 1000);
+}
+
+function markAllOrdersAsSeen() {
+    unseenOrdersCount = 0;
+    updateNewOrdersBadge();
+    document.title = 'لوحة تحكم تعلولة';
+}
+
+function toggleOrderSound() {
+    newOrdersSoundEnabled = !newOrdersSoundEnabled;
+    const soundBtn = document.getElementById('toggleSoundBtn');
+    const soundIcon = soundBtn?.querySelector('i');
+    
+    if (soundIcon) {
+        soundIcon.className = newOrdersSoundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+    }
+    
+    showToast(newOrdersSoundEnabled ? '🔔 تم تفعيل الصوت' : '🔕 تم تعطيل الصوت', 'success');
+    
+    try {
+        localStorage.setItem('taloola_order_sound', newOrdersSoundEnabled);
+    } catch (e) {}
+}
+
+function loadSoundPreference() {
+    try {
+        const saved = localStorage.getItem('taloola_order_sound');
+        if (saved !== null) {
+            newOrdersSoundEnabled = saved === 'true';
+            const soundIcon = document.querySelector('#toggleSoundBtn i');
+            if (soundIcon) {
+                soundIcon.className = newOrdersSoundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            }
+        }
+    } catch (e) {}
+}
+
+function renderOrders() {
+    const ordersList = document.getElementById('ordersList');
+    if (!ordersList) return;
+    
+    let filteredOrders = allOrders;
+    if (currentOrderFilter !== 'all') {
+        filteredOrders = filteredOrders.filter(o => (o.status || 'pending') === currentOrderFilter);
+    }
+    
+    if (filteredOrders.length === 0) {
+        ordersList.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <i class="fas fa-search fa-3x"></i>
+                <h3>لا توجد طلبات في هذه الفئة</h3>
+            </div>
+        `;
+        return;
+    }
+    
+    ordersList.innerHTML = '';
+    
+    const statusLabels = {
+        'pending': { text: 'معلق', icon: 'fa-clock', color: '#ffc107' },
+        'preparing': { text: 'قيد التحضير', icon: 'fa-fire', color: '#17a2b8' },
+        'ready': { text: 'جاهز', icon: 'fa-check-circle', color: '#28a745' },
+        'completed': { text: 'مكتمل', icon: 'fa-check-double', color: '#28a745' },
+        'cancelled': { text: 'ملغي', icon: 'fa-times-circle', color: '#dc3545' }
+    };
+    
+    filteredOrders.forEach(order => {
+        const card = document.createElement('div');
+        card.className = `order-card status-${order.status || 'pending'}`;
+        
+        const status = statusLabels[order.status || 'pending'];
+        const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-EG') : 'غير معروف';
+        
+        let itemsHtml = '';
+        if (order.items && Array.isArray(order.items)) {
+            itemsHtml = order.items.map(item => `
+                <div class="order-item-row">
+                    <span class="item-qty">${item.quantity}×</span>
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-price">${((item.price || 0) * (item.quantity || 0)).toLocaleString('ar-EG')} د.ع</span>
+                </div>
+            `).join('');
+        }
+        
+        card.innerHTML = `
+            <div class="order-header">
+                <div class="order-id">
+                    <i class="fas fa-receipt"></i>
+                    <span>طلب #${order.orderNumber || order.id.substring(0, 6).toUpperCase()}</span>
+                </div>
+                <div class="order-status-badge" style="background: ${status.color};">
+                    <i class="fas ${status.icon}"></i>
+                    <span>${status.text}</span>
+                </div>
+            </div>
+            
+            <div class="order-customer-info">
+                <div class="info-row">
+                    <i class="fas fa-phone"></i>
+                    <a href="tel:${order.phone || ''}">${order.phone || 'غير متوفر'}</a>
+                </div>
+                <div class="info-row">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${order.area || 'غير محدد'}${order.detailedAddress ? ' - ' + order.detailedAddress : ''}</span>
+                </div>
+                ${order.location && order.location.googleMapsUrl ? `
+                <div class="info-row">
+                    <i class="fas fa-location-arrow"></i>
+                    <a href="${order.location.googleMapsUrl}" target="_blank">عرض الموقع</a>
+                </div>
+                ` : ''}
+            </div>
+            
+            <div class="order-items">
+                <h4><i class="fas fa-utensils"></i> الأصناف المطلوبة</h4>
+                ${itemsHtml || '<p class="no-items">لا توجد أصناف</p>'}
+            </div>
+            
+            <div class="order-footer">
+                <div class="order-total">
+                    <span>الإجمالي:</span>
+                    <strong>${(order.total || 0).toLocaleString('ar-EG')} د.ع</strong>
+                </div>
+                <div class="order-date">
+                    <i class="fas fa-calendar"></i>
+                    <span>${orderDate}</span>
+                </div>
+            </div>
+            
+            <div class="order-actions">
+                <select class="order-status-select" onchange="updateOrderStatus('${order.id}', this.value)">
+                    <option value="pending" ${(order.status || 'pending') === 'pending' ? 'selected' : ''}>⏳ معلق</option>
+                    <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>🔥 قيد التحضير</option>
+                    <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>✓ جاهز</option>
+                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>❌ ملغي</option>
+                </select>
+                <button class="btn-cancel-order" onclick="cancelOrder('${order.id}')" title="إلغاء">
+                    <i class="fas fa-ban"></i>
+                </button>
+                <button class="btn-delete-order" onclick="deleteOrder('${order.id}')" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        ordersList.appendChild(card);
+    });
+}
+
+window.updateOrderStatus = async function(orderId, newStatus) {
+    try {
+        await db.ref('orders/list/' + orderId + '/status').set(newStatus);
+        showToast('✅ تم تحديث حالة الطلب', 'success');
+    } catch (error) {
+        showToast('❌ فشل تحديث الحالة', 'error');
+    }
+};
+
+window.cancelOrder = async function(orderId) {
+    if (!confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) return;
+    
+    try {
+        await db.ref('orders/list/' + orderId + '/status').set('cancelled');
+        await db.ref('orders/list/' + orderId + '/cancelledAt').set(Date.now());
+        await db.ref('orders/list/' + orderId + '/notificationSent').set(true);
+        showToast('✅ تم إلغاء الطلب', 'success');
+    } catch (error) {
+        showToast('❌ فشل إلغاء الطلب', 'error');
+    }
+};
+
+window.deleteOrder = async function(orderId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+    try {
+        await db.ref('orders/list/' + orderId).remove();
+        showToast('✅ تم حذف الطلب', 'success');
+    } catch (error) {
+        showToast('❌ فشل الحذف', 'error');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#tab-orders .chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('#tab-orders .chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            currentOrderFilter = this.dataset.filter;
+            renderOrders();
+        });
+    });
+    
+    loadSoundPreference();
+    
+    document.querySelectorAll('.nav-btn[data-tab="orders"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTimeout(markAllOrdersAsSeen, 500);
+        });
+    });
+    
+    const closeBtn = document.getElementById('closeRestaurantBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', async function() {
+            if (!confirm('هل أنت متأكد من إغلاق المطعم؟\n\nسيتم إعادة تعيين عداد الطلبات إلى الصفر.')) return;
+            
+            try {
+                await db.ref('orders/counter').set(0);
+                showToast('✅ تم إغلاق المطعم وإعادة تعيين العداد', 'success');
+            } catch (error) {
+                showToast('❌ فشل إغلاق المطعم', 'error');
+            }
+        });
+    }
+});
+
+window.manualRefreshOrders = manualRefreshOrders;
+window.toggleOrderSound = toggleOrderSound;
+window.markAllOrdersAsSeen = markAllOrdersAsSeen;
