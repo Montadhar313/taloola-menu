@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم مطعم تعلولة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <img src="../assets/images/Logo.gif" alt="شعار تعلولة" class="login-logo">
+            <h2>لوحة تحكم تعلولة</h2>
+            <p>أدخل كلمة المرور للوصول</p>
+            <input type="password" id="adminPassword" placeholder="كلمة المرور">
+            <button id="loginBtn" class="btn-primary">
+                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+            </button>
+            <p id="loginError" class="error-text"></p>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم الرئيسية -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <!-- الشريط الجانبي -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/Logo.gif" alt="Logo" class="sidebar-logo">
+                <h3>تعلولة</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="ads">
+                    <i class="fas fa-bullhorn"></i> إدارة الإعلانات
+                </button>
+                <button class="nav-btn" data-tab="menu" disabled title="قريباً">
+                    <i class="fas fa-utensils"></i> إدارة المنيو
+                </button>
+                <button class="nav-btn" data-tab="orders" disabled title="قريباً">
+                    <i class="fas fa-receipt"></i> الطلبات
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                </button>
+            </div>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <!-- تبويب الإعلانات -->
+            <section id="tab-ads" class="tab-content active">
+                <div class="page-header">
+                    <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات والعروض</h1>
+                    <p>أضف عروضاً خاصة تظهر لعملائك في المنيو الإلكتروني</p>
+                </div>
+
+                <!-- نموذج إضافة إعلان -->
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
+                    <form id="adForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>عنوان الإعلان *</label>
+                                <input type="text" id="adTitle" required placeholder="مثال: عرض البرجر المزدوج">
+                            </div>
+                            <div class="form-group">
+                                <label>السعر (اختياري)</label>
+                                <input type="number" id="adPrice" placeholder="مثال: 5000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>وصف الإعلان *</label>
+                            <textarea id="adDescription" required rows="3" placeholder="اكتب وصفاً جذاباً للعرض..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>صورة الإعلان (اختياري)</label>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>اسحب الصورة هنا أو انقر للاختيار</p>
+                                <input type="file" id="adImage" accept="image/*" hidden>
+                                <img id="imagePreview" class="image-preview" style="display: none;">
+                            </div>
+                        </div>
+                        <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
+                            <i class="fas fa-save"></i> حفظ ونشر الإعلان
+                        </button>
+                    </form>
+                </div>
+
+                <!-- قائمة الإعلانات الحالية -->
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات النشطة حالياً</h2>
+                    <div id="adsList" class="ads-grid">
+                        <p class="loading-text">جاري تحميل الإعلانات...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- تبويب المنيو (قريباً) -->
+            <section id="tab-menu" class="tab-content">
+                <div class="page-header">
+                    <h1><i class="fas fa-utensils"></i> إدارة المنيو</h1>
+                    <p>هذه الميزة قيد التطوير وستتاح قريباً لإضافة وتعديل الأصناف ديناميكياً.</p>
+                </div>
+                <div class="card empty-state">
+                    <i class="fas fa-tools fa-3x"></i>
+                    <h3>قيد التطوير</h3>
+                    <p>سيتمكن المسؤول قريباً من إضافة، تعديل، وحذف أصناف المنيو مباشرة من هنا.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- إشعارات Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
