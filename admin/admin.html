@@ -598,74 +598,150 @@
 </section>
 
             <!-- تبويب الإعلانات -->
-            <section id="tab-ads" class="tab-content">
-                <div class="page-header">
-                    <div class="header-content">
-                        <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات</h1>
-                    </div>
-                    <div class="header-stats">
-                        <div class="stat-card">
-                            <i class="fas fa-ad"></i>
-                            <div class="stat-info">
-                                <span class="stat-number" id="totalAdsCount">0</span>
-                                <span class="stat-label">إعلان</span>
-                            </div>
-                        </div>
-                    </div>
+            <!-- تبويب الإعلانات -->
+<section id="tab-ads" class="tab-content">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-bullhorn"></i> إدارة الإعلانات</h1>
+            <p>أضف إعلانات نصية، صور، أو فيديوهات يوتيوب</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-card">
+                <i class="fas fa-ad"></i>
+                <div class="stat-info">
+                    <span class="stat-number" id="totalAdsCount">0</span>
+                    <span class="stat-label">إعلان</span>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
-                    </div>
-                    <form id="adForm" class="ad-form">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="adTitle">
-                                    <i class="fas fa-heading"></i> العنوان <span class="required">*</span>
-                                </label>
-                                <input type="text" id="adTitle" required placeholder="عنوان الإعلان">
-                            </div>
-                            <div class="form-group">
-                                <label for="adPrice">
-                                    <i class="fas fa-tag"></i> السعر (اختياري)
-                                </label>
-                                <input type="number" id="adPrice" placeholder="مثال: 5000">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="adDescription">
-                                <i class="fas fa-align-right"></i> الوصف <span class="required">*</span>
-                            </label>
-                            <textarea id="adDescription" required rows="3" placeholder="وصف الإعلان..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="adImageUrl">
-                                <i class="fas fa-image"></i> رابط الصورة (اختياري)
-                            </label>
-                            <input type="url" id="adImageUrl" placeholder="https://example.com/image.jpg">
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
-                                <i class="fas fa-save"></i> حفظ الإعلان
-                            </button>
-                        </div>
-                    </form>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h2>
+            <p class="card-subtitle">يمكنك إضافة إعلان نصي، صورة، أو فيديو يوتيوب</p>
+        </div>
+        <form id="adForm" class="ad-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="adTitle">
+                        <i class="fas fa-heading"></i> العنوان <span class="required">*</span>
+                    </label>
+                    <input type="text" id="adTitle" required placeholder="عنوان الإعلان">
                 </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات الحالية</h2>
-                    </div>
-                    <div id="adsList" class="ads-grid">
-                        <div class="loading-state">
-                            <i class="fas fa-spinner fa-spin fa-3x"></i>
-                            <p>جاري تحميل الإعلانات...</p>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label for="adPrice">
+                        <i class="fas fa-tag"></i> السعر (اختياري)
+                    </label>
+                    <input type="number" id="adPrice" placeholder="مثال: 5000">
                 </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="adDescription">
+                    <i class="fas fa-align-right"></i> الوصف <span class="required">*</span>
+                </label>
+                <textarea id="adDescription" required rows="3" placeholder="وصف الإعلان..."></textarea>
+            </div>
 
-            </section>
+            <!-- 🆕 قسم نوع المحتوى -->
+            <div class="form-group">
+                <label><i class="fas fa-photo-video"></i> نوع المحتوى</label>
+                <div class="media-type-selector">
+                    <label class="media-type-option">
+                        <input type="radio" name="adMediaType" value="image" checked>
+                        <div class="media-type-preview">
+                            <i class="fas fa-image"></i>
+                            <span>صورة</span>
+                        </div>
+                    </label>
+                    <label class="media-type-option">
+                        <input type="radio" name="adMediaType" value="youtube">
+                        <div class="media-type-preview">
+                            <i class="fab fa-youtube"></i>
+                            <span>يوتيوب</span>
+                        </div>
+                    </label>
+                    <label class="media-type-option">
+                        <input type="radio" name="adMediaType" value="video">
+                        <div class="media-type-preview">
+                            <i class="fas fa-video"></i>
+                            <span>فيديو مباشر</span>
+                        </div>
+                    </label>
+                    <label class="media-type-option">
+                        <input type="radio" name="adMediaType" value="none">
+                        <div class="media-type-preview">
+                            <i class="fas fa-font"></i>
+                            <span>نص فقط</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 🆕 رابط الصورة -->
+            <div class="form-group ad-media-field" id="imageField">
+                <label for="adImageUrl">
+                    <i class="fas fa-image"></i> رابط الصورة
+                </label>
+                <input type="url" id="adImageUrl" placeholder="https://example.com/image.jpg">
+                <small class="form-hint">
+                    <i class="fas fa-info-circle"></i>
+                    أدخل رابط صورة مباشر (Imgur, ImgBB, Google Drive, GitHub)
+                </small>
+            </div>
+
+            <!-- 🆕 رابط فيديو يوتيوب -->
+            <div class="form-group ad-media-field" id="youtubeField" style="display: none;">
+                <label for="adYoutubeUrl">
+                    <i class="fab fa-youtube" style="color: #ff0000;"></i> رابط فيديو يوتيوب
+                </label>
+                <input type="url" id="adYoutubeUrl" placeholder="https://www.youtube.com/watch?v=...">
+                <small class="form-hint">
+                    <i class="fas fa-info-circle"></i>
+                    أدخل رابط فيديو يوتيوب (يدعم: youtube.com, youtu.be, shorts)
+                </small>
+                <!-- معاينة الفيديو -->
+                <div id="youtubePreview" class="youtube-preview-container" style="display: none;">
+                    <div class="preview-label">
+                        <i class="fas fa-eye"></i> معاينة الفيديو
+                    </div>
+                    <div id="youtubePreviewFrame"></div>
+                </div>
+            </div>
+
+            <!-- 🆕 رابط فيديو مباشر -->
+            <div class="form-group ad-media-field" id="videoField" style="display: none;">
+                <label for="adVideoUrl">
+                    <i class="fas fa-video"></i> رابط الفيديو المباشر (MP4)
+                </label>
+                <input type="url" id="adVideoUrl" placeholder="https://example.com/video.mp4">
+                <small class="form-hint">
+                    <i class="fas fa-info-circle"></i>
+                    يجب أن يكون الفيديو بصيغة MP4 مباشر
+                </small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="saveAdBtn" class="btn-primary btn-lg">
+                    <i class="fas fa-save"></i> حفظ الإعلان
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-list"></i> الإعلانات الحالية</h2>
+        </div>
+        <div id="adsList" class="ads-grid">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p>جاري تحميل الإعلانات...</p>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- 📋 إدارة الطلبات -->
 <div class="tab-content" id="tab-orders">
