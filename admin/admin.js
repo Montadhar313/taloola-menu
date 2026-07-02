@@ -1038,8 +1038,91 @@ function resetMenuForm() {
 }
 
 // ============================================
-// 📢 إدارة الإعلانات
+// 📢 إدارة الإعلانات - النسخة المتقدمة (فيديو + صور)
 // ============================================
+
+// 🆕 دالة استخراج معرف فيديو يوتيوب من الرابط
+function extractYouTubeId(url) {
+    if (!url || typeof url !== 'string') return null;
+    
+    // دعم جميع صيغ روابط يوتيوب
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /[?&]v=([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/ // معرف مباشر
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.trim().match(pattern);
+        if (match && match[1]) return match[1];
+    }
+    
+    return null;
+}
+
+// 🆕 دالة إنشاء رابط مضمن ليوتيوب
+function getYouTubeEmbedUrl(videoId, options = {}) {
+    const params = new URLSearchParams({
+        rel: '0',
+        modestbranding: '1',
+        ...options
+    });
+    return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+}
+
+// 🆕 معاينة فيديو يوتيوب عند إدخال الرابط
+function previewYouTubeVideo() {
+    const urlInput = document.getElementById('adYoutubeUrl');
+    const previewContainer = document.getElementById('youtubePreview');
+    const previewFrame = document.getElementById('youtubePreviewFrame');
+    
+    if (!urlInput || !previewContainer || !previewFrame) return;
+    
+    const url = urlInput.value.trim();
+    const videoId = extractYouTubeId(url);
+    
+    if (videoId) {
+        previewContainer.style.display = 'block';
+        previewFrame.innerHTML = `
+            <iframe 
+                width="100%" 
+                height="250" 
+                src="${getYouTubeEmbedUrl(videoId)}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen
+                style="border-radius: 10px; max-width: 100%;">
+            </iframe>
+            <div class="video-id-badge">
+                <i class="fab fa-youtube"></i> معرف الفيديو: ${videoId}
+            </div>
+        `;
+    } else if (url) {
+        previewContainer.style.display = 'block';
+        previewFrame.innerHTML = `
+            <div class="preview-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>رابط يوتيوب غير صالح</p>
+                <small>تأكد من صحة الرابط وجرب مرة أخرى</small>
+            </div>
+        `;
+    } else {
+        previewContainer.style.display = 'none';
+        previewFrame.innerHTML = '';
+    }
+}
+
+// 🆕 تبديل حقول الوسائط حسب النوع المختار
+function switchMediaFields(mediaType) {
+    const imageField = document.getElementById('imageField');
+    const youtubeField = document.getElementById('youtubeField');
+    const videoField = document.getElementById('videoField');
+    
+    if (imageField) imageField.style.display = mediaType === 'image' ? 'block' : 'none';
+    if (youtubeField) youtubeField.style.display = mediaType === 'youtube' ? 'block' : 'none';
+    if (videoField) videoField.style.display = mediaType === 'video' ? 'block' : 'none';
+}
+
 function loadAds() {
     const adsList = document.getElementById('adsList');
     const totalAdsCount = document.getElementById('totalAdsCount');
@@ -1052,6 +1135,13 @@ function loadAds() {
         
         if (!ads) {
             if (totalAdsCount) totalAdsCount.textContent = '0';
+            adsList.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-bullhorn fa-3x"></i>
+                    <h3>لا توجد إعلانات</h3>
+                    <p>أضف إعلانك الأول من النموذج أعلاه</p>
+                </div>
+            `;
             return;
         }
         
@@ -1063,19 +1153,70 @@ function loadAds() {
             const card = document.createElement('div');
             card.className = 'ad-card';
             
-            const imageHtml = ad.imageUrl 
-                ? `<img src="${ad.imageUrl}" alt="${ad.title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">`
-                : `<img src="https://via.placeholder.com/300x200?text=No+Image" alt="${ad.title}">`;
+            // 🆕 تحديد نوع المحتوى
+            const mediaType = ad.mediaType || 'image';
+            let mediaHtml = '';
+            
+            if (mediaType === 'youtube' && ad.youtubeUrl) {
+                const videoId = extractYouTubeId(ad.youtubeUrl);
+                if (videoId) {
+                    mediaHtml = `
+                        <div class="ad-video-wrapper youtube">
+                            <iframe 
+                                width="100%" 
+                                height="200" 
+                                src="${getYouTubeEmbedUrl(videoId)}" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                            <div class="media-type-badge youtube">
+                                <i class="fab fa-youtube"></i> يوتيوب
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (mediaType === 'video' && ad.videoUrl) {
+                mediaHtml = `
+                    <div class="ad-video-wrapper direct">
+                        <video controls preload="metadata" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px;">
+                            <source src="${ad.videoUrl}" type="video/mp4">
+                            المتصفح لا يدعم تشغيل الفيديو
+                        </video>
+                        <div class="media-type-badge video">
+                            <i class="fas fa-video"></i> فيديو
+                        </div>
+                    </div>
+                `;
+            } else if (mediaType === 'image' && ad.imageUrl) {
+                mediaHtml = `
+                    <div class="ad-image">
+                        <img src="${ad.imageUrl}" alt="${ad.title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                        <div class="media-type-badge image">
+                            <i class="fas fa-image"></i> صورة
+                        </div>
+                    </div>
+                `;
+            } else {
+                mediaHtml = `
+                    <div class="media-type-badge text-only">
+                        <i class="fas fa-font"></i> نص فقط
+                    </div>
+                `;
+            }
             
             card.innerHTML = `
                 <button class="delete-btn" onclick="deleteAd('${key}')" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
-                <div class="ad-card-image">${imageHtml}</div>
+                ${mediaHtml}
                 <div class="ad-card-content">
                     <h4>${ad.title}</h4>
                     <p>${ad.description}</p>
                     ${ad.price ? `<div class="price">${ad.price} د.ع</div>` : ''}
+                    <div class="ad-date">
+                        <i class="fas fa-calendar"></i> ${ad.date || ''}
+                    </div>
                 </div>
             `;
             adsList.appendChild(card);
@@ -1099,6 +1240,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const adForm = document.getElementById('adForm');
     if (!adForm) return;
     
+    // 🆕 أحداث تبديل نوع الوسائط
+    document.querySelectorAll('input[name="adMediaType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            switchMediaFields(this.value);
+        });
+    });
+    
+    // 🆕 معاينة فيديو يوتيوب عند الكتابة
+    const youtubeInput = document.getElementById('adYoutubeUrl');
+    if (youtubeInput) {
+        let previewTimeout;
+        youtubeInput.addEventListener('input', function() {
+            clearTimeout(previewTimeout);
+            previewTimeout = setTimeout(previewYouTubeVideo, 800);
+        });
+    }
+    
+    // حفظ الإعلان
     adForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const saveBtn = document.getElementById('saveAdBtn');
@@ -1107,10 +1266,43 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
         }
         
-        const title = safeGetValue('adTitle').trim();
-        const description = safeGetValue('adDescription').trim();
-        const price = safeGetValue('adPrice').trim();
-        const imageUrl = safeGetValue('adImageUrl').trim();
+        const title = document.getElementById('adTitle').value.trim();
+        const description = document.getElementById('adDescription').value.trim();
+        const price = document.getElementById('adPrice').value.trim();
+        
+        // 🆕 جمع بيانات الوسائط
+        const mediaType = document.querySelector('input[name="adMediaType"]:checked')?.value || 'image';
+        const imageUrl = document.getElementById('adImageUrl').value.trim();
+        const youtubeUrl = document.getElementById('adYoutubeUrl').value.trim();
+        const videoUrl = document.getElementById('adVideoUrl').value.trim();
+        
+        // التحقق من صحة البيانات حسب النوع
+        if (mediaType === 'youtube' && !youtubeUrl) {
+            showToast('⚠ الرجاء إدخال رابط فيديو يوتيوب', 'error');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ الإعلان';
+            }
+            return;
+        }
+        
+        if (mediaType === 'video' && !videoUrl) {
+            showToast('⚠ الرجاء إدخال رابط الفيديو', 'error');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ الإعلان';
+            }
+            return;
+        }
+        
+        if (mediaType === 'image' && !imageUrl) {
+            showToast('⚠ الرجاء إدخال رابط الصورة', 'error');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ الإعلان';
+            }
+            return;
+        }
         
         if (!title || !description) {
             showToast('الرجاء ملء الحقول المطلوبة', 'error');
@@ -1123,17 +1315,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const newAd = {
-                title, description,
+                title,
+                description,
                 price: price || '',
-                imageUrl: imageUrl || '',
+                mediaType,
+                imageUrl: mediaType === 'image' ? imageUrl : '',
+                youtubeUrl: mediaType === 'youtube' ? youtubeUrl : '',
+                videoUrl: mediaType === 'video' ? videoUrl : '',
+                youtubeId: mediaType === 'youtube' ? extractYouTubeId(youtubeUrl) : '',
                 timestamp: Date.now(),
                 date: new Date().toLocaleDateString('ar-EG')
             };
+            
             await db.ref('ads').push(newAd);
-            showToast('تم نشر الإعلان بنجاح!', 'success');
+            showToast('✅ تم نشر الإعلان بنجاح!', 'success');
             adForm.reset();
+            
+            // إعادة تعيين الحقول
+            switchMediaFields('image');
+            document.getElementById('youtubePreview').style.display = 'none';
+            
         } catch (error) {
             showToast('حدث خطأ', 'error');
+            console.error('خطأ:', error);
         } finally {
             if (saveBtn) {
                 saveBtn.disabled = false;
