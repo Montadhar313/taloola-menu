@@ -1317,11 +1317,19 @@ function closeOrderReview() {
 }
 
 // ============================================
-// 📱 إرسال الطلب عبر واتساب
+// 📱 إرسال الطلب عبر واتساب + حفظ في Firebase
 // ============================================
-function confirmAndSendOrder() {
+async function confirmAndSendOrder() {
+    // 🆕 التحقق من السلة
     if (!shoppingCart || shoppingCart.length === 0) {
         showNotification('السلة فارغة!');
+        return;
+    }
+    
+    // 🆕 التحقق من Firebase
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        console.error('❌ Firebase غير متاح');
+        showNotification('⚠ لا يمكن حفظ الطلب حالياً، يرجى إعادة تحميل الصفحة');
         return;
     }
     
@@ -1363,66 +1371,190 @@ function confirmAndSendOrder() {
     
     if (hasError) return;
     
+    // 🆕 حفظ بيانات الزبون
     try {
         safeLocalStorageSet('taloola_saved_phone', phone);
         safeLocalStorageSet('taloola_saved_area', area);
-    } catch (e) {}
-    
-    const phoneNumber = '9647755666073';
-    let message = 'مرحبا اريد طلب استلام من مطعم تعلولة\n\n';
-    
-    message += `📞 رقم الهاتف: ${phone}\n`;
-    message += `📍 منطقة التوصيل: ${area}\n`;
-    if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
-    
-    message += '\n═══════════════════\n';
-    message += 'الطلب :\n';
-    
-    let totalAmount = 0;
-    shoppingCart.forEach((item, index) => {
-        const itemPrice = parseInt(item.price) || 0;
-        const itemQty = parseInt(item.quantity) || 0;
-        const itemTotal = itemPrice * itemQty;
-        totalAmount += itemTotal;
-        
-        message += `\n${index + 1}. ${item.name}`;
-        message += `\nالكمية : ${itemQty}`;
-        message += `\nالسعر : ${itemPrice}`;
-        message += `\n`;
-    });
-    
-    message += '\n═══════════════════\n';
-    message += `\nالاجمالي : ${totalAmount}`;
-    message += `\nالمجموع النهائي : ${totalAmount}`;
-    
-    const gpsLocation = userLocation || getLocationFromStorage();
-    if (gpsLocation) {
-        const mapUrl = gpsLocation.googleMapsUrl || 
-            `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`;
-        message += `\n\n📍 الموقع على الخريطة:`;
-        message += `\n${mapUrl}`;
+    } catch (e) {
+        console.warn('⚠️ فشل حفظ بيانات الزبون:', e);
     }
     
+    // 🆕 حساب الإجمالي
+    let totalAmount = 0;
+    shoppingCart.forEach((item) => {
+        const itemPrice = parseInt(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 0;
+        totalAmount += (itemPrice * itemQty);
+    });
+    
+    const gpsLocation = userLocation || getLocationFromStorage();
+    
+    // 🆕 إظهار شاشة التحميل
+    showNotification('⏳ جاري حفظ طلبك...');
+    
     try {
+        console.log('🔍 بدء حفظ الطلب في Firebase...');
+        
+        // 🆕 الحصول على رقم الطلب التالي
+        let orderNumber = 0;
+        const counterRef = firebase.database().ref('orders/counter');
+        const ordersRef = firebase.database().ref('orders/list');
+        
+        // 🆕 محاولة الحصول على رقم الطلب
+        try {
+            const counterSnapshot = await counterRef.transaction((currentValue) => {
+                return (currentValue || 0) + 1;
+            });
+            
+            if (counterSnapshot && counterSnapshot.val() !== null) {
+                orderNumber = counterSnapshot.val();
+                console.log(`✅ رقم الطلب: ${orderNumber}`);
+            } else {
+                throw new Error('فشل الحصول على رقم الطلب');
+            }
+        } catch (transactionError) {
+            console.warn('⚠️ فشل transaction، استخدام الطريقة البديلة:', transactionError.message);
+            
+            // الطريقة البديلة: قراءة آخر طلب
+            try {
+                const lastOrderSnapshot = await ordersRef
+                    .orderByChild('timestamp')
+                    .limitToLast(1)
+                    .once('value');
+                
+                const lastOrder = lastOrderSnapshot.val();
+                if (lastOrder) {
+                    const lastKey = Object.keys(lastOrder)[0];
+                    const lastNum = lastOrder[lastKey].orderNumber || 0;
+                    orderNumber = lastNum + 1;
+                } else {
+                    orderNumber = 1;
+                }
+                
+                console.log(`✅ رقم الطلب (بديل): ${orderNumber}`);
+                
+                // محاولة تحديث العداد
+                try {
+                    await counterRef.set(orderNumber);
+                } catch (e) {
+                    console.warn('⚠️ لا يمكن تحديث العداد:', e.message);
+                }
+            } catch (fallbackError) {
+                console.error('❌ فشل الحصول على رقم الطلب:', fallbackError);
+                orderNumber = Math.floor(Date.now() / 1000) % 100000;
+            }
+        }
+        
+        // 🆕 بناء بيانات الطلب
+        const orderData = {
+            orderNumber: orderNumber,
+            customerName: 'زبون',
+            phone: phone,
+            area: area,
+            detailedAddress: detailed || '',
+            items: shoppingCart.map(item => ({
+                name: item.name,
+                price: parseInt(item.price) || 0,
+                quantity: parseInt(item.quantity) || 0,
+                total: (parseInt(item.price) || 0) * (parseInt(item.quantity) || 0)
+            })),
+            total: totalAmount,
+            status: 'pending',
+            timestamp: Date.now(),
+            date: new Date().toLocaleString('ar-EG'),
+            time: new Date().toLocaleTimeString('ar-EG', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            }),
+            location: gpsLocation ? {
+                latitude: gpsLocation.latitude,
+                longitude: gpsLocation.longitude,
+                googleMapsUrl: gpsLocation.googleMapsUrl || 
+                    `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
+            } : null,
+            notificationSent: false
+        };
+        
+        console.log('📦 بيانات الطلب:', orderData);
+        
+        // 🆕 حفظ الطلب في Firebase
+        const newOrderRef = await ordersRef.push(orderData);
+        
+        console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
+        console.log('🔗 رابط الطلب:', `orders/list/${newOrderRef.key}`);
+        
+        // 🆕 بناء رسالة الواتساب
+        const phoneNumber = '9647755666073';
+        let message = `🛎️ طلب جديد #${orderNumber}\n`;
+        message += `━━━━━━━━━━━━━━━\n\n`;
+        message += `📞 رقم الهاتف: ${phone}\n`;
+        message += `📍 منطقة التوصيل: ${area}\n`;
+        if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
+        
+        message += `\n━━━━━━━━━━━━━━━\n`;
+        message += `🛒 تفاصيل الطلب:\n\n`;
+        
+        shoppingCart.forEach((item, index) => {
+            const itemPrice = parseInt(item.price) || 0;
+            const itemQty = parseInt(item.quantity) || 0;
+            const itemTotal = itemPrice * itemQty;
+            
+            message += `${index + 1}. ${item.name}\n`;
+            message += `   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n`;
+            message += `   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n\n`;
+        });
+        
+        message += `━━━━━━━━━━━━━━━\n`;
+        message += `💰 المجموع النهائي: ${totalAmount.toLocaleString('ar-EG')} د.ع\n`;
+        
+        if (gpsLocation) {
+            const mapUrl = gpsLocation.googleMapsUrl || 
+                `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`;
+            message += `\n📍 الموقع على الخريطة:\n${mapUrl}\n`;
+        }
+        
+        message += `\n━━━━━━━━━━━━━━━\n`;
+        message += `⏰ وقت الطلب: ${new Date().toLocaleTimeString('ar-EG')}\n`;
+        message += `📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}`;
+        
+        // 🆕 فتح واتساب
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         
-        closeCartModal();
-        showNotification('✅ تم إرسال طلبك بنجاح!');
+        // 🆕 رسالة نجاح
+        showNotification(`✅ تم إرسال طلبك بنجاح! رقم الطلب: #${orderNumber}`);
         
+        // 🆕 تفريغ السلة والنموذج
         setTimeout(() => {
             shoppingCart = [];
             saveCart();
             if (phoneInput) phoneInput.value = '';
             if (areaSelect) areaSelect.value = '';
             if (detailedInput) detailedInput.value = '';
+            closeCartModal();
         }, 500);
-    } catch (e) {
-        showNotification('⚠ فشل فتح واتساب، يرجى المحاولة مرة أخرى');
-        console.error('خطأ في فتح واتساب:', e);
+        
+    } catch (error) {
+        console.error('❌ خطأ في حفظ الطلب:', error);
+        console.error('📋 تفاصيل الخطأ:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        
+        let errorMessage = '⚠ فشل حفظ الطلب';
+        
+        if (error.code === 'PERMISSION_DENIED') {
+            errorMessage = '⚠ خطأ في الصلاحيات - تحقق من قواعد Firebase';
+        } else if (error.code === 'NETWORK_ERROR') {
+            errorMessage = '⚠ خطأ في الاتصال بالإنترنت';
+        } else if (error.message) {
+            errorMessage = `⚠ ${error.message}`;
+        }
+        
+        showNotification(errorMessage);
     }
 }
-
 // ============================================
 // 🔔 دوال عامة
 // ============================================
@@ -1451,20 +1583,39 @@ function openSupport() {
 }
 
 // ============================================
-// 📢 جلب الإعلانات من Firebase
+// 📢 جلب الإعلانات من Firebase - النسخة المتقدمة (فيديو + صور)
 // ============================================
+
+// 🆕 دالة استخراج معرف فيديو يوتيوب
+function extractYouTubeId(url) {
+    if (!url || typeof url !== 'string') return null;
+    
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /[?&]v=([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.trim().match(pattern);
+        if (match && match[1]) return match[1];
+    }
+    
+    return null;
+}
+
 function displayAds() {
     const adsContainer = document.getElementById('adsContainer');
     if (!adsContainer) return;
     
-    adsContainer.innerHTML = '<p class="loading-text" style="color: #fff; text-align: center; grid-column: 1/-1;">جاري تحميل العروض...</p>';
+    adsContainer.innerHTML = '<div class="loading-text" style="color: #fff; text-align: center; grid-column: 1/-1; padding: 20px;">جاري تحميل العروض...</div>';
     
     if (typeof firebase === 'undefined' || !firebase.database) {
         setTimeout(() => {
             if (typeof firebase !== 'undefined' && firebase.database) {
                 listenToAds();
             } else {
-                adsContainer.innerHTML = '<p class="no-ads">تعذر تحميل العروض حالياً</p>';
+                adsContainer.innerHTML = '<div class="no-ads">تعذر تحميل العروض حالياً</div>';
             }
         }, 1000);
         return;
@@ -1478,7 +1629,7 @@ function displayAds() {
             const ads = snapshot.val();
             
             if (!ads) {
-                adsContainer.innerHTML = '<p class="no-ads">لا توجد عروض خاصة حالياً</p>';
+                adsContainer.innerHTML = '<div class="no-ads">لا توجد عروض خاصة حالياً</div>';
                 return;
             }
             
@@ -1489,27 +1640,80 @@ function displayAds() {
                 const adElement = document.createElement('div');
                 adElement.className = `ad-card ${ad.template || 'red'}`;
                 
-                const imageUrl = (ad.imageUrl || '').trim();
-                const hasImage = imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'));
+                // 🆕 تحديد نوع المحتوى
+                const mediaType = ad.mediaType || 'image';
+                let mediaHtml = '';
+                
+                if (mediaType === 'youtube' && (ad.youtubeUrl || ad.youtubeId)) {
+                    const videoId = ad.youtubeId || extractYouTubeId(ad.youtubeUrl);
+                    if (videoId) {
+                        mediaHtml = `
+                            <div class="ad-video-wrapper youtube">
+                                <div class="video-responsive">
+                                    <iframe 
+                                        src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                        allowfullscreen
+                                        loading="lazy"
+                                        title="${ad.title || 'فيديو'}">
+                                    </iframe>
+                                </div>
+                                <div class="media-type-badge youtube">
+                                    <i class="fab fa-youtube"></i>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (mediaType === 'video' && ad.videoUrl) {
+                    mediaHtml = `
+                        <div class="ad-video-wrapper direct">
+                            <video 
+                                controls 
+                                preload="metadata" 
+                                playsinline
+                                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23000'/%3E%3C/svg%3E"
+                                style="width: 100%; border-radius: 10px;">
+                                <source src="${ad.videoUrl}" type="video/mp4">
+                                المتصفح لا يدعم تشغيل الفيديو
+                            </video>
+                            <div class="media-type-badge video">
+                                <i class="fas fa-video"></i>
+                            </div>
+                        </div>
+                    `;
+                } else if (mediaType === 'image' && ad.imageUrl) {
+                    const imageUrl = (ad.imageUrl || '').trim();
+                    const hasImage = imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'));
+                    
+                    if (hasImage) {
+                        mediaHtml = `
+                            <div class="ad-image">
+                                <img src="${imageUrl}" alt="${ad.title || ''}" loading="lazy" onerror="handleImageError(this)">
+                                <div class="media-type-badge image">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
                 
                 adElement.innerHTML = `
-                    ${hasImage ? `<div class="ad-image"><img src="${imageUrl}" alt="${ad.title || ''}" loading="lazy" onerror="handleImageError(this)"></div>` : ''}
-                    <h4>${ad.title || 'عرض'}</h4>
-                    <p>${ad.description || ''}</p>
-                    ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+                    ${mediaHtml}
+                    <div class="ad-card-content">
+                        <h4>${ad.title || 'عرض'}</h4>
+                        <p>${ad.description || ''}</p>
+                        ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
+                    </div>
                 `;
                 adsContainer.appendChild(adElement);
             });
             
-            if (smartImageLoader && smartImageLoader.visibilityObserver) {
-                const newLazyImages = adsContainer.querySelectorAll('.lazy-image:not(.loaded):not(.loading)');
-                newLazyImages.forEach(img => {
-                    smartImageLoader.visibilityObserver.observe(img);
-                });
-            }
+            console.log(`✅ تم تحميل ${sortedKeys.length} إعلان`);
+            
         }, (error) => {
             console.error('خطأ في جلب الإعلانات:', error);
-            adsContainer.innerHTML = '<p class="no-ads">تعذر تحميل العروض حالياً</p>';
+            adsContainer.innerHTML = '<div class="no-ads">تعذر تحميل العروض حالياً</div>';
         });
     }
 }
