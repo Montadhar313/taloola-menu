@@ -2328,3 +2328,163 @@ section.info-section.animate-in {
     }
 }
 
+/* ============================================ */
+/* 🎬 عرض فيديوهات يوتيوب في الإعلانات */
+/* ============================================ */
+
+/* حاوية الفيديو متجاوبة (Responsive) */
+.ad-video-wrapper {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+}
+
+.video-responsive {
+    position: relative;
+    padding-bottom: 56.25%; /* نسبة 16:9 */
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+    background: #000;
+}
+
+.video-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.ad-video-wrapper.youtube iframe {
+    width: 100%;
+    height: 280px;
+    display: block;
+}
+
+.ad-video-wrapper.direct video {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    display: block;
+}
+
+/* شارات نوع الوسائط */
+.ad-card .media-type-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+    z-index: 5;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.ad-card .media-type-badge.youtube {
+    background: rgba(255, 0, 0, 0.9);
+}
+
+.ad-card .media-type-badge.video {
+    background: rgba(0, 123, 255, 0.9);
+}
+
+.ad-card .media-type-badge.image {
+    background: rgba(40, 167, 69, 0.9);
+}
+
+/* تحسين مظهر بطاقات الإعلانات */
+#adsContainer .ad-card {
+    position: relative;
+    overflow: hidden;
+}
+
+#adsContainer .ad-card .ad-image {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+}
+
+#adsContainer .ad-card .ad-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+#adsContainer .ad-card:hover .ad-image img {
+    transform: scale(1.05);
+}
+
+#adsContainer .ad-card .ad-card-content {
+    padding: 18px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+}
+
+#adsContainer .ad-card .ad-card-content h4 {
+    color: var(--main-yellow);
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+#adsContainer .ad-card .ad-card-content p {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+#adsContainer .ad-card .ad-price {
+    color: var(--main-yellow);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive للفيديو */
+@media (max-width: 768px) {
+    .ad-video-wrapper.youtube iframe,
+    .ad-video-wrapper.direct video {
+        height: 220px;
+    }
+    
+    #adsContainer .ad-card .ad-image {
+        height: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ad-video-wrapper.youtube iframe,
+    .ad-video-wrapper.direct video {
+        height: 200px;
+    }
+    
+    #adsContainer .ad-card .ad-image {
+        height: 160px;
+    }
+    
+    #adsContainer .ad-card .ad-card-content h4 {
+        font-size: 1.05rem;
+    }
+    
+    #adsContainer .ad-card .media-type-badge {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+}
+
