@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ❌ احذف هذه الدالة القديمة
 function showDashboard() {
     const loginScreen = document.getElementById('loginScreen');
     const dashboard = document.getElementById('dashboard');
@@ -87,6 +88,7 @@ function showDashboard() {
     loadThemeSettings();
     loadOrderCounter();
     loadOrders();
+    // ❌ كانت تفتقر لـ loadBannedPhones()
 }
 
 // ============================================
@@ -1816,6 +1818,393 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ============================================
+// 🚫 نظام إدارة الحظر - النسخة الكاملة
+// ============================================
+let allBannedPhones = [];
+let currentBanFilter = 'all';
+let bannedPhonesListener = null;
+
+// تحميل الأرقام المحظورة من Firebase
+function loadBannedPhones() {
+    const bannedList = document.getElementById('bannedList');
+    const totalBannedCount = document.getElementById('totalBannedCount');
+    const temporaryBansCount = document.getElementById('temporaryBansCount');
+    const permanentBansCount = document.getElementById('permanentBansCount');
+    
+    if (!bannedList) return;
+    
+    // إلغاء المستمع القديم إن وجد
+    if (bannedPhonesListener) {
+        db.ref('banned_phones').off('value', bannedPhonesListener);
+    }
+    
+    bannedPhonesListener = db.ref('banned_phones').on('value', (snapshot) => {
+        bannedList.innerHTML = '';
+        allBannedPhones = [];
+        const banned = snapshot.val();
+        
+        if (!banned) {
+            if (totalBannedCount) totalBannedCount.textContent = '0';
+            if (temporaryBansCount) temporaryBansCount.textContent = '0';
+            if (permanentBansCount) permanentBansCount.textContent = '0';
+            
+            bannedList.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-check-circle fa-3x" style="color: #28a745;"></i>
+                    <h3>لا توجد أرقام محظورة</h3>
+                    <p>جميع الزبائن يمكنهم الطلب بشكل طبيعي</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const now = Date.now();
+        let tempCount = 0;
+        let permCount = 0;
+        let expiredCount = 0;
+        
+        Object.keys(banned).forEach(key => {
+            const banInfo = banned[key];
+            const isPermanent = banInfo.permanent === true;
+            const isExpired = !isPermanent && banInfo.banUntil && banInfo.banUntil <= now;
+            
+            // حذف الأرقام المنتهية الصلاحية تلقائياً
+            if (isExpired) {
+                db.ref('banned_phones/' + key).remove().catch(err => {
+                    console.warn('⚠️ فشل حذف حظر منتهي:', err);
+                });
+                return;
+            }
+            
+            allBannedPhones.push({
+                phone: key,
+                ...banInfo,
+                isPermanent,
+                isExpired
+            });
+            
+            if (isPermanent) permCount++;
+            else tempCount++;
+        });
+        
+        // ترتيب حسب التاريخ (الأحدث أولاً)
+        allBannedPhones.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        
+        // تحديث الإحصائيات
+        if (totalBannedCount) totalBannedCount.textContent = allBannedPhones.length;
+        if (temporaryBansCount) temporaryBansCount.textContent = tempCount;
+        if (permanentBansCount) permanentBansCount.textContent = permCount;
+        
+        renderBannedPhones();
+        
+    }, (error) => {
+        console.error('❌ خطأ في تحميل الأرقام المحظورة:', error);
+        bannedList.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <i class="fas fa-exclamation-circle fa-3x" style="color: #dc3545;"></i>
+                <h3>حدث خطأ</h3>
+                <p>${error.message}</p>
+                <button onclick="loadBannedPhones()" style="margin-top:15px; padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer;">
+                    <i class="fas fa-redo"></i> إعادة المحاولة
+                </button>
+            </div>
+        `;
+    });
+}
+
+// عرض الأرقام المحظورة
+function renderBannedPhones() {
+    const bannedList = document.getElementById('bannedList');
+    if (!bannedList) return;
+    
+    let filteredBans = allBannedPhones;
+    const now = Date.now();
+    
+    if (currentBanFilter === 'temporary') {
+        filteredBans = filteredBans.filter(b => !b.isPermanent);
+    } else if (currentBanFilter === 'permanent') {
+        filteredBans = filteredBans.filter(b => b.isPermanent);
+    } else if (currentBanFilter === 'expired') {
+        filteredBans = filteredBans.filter(b => !b.isPermanent && b.banUntil && b.banUntil <= now);
+    }
+    
+    if (filteredBans.length === 0) {
+        bannedList.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <i class="fas fa-search fa-3x"></i>
+                <h3>لا توجد نتائج في هذه الفئة</h3>
+            </div>
+        `;
+        return;
+    }
+    
+    bannedList.innerHTML = '';
+    
+    filteredBans.forEach(ban => {
+        const card = document.createElement('div');
+        card.className = `banned-card ${ban.isPermanent ? 'permanent' : 'temporary'}`;
+        
+        // حساب الوقت المتبقي
+        let timeInfo = '';
+        let statusBadge = '';
+        
+        if (ban.isPermanent) {
+            timeInfo = '♾️ حظر دائم';
+            statusBadge = '<span class="ban-badge permanent">دائم</span>';
+        } else if (ban.banUntil) {
+            const remaining = ban.banUntil - now;
+            const hours = Math.ceil(remaining / (60 * 60 * 1000));
+            const days = Math.floor(hours / 24);
+            
+            if (hours > 24) {
+                timeInfo = `⏰ متبقي ${days} يوم و ${hours % 24} ساعة`;
+            } else {
+                timeInfo = `⏰ متبقي ${hours} ساعة`;
+            }
+            
+            statusBadge = `<span class="ban-badge temporary">مؤقت</span>`;
+        }
+        
+        const banDate = ban.timestamp ? new Date(ban.timestamp).toLocaleString('ar-EG') : 'غير معروف';
+        const reason = ban.reason ? `<div class="ban-reason"><i class="fas fa-comment"></i> ${ban.reason}</div>` : '';
+        
+        card.innerHTML = `
+            <div class="banned-header">
+                <div class="banned-phone">
+                    <i class="fas fa-phone"></i>
+                    <a href="tel:${ban.phone}">${ban.phone}</a>
+                </div>
+                ${statusBadge}
+            </div>
+            
+            <div class="banned-info">
+                <div class="info-row">
+                    <i class="fas fa-clock"></i>
+                    <span>${timeInfo}</span>
+                </div>
+                <div class="info-row">
+                    <i class="fas fa-calendar"></i>
+                    <span>تاريخ الحظر: ${banDate}</span>
+                </div>
+                ${reason}
+            </div>
+            
+            <div class="banned-actions">
+                <button class="btn-unban" onclick="unbanPhone('${ban.phone}')" title="فك الحظر">
+                    <i class="fas fa-unlock"></i> فك الحظر
+                </button>
+                <button class="btn-extend-ban" onclick="extendBan('${ban.phone}')" title="تمديد الحظر">
+                    <i class="fas fa-hourglass-half"></i> تمديد
+                </button>
+                <button class="btn-delete-ban" onclick="deleteBan('${ban.phone}')" title="حذف نهائي">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        bannedList.appendChild(card);
+    });
+}
+
+// حظر رقم جديد
+async function banPhone(phone, durationMs = 5 * 60 * 60 * 1000, permanent = false, reason = '') {
+    if (!phone) return false;
+    
+    const banUntil = permanent ? 'permanent' : Date.now() + durationMs;
+    
+    const banData = {
+        phone: phone,
+        banUntil: banUntil,
+        permanent: permanent,
+        reason: reason || '',
+        timestamp: Date.now(),
+        bannedBy: 'admin'
+    };
+    
+    try {
+        await db.ref('banned_phones/' + phone).set(banData);
+        showToast(`✅ تم حظر الرقم ${phone} بنجاح`, 'success');
+        return true;
+    } catch (error) {
+        console.error('❌ فشل حظر الرقم:', error);
+        showToast('❌ فشل حظر الرقم', 'error');
+        return false;
+    }
+}
+
+// فك الحظر عن رقم
+window.unbanPhone = async function(phone) {
+    if (!confirm(`هل أنت متأكد من فك الحظر عن الرقم ${phone}؟\n\nسيتمكن من الطلب مرة أخرى فوراً.`)) return;
+    
+    try {
+        await db.ref('banned_phones/' + phone).remove();
+        showToast(`✅ تم فك الحظر عن ${phone}`, 'success');
+    } catch (error) {
+        showToast('❌ فشل فك الحظر', 'error');
+        console.error('خطأ في فك الحظر:', error);
+    }
+};
+
+// تمديد الحظر
+window.extendBan = async function(phone) {
+    const ban = allBannedPhones.find(b => b.phone === phone);
+    if (!ban) return;
+    
+    const extension = prompt(
+        'اختر مدة التمديد (بالساعات):\n\n' +
+        '1 = ساعة واحدة\n' +
+        '5 = 5 ساعات\n' +
+        '24 = يوم واحد\n' +
+        '168 = أسبوع',
+        '5'
+    );
+    
+    if (!extension) return;
+    
+    const hours = parseInt(extension);
+    if (isNaN(hours) || hours <= 0) {
+        showToast('⚠ مدة غير صالحة', 'error');
+        return;
+    }
+    
+    const newBanUntil = Date.now() + (hours * 60 * 60 * 1000);
+    
+    try {
+        await db.ref('banned_phones/' + phone + '/banUntil').set(newBanUntil);
+        showToast(`✅ تم تمديد الحظر ${hours} ساعة إضافية`, 'success');
+    } catch (error) {
+        showToast('❌ فشل تمديد الحظر', 'error');
+    }
+};
+
+// حذف حظر نهائي
+window.deleteBan = async function(phone) {
+    if (!confirm(`هل أنت متأكد من حذف سجل الحظر للرقم ${phone}؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) return;
+    
+    try {
+        await db.ref('banned_phones/' + phone).remove();
+        showToast(`✅ تم حذف سجل الحظر`, 'success');
+    } catch (error) {
+        showToast('❌ فشل الحذف', 'error');
+    }
+};
+
+// تهيئة نموذج الحظر
+document.addEventListener('DOMContentLoaded', () => {
+    const banForm = document.getElementById('banForm');
+    if (banForm) {
+        banForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const saveBtn = document.getElementById('saveBanBtn');
+            
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحظر...';
+            }
+            
+            const phone = safeGetValue('banPhone').trim();
+            const duration = safeGetValue('banDuration');
+            const reason = safeGetValue('banReason').trim();
+            
+            // التحقق من صحة الرقم
+            if (!phone) {
+                showToast('⚠ الرجاء إدخال رقم الهاتف', 'error');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
+                }
+                return;
+            }
+            
+            if (!/^07[0-9]{9}$/.test(phone)) {
+                showToast('⚠ رقم الهاتف غير صحيح (يجب أن يبدأ بـ 07 ويتكون من 10 أرقام)', 'error');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
+                }
+                return;
+            }
+            
+            // التحقق من عدم وجود حظر مسبق
+            const existingBan = allBannedPhones.find(b => b.phone === phone);
+            if (existingBan) {
+                const override = confirm(
+                    `⚠️ الرقم ${phone} محظور بالفعل!\n\n` +
+                    `هل تريد استبدال الحظر الحالي بالحظر الجديد؟`
+                );
+                if (!override) {
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
+                    }
+                    return;
+                }
+            }
+            
+            try {
+                const isPermanent = duration === 'permanent';
+                const hours = isPermanent ? 0 : parseInt(duration);
+                const durationMs = hours * 60 * 60 * 1000;
+                
+                const success = await banPhone(phone, durationMs, isPermanent, reason);
+                
+                if (success) {
+                    banForm.reset();
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+                console.error('خطأ:', error);
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
+                }
+            }
+        });
+    }
+    
+    // فلترة الأرقام المحظورة
+    document.querySelectorAll('#tab-bans .chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('#tab-bans .chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            currentBanFilter = this.dataset.banFilter;
+            renderBannedPhones();
+        });
+    });
+    
+    // تحميل الأرقام المحظورة عند فتح التبويب
+    document.querySelectorAll('.nav-btn[data-tab="bans"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTimeout(loadBannedPhones, 100);
+        });
+    });
+});
+
+
+// تصدير الدوال للنطاق العام (مهم جداً!)
 window.manualRefreshOrders = manualRefreshOrders;
 window.toggleOrderSound = toggleOrderSound;
 window.markAllOrdersAsSeen = markAllOrdersAsSeen;
+window.loadBannedPhones = loadBannedPhones;
+window.banPhone = banPhone;
+window.unbanPhone = unbanPhone;
+window.extendBan = extendBan;
+window.deleteBan = deleteBan;
+
+// ✅ تحميل بيانات الحظر تلقائياً عند فتح لوحة الإدارة
+function showDashboard() {
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboard = document.getElementById('dashboard');
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (dashboard) dashboard.style.display = 'flex';
+    
+    loadCategories();
+    loadMenuItems();
+    loadAds();
+    loadThemeSettings();
+    loadOrderCounter();
+    loadOrders();
+    loadBannedPhones(); // ✅ جديد - تحميل بيانات الحظر
+}
