@@ -1,8 +1,14 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي - النسخة المُصلَّحة
+// 🍽️ تحميل المنيو الديناميكي - النسخة المُحسَّنة v3.0 (مُصلَّحة)
 // ============================================
 
-// 🆕 متغيرات عامة لتخزين البيانات
+// 🔑 الثوابت العامة
+const PROCESSING_KEY = 'taloola_processing_order';
+const PROCESSING_DURATION = 15 * 60 * 1000;
+const BAN_KEY = 'taloola_ban_until';
+const BAN_DURATION = 5 * 60 * 60 * 1000;
+const BAN_DATA_KEY = 'taloola_ban_data';
+
 let cachedCategories = [];
 let cachedMenuItems = null;
 let isMenuInitialized = false;
@@ -15,7 +21,7 @@ function safeLocalStorageGet(key, defaultValue = null) {
         const value = localStorage.getItem(key);
         return value !== null ? value : defaultValue;
     } catch (e) {
-        console.warn(`⚠️ لا يمكن الوصول إلى localStorage: ${key}`);
+        console.warn(`⚠️ localStorage get: ${key}`);
         return defaultValue;
     }
 }
@@ -25,7 +31,17 @@ function safeLocalStorageSet(key, value) {
         localStorage.setItem(key, value);
         return true;
     } catch (e) {
-        console.warn(`⚠️ لا يمكن الكتابة إلى localStorage: ${key}`);
+        console.warn(`⚠️ localStorage set: ${key}`);
+        return false;
+    }
+}
+
+function safeLocalStorageRemove(key) {
+    try {
+        localStorage.removeItem(key);
+        return true;
+    } catch (e) {
+        console.warn(`⚠️ localStorage remove: ${key}`);
         return false;
     }
 }
@@ -38,7 +54,6 @@ function safeJsonParse(str, defaultValue = null) {
     }
 }
 
-// Placeholder للصور الفاشلة
 const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+8J+TuyDZhNmI2YXYryDYqtmC2LPYqSDYp9mE2YXYutmI2LHYqTwvdGV4dD48L3N2Zz4=';
 
 // ============================================
@@ -72,7 +87,9 @@ function loadMenuFromFirebase() {
             
             if (cachedMenuItems) {
                 populateMenuItems(cachedCategories, cachedMenuItems);
-                if (smartImageLoader) smartImageLoader.observeAllImages();
+                setTimeout(() => {
+                    if (smartImageLoader) smartImageLoader.observeAllImages();
+                }, 200);
             }
         },
         (error) => {
@@ -92,7 +109,9 @@ function loadMenuFromFirebase() {
             
             if (cachedCategories.length > 0) {
                 populateMenuItems(cachedCategories, cachedMenuItems);
-                if (smartImageLoader) smartImageLoader.observeAllImages();
+                setTimeout(() => {
+                    if (smartImageLoader) smartImageLoader.observeAllImages();
+                }, 200);
             }
         },
         (error) => {
@@ -115,7 +134,9 @@ function rebuildMenuSections(categoriesArray) {
     oldSections.forEach(section => section.remove());
     
     const teamSection = mainElement.querySelector('#team');
-    const referenceElement = teamSection || mainElement.querySelector('#support') || mainElement.querySelector('#social');
+    const referenceElement = teamSection || 
+                             mainElement.querySelector('#support') || 
+                             mainElement.querySelector('#social');
     
     categoriesArray.forEach((category) => {
         const newSection = document.createElement('section');
@@ -168,7 +189,7 @@ function updateNavigationButtons(categoriesArray) {
 }
 
 // ============================================
-// 🎯 توزيع الأصناف على الأقسام (محسّن للصور)
+// 🎯 توزيع الأصناف على الأقسام
 // ============================================
 function populateMenuItems(categoriesArray, menuItems) {
     document.querySelectorAll('.menu-section .menu-items').forEach(container => {
@@ -253,7 +274,6 @@ function populateMenuItems(categoriesArray, menuItems) {
     console.log(`✅ تم توزيع ${itemsAdded} صنف`);
 }
 
-// ✅ معالج عام لأخطاء الصور
 function handleImageError(img) {
     if (!img) return;
     img.onerror = null;
@@ -266,7 +286,7 @@ function handleImageError(img) {
 window.handleImageError = handleImageError;
 
 // ============================================
-// 🚀 نظام تحميل الصور الذكي (مُحسَّن)
+// 🚀 نظام تحميل الصور الذكي
 // ============================================
 class SmartSequentialImageLoader {
     constructor() {
@@ -276,6 +296,7 @@ class SmartSequentialImageLoader {
         this.waitingElements = new Map();
         this.visibilityObserver = null;
         this.preloadObserver = null;
+        this.mutationObserver = null;
         this.retryCount = new Map();
         this.maxRetries = 2;
         this.config = {
@@ -307,8 +328,40 @@ class SmartSequentialImageLoader {
     init() {
         this.loadFromSessionCache();
         this.setupObservers();
+        this.setupMutationObserver();
         this.observeAllImages();
         this.monitorConnectionChanges();
+    }
+    
+    setupMutationObserver() {
+        if (!('MutationObserver' in window)) return;
+        
+        this.mutationObserver = new MutationObserver((mutations) => {
+            let hasNewImages = false;
+            
+            mutations.forEach(mutation => {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType === 1) {
+                            const images = node.querySelectorAll?.('img.lazy-image:not(.loaded):not(.loading)') || [];
+                            if (images.length > 0) hasNewImages = true;
+                        }
+                    });
+                }
+            });
+            
+            if (hasNewImages) {
+                setTimeout(() => this.observeAllImages(), 100);
+            }
+        });
+        
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            this.mutationObserver.observe(mainElement, {
+                childList: true,
+                subtree: true
+            });
+        }
     }
     
     setupObservers() {
@@ -381,6 +434,8 @@ class SmartSequentialImageLoader {
         const lazyImages = document.querySelectorAll('img.lazy-image:not(.loaded):not(.loading)');
         
         lazyImages.forEach(img => {
+            if (img.dataset.observed === 'true') return;
+            
             const dataSrc = img.getAttribute('data-src');
             if (!dataSrc || dataSrc.trim() === '') {
                 img.classList.remove('lazy-image');
@@ -389,7 +444,10 @@ class SmartSequentialImageLoader {
                 return;
             }
             
-            if (this.visibilityObserver) {
+            const rect = img.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+                this.loadImageImmediately(img, dataSrc);
+            } else if (this.visibilityObserver) {
                 this.visibilityObserver.observe(img);
             }
             
@@ -397,9 +455,54 @@ class SmartSequentialImageLoader {
             if (section && this.preloadObserver) {
                 this.preloadObserver.observe(section);
             }
+            
+            img.dataset.observed = 'true';
         });
         
         console.log(`🖼️ مراقبة ${lazyImages.length} صورة للتحميل الذكي`);
+    }
+    
+    loadImageImmediately(img, src) {
+        if (this.cache.has(src)) {
+            this.applyImage(img, src);
+            return;
+        }
+        
+        if (this.currentlyLoading.has(src)) {
+            if (!this.waitingElements.has(src)) {
+                this.waitingElements.set(src, []);
+            }
+            this.waitingElements.get(src).push(img);
+            img.classList.add('loading');
+            return;
+        }
+        
+        img.classList.add('loading');
+        this.currentlyLoading.add(src);
+        
+        const tempImg = new Image();
+        tempImg.decoding = 'async';
+        
+        tempImg.onload = () => {
+            this.currentlyLoading.delete(src);
+            this.cache.set(src, src);
+            
+            const waiting = this.waitingElements.get(src) || [img];
+            waiting.forEach(el => {
+                if (document.body.contains(el)) {
+                    this.applyImage(el, src);
+                }
+            });
+            this.waitingElements.delete(src);
+            this.processQueue();
+        };
+        
+        tempImg.onerror = () => {
+            this.currentlyLoading.delete(src);
+            this.applyFallback(img);
+        };
+        
+        tempImg.src = src;
     }
     
     enqueue(img, priority = 50) {
@@ -486,7 +589,6 @@ class SmartSequentialImageLoader {
         const retries = this.retryCount.get(src) || 0;
         if (retries < this.maxRetries) {
             this.retryCount.set(src, retries + 1);
-            console.log(`🔄 إعادة المحاولة ${retries + 1}/${this.maxRetries} لـ ${src.split('/').pop()}`);
             setTimeout(() => {
                 if (!this.cache.has(src)) {
                     this.loadImage(src);
@@ -591,7 +693,6 @@ class SmartSequentialImageLoader {
                 const newConcurrency = this.detectOptimalConcurrency();
                 if (newConcurrency !== this.config.maxConcurrent) {
                     this.config.maxConcurrent = newConcurrency;
-                    console.log(`📶 تغيير السرعة - Concurrent: ${newConcurrency}`);
                     this.processQueue();
                 }
             });
@@ -903,7 +1004,7 @@ async function initializeLocationSystem() {
 }
 
 // ============================================
-// 🛒 نظام السلة العائمة (مُحسَّن)
+// 🛒 نظام السلة العائمة
 // ============================================
 let shoppingCart = [];
 try {
@@ -1080,13 +1181,14 @@ function displayCartItems() {
     if (cartItemsCount) cartItemsCount.textContent = totalQuantity;
 }
 
-function openCartModal() {
-    const m = document.getElementById('cartModal');
-    if (m) {
-        m.style.display = 'flex';
-        displayCartItems();
-        loadSavedCustomerInfo();
-    }
+function updateNotesCounter() {
+    const textarea = document.getElementById('orderNotes');
+    const counter = document.getElementById('notesCharCount');
+    if (!textarea || !counter) return;
+
+    const len = textarea.value.length;
+    counter.textContent = len + '/80';
+    counter.classList.toggle('near-limit', len > 70);
 }
 
 function closeCartModal() {
@@ -1113,7 +1215,7 @@ function loadSavedCustomerInfo() {
 }
 
 // ============================================
-// 🛍️ نافذة تفاصيل المنتج (🔥 مُصلَّح)
+// 🛍️ نافذة تفاصيل المنتج
 // ============================================
 let currentProduct = null;
 let modalQuantity = 1;
@@ -1171,7 +1273,6 @@ function openProductModal(element) {
     if (qtyDisplay) qtyDisplay.textContent = modalQuantity;
     updateModalTotal();
     
-    // 🔥 إعادة تعيين زر الإضافة
     const addBtn = document.getElementById('modalAddToCartBtn');
     if (addBtn) {
         addBtn.classList.remove('added');
@@ -1317,34 +1418,330 @@ function closeOrderReview() {
 }
 
 // ============================================
+// 🚫 نظام حظر الأجهزة (v3)
+// ============================================
+let bannedPhonesRef = null;
+let currentBannedPhone = null;
+let banCheckInterval = null;
+
+function initBanSystem() {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        bannedPhonesRef = firebase.database().ref('banned_phones');
+        console.log('✅ نظام الحظر جاهز (Firebase)');
+        
+        listenToBanChanges();
+        
+        banCheckInterval = setInterval(() => {
+            const currentPhone = getCurrentPhoneInput();
+            if (currentPhone) {
+                checkPhoneBanRealtime(currentPhone);
+            }
+        }, 30000);
+    } else {
+        setTimeout(initBanSystem, 1000);
+    }
+}
+
+function listenToBanChanges() {
+    if (!bannedPhonesRef) return;
+    
+    bannedPhonesRef.on('value', (snapshot) => {
+        const bannedPhones = snapshot.val();
+        const currentPhone = getCurrentPhoneInput();
+        
+        if (currentPhone && bannedPhones && bannedPhones[currentPhone]) {
+            const banInfo = bannedPhones[currentPhone];
+            const now = Date.now();
+            
+            if (banInfo.permanent === true || 
+                (typeof banInfo.banUntil === 'number' && banInfo.banUntil > now)) {
+                currentBannedPhone = currentPhone;
+                showBanWindowFromFirebase(banInfo);
+                disableOrdering();
+            } else {
+                currentBannedPhone = null;
+                enableOrdering();
+            }
+        } else {
+            currentBannedPhone = null;
+            enableOrdering();
+        }
+    }, (error) => {
+        console.warn('⚠️ خطأ في الاستماع لقائمة الحظر:', error.message);
+    });
+}
+
+function getCurrentPhoneInput() {
+    const phoneInput = document.getElementById('customerPhone');
+    if (!phoneInput) return null;
+    
+    let phone = phoneInput.value.trim();
+    
+    if (phone.startsWith('+964')) {
+        phone = '0' + phone.substring(4);
+    } else if (phone.startsWith('964')) {
+        phone = '0' + phone.substring(3);
+    }
+    
+    if (/^07[0-9]{9}$/.test(phone)) {
+        return phone;
+    }
+    
+    return null;
+}
+
+async function checkPhoneBanRealtime(phone) {
+    if (!phone || !bannedPhonesRef) return false;
+    
+    try {
+        const snapshot = await bannedPhonesRef.child(phone).once('value');
+        const banInfo = snapshot.val();
+        
+        if (!banInfo) {
+            currentBannedPhone = null;
+            enableOrdering();
+            return false;
+        }
+        
+        const now = Date.now();
+        
+        if (banInfo.permanent === true) {
+            currentBannedPhone = phone;
+            showBanWindowFromFirebase(banInfo);
+            disableOrdering();
+            return true;
+        }
+        
+        if (typeof banInfo.banUntil === 'number') {
+            if (banInfo.banUntil > now) {
+                currentBannedPhone = phone;
+                showBanWindowFromFirebase(banInfo);
+                disableOrdering();
+                return true;
+            } else {
+                await bannedPhonesRef.child(phone).remove();
+                currentBannedPhone = null;
+                enableOrdering();
+                return false;
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        console.warn('⚠️ فشل فحص الحظر:', error.message);
+        return false;
+    }
+}
+
+function enableOrdering() {
+    const cartBtn = document.getElementById('floatingCartBtn');
+    if (cartBtn) {
+        cartBtn.style.pointerEvents = '';
+        cartBtn.style.opacity = '';
+        cartBtn.title = 'عرض السلة وتأكيد الطلب';
+    }
+    
+    const banModal = document.getElementById('banModal');
+    if (banModal) {
+        banModal.style.display = 'none';
+    }
+}
+
+function showBanWindowFromFirebase(banInfo) {
+    const modal = document.getElementById('banModal');
+    const message = document.getElementById('banMessage');
+    if (!modal || !message) return;
+    
+    let messageHtml = '';
+    
+    if (banInfo.reason) {
+        messageHtml += `<p class="ban-reason-text"><i class="fas fa-info-circle"></i> <strong>السبب:</strong> ${banInfo.reason}</p>`;
+    }
+    
+    if (banInfo.phone) {
+        messageHtml += `<p class="ban-phone-text"><i class="fas fa-phone"></i> <strong>الرقم:</strong> ${banInfo.phone}</p>`;
+    }
+    
+    if (banInfo.permanent === true) {
+        messageHtml += `<p class="ban-permanent-text"><i class="fas fa-infinity"></i> <strong>حظر دائم</strong></p>`;
+        messageHtml += `<p>تم تعليق حسابك بشكل دائم بسبب مخالفة شروط الاستخدام.</p>`;
+        messageHtml += `<p>للاستفسار، يرجى التواصل مع الإدارة عبر واتساب.</p>`;
+    } else if (typeof banInfo.banUntil === 'number') {
+        const now = Date.now();
+        const remaining = banInfo.banUntil - now;
+        const hours = Math.ceil(remaining / (60 * 60 * 1000));
+        const days = Math.floor(hours / 24);
+        
+        let timeText = '';
+        if (days > 0) {
+            timeText = `${days} يوم و ${hours % 24} ساعة`;
+        } else {
+            timeText = `${hours} ساعة`;
+        }
+        
+        messageHtml += `<p class="ban-temporary-text"><i class="fas fa-clock"></i> <strong>المدة المتبقية:</strong> ${timeText}</p>`;
+        messageHtml += `<p>يمكنك الطلب مرة أخرى بعد انتهاء المدة.</p>`;
+        messageHtml += `<p class="ban-warning-text"><i class="fas fa-exclamation-triangle"></i> أي محاولة للتلاعب ستؤدي إلى حظر دائم.</p>`;
+    }
+    
+    message.innerHTML = messageHtml;
+    modal.style.display = 'flex';
+}
+
+function saveLastOrderPhone(phone) {
+    if (!phone) return;
+    safeLocalStorageSet('taloola_last_order_phone', phone);
+}
+
+function getLastOrderPhone() {
+    return safeLocalStorageGet('taloola_last_order_phone');
+}
+
+async function banPhone(phone, durationMs = BAN_DURATION, permanent = false) {
+    if (!phone) return false;
+
+    const banUntil = permanent ? 'permanent' : Date.now() + durationMs;
+
+    const banData = {
+        phone: phone,
+        banUntil: banUntil,
+        permanent: permanent
+    };
+    safeLocalStorageSet(BAN_DATA_KEY, JSON.stringify(banData));
+    safeLocalStorageSet(BAN_KEY, permanent ? 'permanent' : banUntil.toString());
+
+    if (bannedPhonesRef) {
+        try {
+            await bannedPhonesRef.child(phone).set({
+                phone: phone,
+                banUntil: banUntil,
+                permanent: permanent,
+                timestamp: Date.now(),
+                reason: 'تم الحظر من لوحة الإدارة'
+            });
+            console.log(`🚫 تم حظر ${phone} في Firebase حتى ${banUntil}`);
+            return true;
+        } catch (error) {
+            console.error('❌ فشل حفظ الحظر في Firebase:', error);
+            return false;
+        }
+    }
+    return false;
+}
+
+async function isPhoneBanned(phone) {
+    if (!phone) return false;
+
+    if (bannedPhonesRef) {
+        try {
+            const snapshot = await bannedPhonesRef.child(phone).once('value');
+            const banInfo = snapshot.val();
+            
+            if (banInfo) {
+                const now = Date.now();
+                
+                if (banInfo.permanent === true) {
+                    currentBannedPhone = phone;
+                    return true;
+                }
+                
+                if (typeof banInfo.banUntil === 'number' && banInfo.banUntil > now) {
+                    currentBannedPhone = phone;
+                    return true;
+                }
+                
+                if (typeof banInfo.banUntil === 'number' && banInfo.banUntil <= now) {
+                    await bannedPhonesRef.child(phone).remove();
+                    console.log(`✅ انتهى حظر ${phone} وتم حذفه`);
+                    return false;
+                }
+            }
+        } catch (error) {
+            console.warn('⚠ تعذر فحص Firebase:', error.message);
+        }
+    }
+
+    const localBanData = safeJsonParse(safeLocalStorageGet(BAN_DATA_KEY));
+    if (localBanData && localBanData.phone === phone) {
+        if (localBanData.permanent === true) return true;
+        if (typeof localBanData.banUntil === 'number' && localBanData.banUntil > Date.now()) return true;
+    }
+
+    return false;
+}
+
+async function unbanPhone(phone) {
+    safeLocalStorageRemove(BAN_DATA_KEY);
+    safeLocalStorageRemove(BAN_KEY);
+    if (bannedPhonesRef && phone) {
+        await bannedPhonesRef.child(phone).remove();
+    }
+}
+
+// ============================================
+// 🪟 نوافذ المعالجة والحظر
+// ============================================
+function showProcessingWindow() {
+    const modal = document.getElementById('processingModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        safeLocalStorageSet(PROCESSING_KEY, Date.now().toString());
+    }
+}
+
+function closeProcessingWindow() {
+    const modal = document.getElementById('processingModal');
+    if (modal) {
+        modal.style.display = 'none';
+        safeLocalStorageRemove(PROCESSING_KEY);
+    }
+}
+
+function disableOrdering() {
+    const cartBtn = document.getElementById('floatingCartBtn');
+    if (cartBtn) {
+        cartBtn.style.pointerEvents = 'none';
+        cartBtn.style.opacity = '0.5';
+        cartBtn.title = 'الحساب معلق مؤقتاً';
+    }
+}
+
+// ============================================
 // 📱 إرسال الطلب عبر واتساب + حفظ في Firebase
+// ✅ تم إصلاح التكرار بالكامل
 // ============================================
 async function confirmAndSendOrder() {
-    // 🆕 التحقق من السلة
+    // 1️⃣ فحص المعالجة السابقة
+    if (safeLocalStorageGet(PROCESSING_KEY)) {
+        showNotification('لديك طلب قيد التحضير بالفعل');
+        return;
+    }
+
+    // 2️⃣ فحص السلة
     if (!shoppingCart || shoppingCart.length === 0) {
         showNotification('السلة فارغة!');
         return;
     }
     
-    // 🆕 التحقق من Firebase
+    // 3️⃣ فحص Firebase
     if (typeof firebase === 'undefined' || !firebase.database) {
         console.error('❌ Firebase غير متاح');
         showNotification('⚠ لا يمكن حفظ الطلب حالياً، يرجى إعادة تحميل الصفحة');
         return;
     }
     
+    // 4️⃣ جمع البيانات
     const phoneInput = document.getElementById('customerPhone');
     const areaSelect = document.getElementById('deliveryArea');
     const detailedInput = document.getElementById('detailedAddress');
+    const notesInput = document.getElementById('orderNotes');
     
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const area = areaSelect ? areaSelect.value.trim() : '';
     const detailed = detailedInput ? detailedInput.value.trim() : '';
-    
-    [phoneInput, areaSelect].forEach(el => {
-        if (el) el.classList.remove('error');
-    });
-    
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    // 5️⃣ التحقق من صحة البيانات
     let hasError = false;
     
     if (!phone) {
@@ -1370,8 +1767,35 @@ async function confirmAndSendOrder() {
     }
     
     if (hasError) return;
-    
-    // 🆕 حفظ بيانات الزبون
+
+    // 6️⃣ فحص الحظر (مرة واحدة فقط)
+    showNotification('⏳ جاري التحقق من الحساب...');
+    const banned = await isPhoneBanned(phone);
+    if (banned) {
+        showNotification('⛔ رقم الهاتف محظور ولا يمكنه الطلب حالياً');
+        
+        if (bannedPhonesRef) {
+            try {
+                const snapshot = await bannedPhonesRef.child(phone).once('value');
+                const banInfo = snapshot.val();
+                if (banInfo) {
+                    showBanWindowFromFirebase(banInfo);
+                } else {
+                    showBanWindow(Date.now() + BAN_DURATION);
+                }
+            } catch (e) {
+                showBanWindow(Date.now() + BAN_DURATION);
+            }
+        } else {
+            showBanWindow(Date.now() + BAN_DURATION);
+        }
+        
+        disableOrdering();
+        return;
+    }
+
+    // 7️⃣ حفظ بيانات الزبون
+    saveLastOrderPhone(phone);
     try {
         safeLocalStorageSet('taloola_saved_phone', phone);
         safeLocalStorageSet('taloola_saved_area', area);
@@ -1379,7 +1803,7 @@ async function confirmAndSendOrder() {
         console.warn('⚠️ فشل حفظ بيانات الزبون:', e);
     }
     
-    // 🆕 حساب الإجمالي
+    // 8️⃣ حساب الإجمالي
     let totalAmount = 0;
     shoppingCart.forEach((item) => {
         const itemPrice = parseInt(item.price) || 0;
@@ -1389,18 +1813,14 @@ async function confirmAndSendOrder() {
     
     const gpsLocation = userLocation || getLocationFromStorage();
     
-    // 🆕 إظهار شاشة التحميل
     showNotification('⏳ جاري حفظ طلبك...');
     
     try {
-        console.log('🔍 بدء حفظ الطلب في Firebase...');
-        
-        // 🆕 الحصول على رقم الطلب التالي
+        // 9️⃣ الحصول على رقم الطلب
         let orderNumber = 0;
         const counterRef = firebase.database().ref('orders/counter');
         const ordersRef = firebase.database().ref('orders/list');
         
-        // 🆕 محاولة الحصول على رقم الطلب
         try {
             const counterSnapshot = await counterRef.transaction((currentValue) => {
                 return (currentValue || 0) + 1;
@@ -1415,7 +1835,6 @@ async function confirmAndSendOrder() {
         } catch (transactionError) {
             console.warn('⚠️ فشل transaction، استخدام الطريقة البديلة:', transactionError.message);
             
-            // الطريقة البديلة: قراءة آخر طلب
             try {
                 const lastOrderSnapshot = await ordersRef
                     .orderByChild('timestamp')
@@ -1433,7 +1852,6 @@ async function confirmAndSendOrder() {
                 
                 console.log(`✅ رقم الطلب (بديل): ${orderNumber}`);
                 
-                // محاولة تحديث العداد
                 try {
                     await counterRef.set(orderNumber);
                 } catch (e) {
@@ -1445,13 +1863,14 @@ async function confirmAndSendOrder() {
             }
         }
         
-        // 🆕 بناء بيانات الطلب
+        // 🔟 بناء بيانات الطلب
         const orderData = {
             orderNumber: orderNumber,
             customerName: 'زبون',
             phone: phone,
             area: area,
             detailedAddress: detailed || '',
+            notes: notes,
             items: shoppingCart.map(item => ({
                 name: item.name,
                 price: parseInt(item.price) || 0,
@@ -1477,19 +1896,19 @@ async function confirmAndSendOrder() {
         
         console.log('📦 بيانات الطلب:', orderData);
         
-        // 🆕 حفظ الطلب في Firebase
+        // 1️⃣1️⃣ حفظ الطلب في Firebase
         const newOrderRef = await ordersRef.push(orderData);
         
         console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
-        console.log('🔗 رابط الطلب:', `orders/list/${newOrderRef.key}`);
         
-        // 🆕 بناء رسالة الواتساب
-        const phoneNumber = '9647755666073';
+        // 1️⃣2️⃣ بناء رسالة الواتساب
+        const whatsappNumber = '9647755666073';
         let message = `🛎️ طلب جديد #${orderNumber}\n`;
         message += `━━━━━━━━━━━━━━━\n\n`;
         message += `📞 رقم الهاتف: ${phone}\n`;
         message += `📍 منطقة التوصيل: ${area}\n`;
         if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
+        if (notes) message += `📝 ملاحظات: ${notes}\n`;
         
         message += `\n━━━━━━━━━━━━━━━\n`;
         message += `🛒 تفاصيل الطلب:\n\n`;
@@ -1517,23 +1936,26 @@ async function confirmAndSendOrder() {
         message += `⏰ وقت الطلب: ${new Date().toLocaleTimeString('ar-EG')}\n`;
         message += `📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}`;
         
-        // 🆕 فتح واتساب
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        // 1️⃣3️⃣ فتح واتساب
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         
-        // 🆕 رسالة نجاح
+        // 1️⃣4️⃣ رسالة نجاح + نافذة المعالجة
         showNotification(`✅ تم إرسال طلبك بنجاح! رقم الطلب: #${orderNumber}`);
+        showProcessingWindow();
         
-        // 🆕 تفريغ السلة والنموذج
-        setTimeout(() => {
-            shoppingCart = [];
-            saveCart();
-            if (phoneInput) phoneInput.value = '';
-            if (areaSelect) areaSelect.value = '';
-            if (detailedInput) detailedInput.value = '';
-            closeCartModal();
-        }, 500);
+        // 1️⃣5️⃣ تفريغ السلة والنموذج
+        shoppingCart = [];
+        saveCart();
+        displayCartItems();
         
+        if (phoneInput) phoneInput.value = '';
+        if (areaSelect) areaSelect.value = '';
+        if (detailedInput) detailedInput.value = '';
+        if (notesInput) notesInput.value = '';
+        updateNotesCounter();
+        closeCartModal();
+                
     } catch (error) {
         console.error('❌ خطأ في حفظ الطلب:', error);
         console.error('📋 تفاصيل الخطأ:', {
@@ -1555,6 +1977,7 @@ async function confirmAndSendOrder() {
         showNotification(errorMessage);
     }
 }
+
 // ============================================
 // 🔔 دوال عامة
 // ============================================
@@ -1583,10 +2006,8 @@ function openSupport() {
 }
 
 // ============================================
-// 📢 جلب الإعلانات من Firebase - النسخة المتقدمة (فيديو + صور)
+// 📢 جلب الإعلانات من Firebase
 // ============================================
-
-// 🆕 دالة استخراج معرف فيديو يوتيوب
 function extractYouTubeId(url) {
     if (!url || typeof url !== 'string') return null;
     
@@ -1640,7 +2061,6 @@ function displayAds() {
                 const adElement = document.createElement('div');
                 adElement.className = `ad-card ${ad.template || 'red'}`;
                 
-                // 🆕 تحديد نوع المحتوى
                 const mediaType = ad.mediaType || 'image';
                 let mediaHtml = '';
                 
@@ -1719,7 +2139,7 @@ function displayAds() {
 }
 
 // ============================================
-// 🎯 Event Delegation للنقر على المنتجات
+// 🎯 Event Delegation
 // ============================================
 function setupProductClickDelegation() {
     const mainElement = document.querySelector('main');
@@ -1747,10 +2167,9 @@ function setupProductClickDelegation() {
 }
 
 // ============================================
-// 🔥 إعداد معالجات نافذة المنتج (الحل الأساسي للمشكلة)
+// 🔥 إعداد معالجات نافذة المنتج
 // ============================================
 function setupProductModalHandlers() {
-    // 🔥 أزرار الكمية
     const decreaseBtn = document.getElementById('modalQtyDecrease');
     const increaseBtn = document.getElementById('modalQtyIncrease');
     const addToCartBtn = document.getElementById('modalAddToCartBtn');
@@ -1760,33 +2179,24 @@ function setupProductModalHandlers() {
         decreaseBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🔽 تقليل الكمية');
             changeModalQuantity(-1);
         });
-    } else {
-        console.error('❌ زر تقليل الكمية غير موجود');
     }
     
     if (increaseBtn) {
         increaseBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🔼 زيادة الكمية');
             changeModalQuantity(1);
         });
-    } else {
-        console.error('❌ زر زيادة الكمية غير موجود');
     }
     
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🛒 إضافة للسلة');
             addCurrentProductToCart();
         });
-    } else {
-        console.error('❌ زر إضافة للسلة غير موجود');
     }
     
     if (closeBtn) {
@@ -1798,6 +2208,20 @@ function setupProductModalHandlers() {
     }
     
     console.log('✅ تم إعداد معالجات نافذة المنتج بنجاح');
+}
+
+// ============================================
+// 🛒 فتح نافذة السلة
+// ============================================
+function openCartModal() {
+    const modal = document.getElementById('cartModal');
+    if (!modal) return;
+
+    loadSavedCustomerInfo();
+    displayCartItems();
+    updateNotesCounter();
+    modal.style.display = 'flex';
+    updateLocationInCart();
 }
 
 // ============================================
@@ -1851,7 +2275,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const floatingCartBtn = document.getElementById('floatingCartBtn');
-    
+
     if (floatingCartBtn) {
         floatingCartBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -1875,7 +2299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 scrollToTopBtn.classList.remove('visible');
             }
         }
-    });
+    }, { passive: true });
     
     if (scrollToTopBtn) {
         scrollToTopBtn.addEventListener('click', () => {
@@ -1894,14 +2318,42 @@ document.addEventListener('DOMContentLoaded', function() {
     initLocationIcon();
     initializeLocationSystem();
     
-    // ✅ إعداد Event Delegation للمنتجات
     setupProductClickDelegation();
-    
-    // 🔥 إعداد معالجات نافذة المنتج (الحل الأساسي)
     setupProductModalHandlers();
-    
-    // ✅ تهيئة محمل الصور الذكي
     initSmartImageLoading();
+    
+    // ✅ تهيئة عداد الملاحظات
+    const notesTextarea = document.getElementById('orderNotes');
+    if (notesTextarea) {
+        notesTextarea.addEventListener('input', updateNotesCounter);
+        updateNotesCounter();
+    }
+
+    // ✅ مراقبة تغييرات رقم الهاتف للكشف عن الحظر فوراً
+    const phoneInput = document.getElementById('customerPhone');
+    if (phoneInput) {
+        let phoneCheckTimeout;
+        
+        phoneInput.addEventListener('input', function() {
+            clearTimeout(phoneCheckTimeout);
+            
+            phoneCheckTimeout = setTimeout(async () => {
+                const phone = getCurrentPhoneInput();
+                if (phone) {
+                    await checkPhoneBanRealtime(phone);
+                } else {
+                    enableOrdering();
+                }
+            }, 800);
+        });
+        
+        phoneInput.addEventListener('blur', async function() {
+            const phone = getCurrentPhoneInput();
+            if (phone) {
+                await checkPhoneBanRealtime(phone);
+            }
+        });
+    }
 
     firebaseDbScript.onload = function() {
         setTimeout(() => {
@@ -1909,6 +2361,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     firebase.initializeApp(firebaseConfig);
                     console.log('✅ تم تهيئة Firebase بنجاح');
+                    initBanSystem();
                     displayAds();
                     loadMenuFromFirebase();
                 } catch (error) {
@@ -1917,7 +2370,107 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 500);
     };
+
+    // التحقق من وجود طلب قيد التحضير
+    const processingStart = parseInt(safeLocalStorageGet(PROCESSING_KEY, '0'));
+    if (processingStart && (Date.now() - processingStart < PROCESSING_DURATION)) {
+        showProcessingWindow();
+    } else if (processingStart) {
+        safeLocalStorageRemove(PROCESSING_KEY);
+    }
+
+    // فحص الحظر عند التحميل
+    setTimeout(async () => {
+        const currentPhone = getCurrentPhoneInput();
+        if (currentPhone) {
+            await checkPhoneBanRealtime(currentPhone);
+        } else {
+            checkBanStatus();
+        }
+    }, 1000);
 });
+
+// ✅ معالج زر إلغاء الطلب
+document.addEventListener('DOMContentLoaded', function() {
+    const cancelBtn = document.getElementById('cancelOrderBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', async function() {
+            const confirmCancel = confirm(
+                'هل أنت متأكد من إلغاء الطلب؟\n\n' +
+                'سيتم حظر رقم هاتفك لمدة 5 ساعات كاملة.'
+            );
+            
+            if (confirmCancel) {
+                const lastPhone = getLastOrderPhone();
+                
+                if (lastPhone) {
+                    await banPhone(lastPhone, BAN_DURATION);
+                } else {
+                    const banUntil = Date.now() + BAN_DURATION;
+                    safeLocalStorageSet(BAN_KEY, banUntil.toString());
+                }
+                
+                closeProcessingWindow();
+                shoppingCart = [];
+                saveCart();
+                displayCartItems();
+                showNotification('تم إلغاء الطلب. رقم هاتفك محظور لمدة 5 ساعات');
+            }
+        });
+    }
+});
+
+// ============================================
+// 🔒 دوال الحظر
+// ============================================
+function checkBanStatus() {
+    const banUntil = parseInt(safeLocalStorageGet(BAN_KEY, '0'));
+    if (!banUntil) return false;
+    
+    const now = Date.now();
+    if (now < banUntil) {
+        showBanWindow(banUntil);
+        return true;
+    } else {
+        safeLocalStorageRemove(BAN_KEY);
+        return false;
+    }
+}
+
+function showBanWindow(banUntil) {
+    const modal = document.getElementById('banModal');
+    const message = document.getElementById('banMessage');
+    if (!modal || !message) return;
+    
+    const banData = safeJsonParse(safeLocalStorageGet(BAN_DATA_KEY));
+    let phoneInfo = '';
+    if (banData && banData.phone) {
+        phoneInfo = `<p class="ban-phone-text"><i class="fas fa-phone"></i> <strong>الرقم:</strong> ${banData.phone}</p>`;
+    }
+    
+    let timeInfo = '';
+    if (banUntil === 'permanent' || banUntil === 0) {
+        timeInfo = '<p class="ban-permanent-text"><i class="fas fa-infinity"></i> <strong>حظر دائم</strong></p>';
+    } else {
+        const remainingHours = Math.ceil((banUntil - Date.now()) / (60 * 60 * 1000));
+        timeInfo = `<p class="ban-temporary-text"><i class="fas fa-clock"></i> <strong>المدة المتبقية:</strong> ${remainingHours} ساعة</p>`;
+    }
+    
+    message.innerHTML = `
+        ${phoneInfo}
+        ${timeInfo}
+        <p>تم تعليق حسابك بسبب إلغاء طلب سابق أو مخالفة شروط الاستخدام.</p>
+        <p class="ban-warning-text"><i class="fas fa-exclamation-triangle"></i> أي محاولة للتلاعب ستؤدي إلى حظر دائم.</p>
+    `;
+    
+    modal.style.display = 'flex';
+    disableOrdering();
+}
+
+function closeBanModal() {
+    const modal = document.getElementById('banModal');
+    if (modal) modal.style.display = 'none';
+}
 
 // ============================================
 // 📤 تصدير الدوال العامة
@@ -1941,3 +2494,5 @@ window.addCurrentProductToCart = addCurrentProductToCart;
 window.showCartAddEffect = showCartAddEffect;
 window.smartImageLoader = smartImageLoader;
 window.handleImageError = handleImageError;
+window.closeBanModal = closeBanModal;
+window.updateNotesCounter = updateNotesCounter;
