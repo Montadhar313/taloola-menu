@@ -2488,3 +2488,202 @@ section.info-section.animate-in {
     }
 }
 
+.textarea-field {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+.char-counter {
+    font-size: 12px;
+    color: #888;
+    margin-right: 8px;
+}
+
+.char-counter.near-limit {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.textarea-field {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.char-counter {
+    font-size: 12px;
+    color: #888;
+    margin-right: 8px;
+}
+
+.char-counter.near-limit {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* نافذة المعالجة */
+.processing-modal-content {
+    background: var(--main-red, #c70301);
+    color: #fff;
+    text-align: center;
+    padding: 30px 20px;
+    border-radius: 20px;
+    max-width: 350px;
+    width: 90%;
+    animation: bounceIn 0.6s ease;
+}
+.processing-icon { font-size: 50px; margin-bottom: 15px; }
+.countdown-timer { font-size: 40px; font-weight: bold; margin: 20px 0; }
+.processing-warning { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; margin: 15px 0; }
+.processing-contact { margin: 15px 0; }
+.whatsapp-contact-btn {
+    display: inline-block; background: #25D366; color: #fff;
+    padding: 8px 20px; border-radius: 25px; text-decoration: none; margin-top: 5px;
+}
+.processing-cancel { margin-top: 25px; }
+.btn-cancel-order {
+    background: #ff4444; color: white; border: none;
+    padding: 10px 25px; border-radius: 25px; font-size: 16px; cursor: pointer;
+    transition: 0.3s; width: 100%;
+}
+.btn-cancel-order:hover { background: #cc0000; }
+.cancel-warning-text { display: block; margin-top: 8px; font-size: 12px; opacity: 0.9; }
+
+/* نافذة الحظر */
+.ban-modal-content {
+    background: #2c2c2c; color: #fff;
+    text-align: center; padding: 30px; border-radius: 20px; max-width: 350px;
+}
+.ban-icon { font-size: 60px; color: #ff4444; }
+.btn-close-ban {
+    background: var(--main-red, #c70301); color: white; border: none;
+    padding: 10px 30px; border-radius: 25px; margin-top: 20px; cursor: pointer;
+}
+
+
+/* ============================================ */
+/* 🚫 نافذة الحظر المحسّنة */
+/* ============================================ */
+.ban-modal-content {
+    text-align: center;
+    padding: 40px 30px;
+    max-width: 450px;
+}
+
+.ban-icon {
+    font-size: 4rem;
+    color: var(--danger);
+    margin-bottom: 20px;
+    animation: banPulse 2s infinite;
+}
+
+@keyframes banPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.ban-modal-content h2 {
+    color: var(--danger);
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    font-weight: 800;
+}
+
+#banMessage {
+    color: var(--dark);
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 25px;
+}
+
+#banMessage p {
+    margin-bottom: 12px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+#banMessage p i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.ban-reason-text {
+    background: #fff3cd !important;
+    border-right: 4px solid #ffc107;
+}
+
+.ban-reason-text i {
+    color: #ffc107 !important;
+}
+
+.ban-phone-text {
+    background: #e3f2fd !important;
+    border-right: 4px solid #2196f3;
+}
+
+.ban-phone-text i {
+    color: #2196f3 !important;
+}
+
+.ban-permanent-text {
+    background: #ffebee !important;
+    border-right: 4px solid var(--danger);
+    font-weight: 700;
+}
+
+.ban-permanent-text i {
+    color: var(--danger) !important;
+}
+
+.ban-temporary-text {
+    background: #fff8e1 !important;
+    border-right: 4px solid #ff9800;
+}
+
+.ban-temporary-text i {
+    color: #ff9800 !important;
+}
+
+.ban-warning-text {
+    background: #ffebee !important;
+    border-right: 4px solid var(--danger);
+    color: var(--danger) !important;
+    font-weight: 600;
+}
+
+.ban-warning-text i {
+    color: var(--danger) !important;
+}
+
+.btn-close-ban {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 4px 15px rgba(199, 3, 1, 0.3);
+}
+
+.btn-close-ban:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+}
+
+/* تأثير تعطيل الأزرار */
+.floating-cart-btn[style*="opacity: 0.5"] {
+    filter: grayscale(100%);
+}
