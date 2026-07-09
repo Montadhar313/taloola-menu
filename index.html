@@ -161,6 +161,7 @@
         </div>
     </section>
 </main>
+
 <!-- ============================================ -->
 <!-- 🎯 الأزرار السفلية المنفصلة -->
 <!-- ============================================ -->
@@ -193,15 +194,36 @@
         </div>
 
         <div class="customer-info-section">
+            <!-- 🆕 حقل رقم الهاتف مع التحقق من الحظر -->
             <div class="input-group-new">
                 <label for="customerPhone">
                     <i class="fas fa-phone"></i> رقم الهاتف
                     <span class="required-star">*</span>
+                    <span id="phoneBanIndicator" class="ban-indicator" style="display: none;">
+                        <i class="fas fa-ban"></i> محظور
+                    </span>
                 </label>
                 <div class="input-wrapper-new">
-                    <input type="tel" id="customerPhone" class="input-field-new" placeholder="07XX XXX XXXX" maxlength="11" inputmode="numeric" autocomplete="tel">
+                    <input type="tel" id="customerPhone" class="input-field-new" 
+                           placeholder="07XX XXX XXXX" maxlength="11" 
+                           inputmode="numeric" autocomplete="tel">
                     <span class="phone-prefix">+964</span>
                 </div>
+                <small class="form-hint" id="phoneStatusHint">
+                    <i class="fas fa-info-circle"></i>
+                    أدخل رقم هاتفك للتحقق من إمكانية الطلب
+                </small>
+            </div>
+
+            <!-- 🆕 حقل ملاحظات الطلب مع عداد الأحرف -->
+            <div class="input-group-new">
+                <label for="orderNotes">
+                    <i class="fas fa-sticky-note"></i> ملاحظات الطلب
+                    <span class="char-counter" id="notesCharCount">0/80</span>
+                </label>
+                <textarea id="orderNotes" class="input-field-new textarea-field" 
+                        placeholder="مثال: بدون بصل، تغليف إضافي..." 
+                        maxlength="80" rows="2"></textarea>
             </div>
 
             <div class="input-group-new">
@@ -299,7 +321,8 @@
                 <label for="detailedAddress">
                     <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
                 </label>
-                <input type="text" id="detailedAddress" class="input-field-new" placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
+                <input type="text" id="detailedAddress" class="input-field-new" 
+                       placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
             </div>
         </div>
 
@@ -436,6 +459,72 @@
             <p><i class="fas fa-check-circle"></i> تم تحديد موقعك بنجاح</p>
             <p class="location-coords" id="locationCoords"></p>
         </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ⏳ نافذة الطلب قيد التحضير -->
+<!-- ============================================ -->
+<div id="processingModal" class="modal">
+    <div class="modal-content processing-modal-content">
+        <div class="processing-icon">
+            <i class="fas fa-hourglass-half fa-spin"></i>
+        </div>
+        <h2>طلبك قيد التحضير 🍳</h2>
+        <p class="processing-message">
+            الدلفري سيتصل بك قريباً، الرجاء الانتظار
+        </p>
+        <div class="countdown-timer">
+            <span id="processingTimer">05:00</span>
+        </div>
+        <div class="processing-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>تنبيه:</strong> بعد تقديم الطلب لا يمكنك تعديله إلكترونياً.
+        </div>
+        <div class="processing-contact">
+            <p>للتعديل أو الاستفسار يُرجى التواصل عبر واتساب:</p>
+            <a href="https://wa.me/9647755666073" target="_blank" class="whatsapp-contact-btn">
+                <i class="fab fa-whatsapp"></i> 07755666073
+            </a>
+        </div>
+        <div class="processing-cancel">
+            <button id="cancelOrderBtn" class="btn-cancel-order">
+                <i class="fas fa-times-circle"></i> إلغاء الطلب
+            </button>
+            <small class="cancel-warning-text">
+                ⚠️ في حال الإلغاء سيتم حظر حسابك عن الطلب لمدة 5 ساعات
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- 🚫 نافذة الحظر (عند وجود حظر) -->
+<!-- ============================================ -->
+<div id="banModal" class="modal">
+    <div class="modal-content ban-modal-content">
+        <div class="ban-icon">
+            <i class="fas fa-ban"></i>
+        </div>
+        <h2>تم تعليق الحساب</h2>
+        <div id="banMessage"></div>
+        <div id="banCountdown" class="ban-countdown" style="display: none;">
+            <p><i class="fas fa-clock"></i> الوقت المتبقي:</p>
+            <span id="banTimeRemaining">--:--:--</span>
+        </div>
+        <div class="ban-actions">
+            <button onclick="closeBanModal()" class="btn-close-ban">
+                <i class="fas fa-check"></i> فهمت
+            </button>
+            <a href="https://wa.me/9647755666073?text=أريد%20الاستفسار%20عن%20حظر%20حسابي" 
+               target="_blank" class="btn-contact-support">
+                <i class="fab fa-whatsapp"></i> تواصل مع الدعم
+            </a>
+        </div>
+        <small class="ban-footer-text">
+            <i class="fas fa-info-circle"></i>
+            في حال وجود أي استفسار، يرجى التواصل مع الإدارة
+        </small>
     </div>
 </div>
 
