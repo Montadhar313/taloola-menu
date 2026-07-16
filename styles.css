@@ -1,15 +1,674 @@
 /* ============================================ */
-/* متغيرات الألوان */
+/* 🌗 متغيرات الألوان العامة للنوافذ */
 /* ============================================ */
 :root {
-    --main-red: #c70301;
-    --main-yellow: #fedb17;
-    --text-color: #ffffff;
-    --item-bg: rgba(199, 3, 1, 0.95);
-    --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    --shadow-hover: 0 8px 25px rgba(254, 219, 23, 0.5);
-    --main-font: 'Cairo', sans-serif;
-    --top-bar-height: 75px;
+    /* ألوان النوافذ - الوضع المظلم (افتراضي) */
+    --modal-bg: #2c2c2c;
+    --modal-text: #ffffff;
+    --modal-card-bg: #3a3a3a;
+    --modal-border: #555;
+    --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    --modal-input-bg: #444;
+    --modal-input-text: #fff;
+    --modal-input-border: #666;
+    --modal-btn-close-bg: rgba(255,255,255,0.1);
+    --modal-btn-close-hover: rgba(255,255,255,0.2);
+    --modal-success: #28a745;
+    --modal-danger: #dc3545;
+    --modal-warning: #ffc107;
+    --modal-info: #17a2b8;
+    --modal-star-color: #ddd;
+    --modal-star-active: var(--main-yellow);
+}
+
+/* الوضع المشرق */
+body.light-mode {
+    --modal-bg: #f8f9fa;
+    --modal-text: #1a1a1a;
+    --modal-card-bg: #ffffff;
+    --modal-border: #ddd;
+    --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    --modal-input-bg: #fff;
+    --modal-input-text: #333;
+    --modal-input-border: #ccc;
+    --modal-btn-close-bg: rgba(0,0,0,0.05);
+    --modal-btn-close-hover: rgba(0,0,0,0.1);
+    --modal-star-color: #ccc;
+    --modal-star-active: var(--main-yellow);
+}
+
+/* ============================================ */
+/* ⏳ نافذة المعالجة (الانتظار) */
+/* ============================================ */
+.processing-modal-content {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+    padding: 40px 30px;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: var(--modal-shadow);
+    border: 2px solid var(--main-yellow);
+    animation: slideUpModal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.processing-icon {
+    font-size: 4rem;
+    color: var(--main-yellow);
+    margin-bottom: 15px;
+    animation: spin 2s linear infinite;
+}
+
+.processing-modal-content h2 {
+    color: var(--main-yellow);
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.processing-message {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: var(--modal-text);
+    opacity: 0.9;
+}
+
+.countdown-timer {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--main-yellow);
+    background: rgba(0,0,0,0.2);
+    padding: 10px 20px;
+    border-radius: 15px;
+    display: inline-block;
+    margin: 15px 0;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+}
+
+.processing-warning {
+    background: rgba(255, 193, 7, 0.15);
+    border-right: 4px solid var(--modal-warning);
+    padding: 12px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--modal-text);
+}
+
+.processing-warning i {
+    color: var(--modal-warning);
+    font-size: 1.2rem;
+}
+
+.processing-contact {
+    margin: 20px 0;
+}
+
+.processing-contact p {
+    margin-bottom: 8px;
+    color: var(--modal-text);
+    opacity: 0.8;
+}
+
+.whatsapp-contact-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #25D366;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+.whatsapp-contact-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
+.processing-cancel {
+    margin-top: 20px;
+}
+
+.btn-cancel-order {
+    background: var(--modal-danger);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--main-font);
+}
+
+.btn-cancel-order:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.cancel-warning-text {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    color: var(--modal-text);
+}
+
+
+
+@keyframes shakeIn {
+    0% { transform: scale(0.8) rotate(-5deg); opacity: 0; }
+    50% { transform: scale(1.05) rotate(2deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.ban-icon {
+    font-size: 4.5rem;
+    color: var(--modal-danger);
+    margin-bottom: 15px;
+    animation: banPulse 1.5s infinite;
+}
+
+@keyframes banPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+}
+
+.ban-modal-content h2 {
+    color: var(--modal-danger);
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+#banMessage {
+    color: var(--modal-text);
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 25px;
+}
+
+#banMessage p {
+    margin-bottom: 12px;
+    padding: 12px 15px;
+    background: var(--modal-card-bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    border: 1px solid var(--modal-border);
+}
+
+#banMessage p i {
+    font-size: 1.2rem;
+}
+
+.ban-reason-text {
+    border-right: 4px solid var(--modal-warning) !important;
+}
+.ban-reason-text i { color: var(--modal-warning) !important; }
+
+.ban-phone-text {
+    border-right: 4px solid var(--modal-info) !important;
+}
+.ban-phone-text i { color: var(--modal-info) !important; }
+
+.ban-permanent-text {
+    border-right: 4px solid var(--modal-danger) !important;
+    font-weight: 700;
+}
+.ban-permanent-text i { color: var(--modal-danger) !important; }
+
+.ban-temporary-text {
+    border-right: 4px solid var(--modal-warning) !important;
+}
+.ban-temporary-text i { color: var(--modal-warning) !important; }
+
+.ban-warning-text {
+    border-right: 4px solid var(--modal-danger) !important;
+    color: var(--modal-danger) !important;
+    font-weight: 600;
+}
+.ban-warning-text i { color: var(--modal-danger) !important; }
+
+/* عد تنازلي الحظر */
+.ban-countdown {
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--modal-card-bg);
+    border-radius: 15px;
+    border: 2px solid var(--modal-warning);
+}
+
+.ban-countdown p {
+    color: var(--modal-text);
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ban-countdown p i {
+    color: var(--modal-warning);
+}
+
+#banTimeRemaining {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--main-yellow);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+}
+
+/* أزرار نافذة الحظر */
+.ban-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-close-ban {
+    flex: 1;
+    background: var(--main-red);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: var(--main-font);
+    box-shadow: 0 4px 15px rgba(199, 3, 1, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-close-ban:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+}
+
+.btn-contact-support {
+    flex: 1;
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: var(--main-font);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.btn-contact-support:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.ban-footer-text {
+    display: block;
+    margin-top: 20px;
+    color: var(--modal-text);
+    opacity: 0.7;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ban-footer-text i {
+    color: var(--main-yellow);
+}
+
+/* ============================================ */
+/* ⭐ نافذة التقييم */
+/* ============================================ */
+.rating-modal-content {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+    padding: 30px 25px;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 95%;
+    text-align: center;
+    box-shadow: var(--modal-shadow);
+    border: 2px solid var(--main-yellow);
+    animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rating-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.rating-icon {
+    font-size: 3rem;
+    color: var(--main-yellow);
+    background: var(--main-red);
+    padding: 15px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.rating-header h2 {
+    color: var(--main-yellow);
+    font-size: 1.8rem;
+    margin: 10px 0 5px;
+    font-weight: 800;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.rating-subtitle {
+    color: var(--modal-text);
+    opacity: 0.8;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.rating-sections {
+    margin: 20px 0;
+}
+
+.rating-group {
+    margin-bottom: 20px;
+    background: var(--modal-card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px solid var(--modal-border);
+    transition: border-color 0.3s;
+}
+
+.rating-group:hover {
+    border-color: var(--main-yellow);
+}
+
+.rating-label {
+    display: block;
+    font-weight: 700;
+    color: var(--main-yellow);
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+}
+
+.stars-container {
+    display: flex;
+    gap: 8px;
+    direction: ltr;
+    justify-content: center;
+}
+
+.star {
+    font-size: 2.2rem;
+    cursor: pointer;
+    color: var(--modal-star-color);
+    transition: all 0.2s ease;
+    user-select: none;
+    line-height: 1;
+}
+
+.star:hover,
+.star.active {
+    color: var(--modal-star-active);
+    transform: scale(1.2);
+}
+
+.star.active {
+    text-shadow: 0 0 20px rgba(254, 219, 23, 0.4);
+}
+
+.rating-value {
+    display: inline-block;
+    margin-right: 10px;
+    font-weight: 700;
+    color: var(--main-yellow);
+    font-size: 1.1rem;
+    min-width: 30px;
+}
+
+.rating-message {
+    margin: 20px 0;
+}
+
+.rating-message label {
+    display: block;
+    font-weight: 600;
+    color: var(--modal-text);
+    margin-bottom: 8px;
+}
+
+.rating-message textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--modal-input-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: var(--main-font);
+    resize: vertical;
+    transition: border-color 0.3s;
+    background: var(--modal-input-bg);
+    color: var(--modal-input-text);
+}
+
+.rating-message textarea:focus {
+    border-color: var(--main-yellow);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(254, 219, 23, 0.2);
+}
+
+.rating-order-info {
+    text-align: center;
+    padding: 10px;
+    background: var(--modal-card-bg);
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 0.95rem;
+    color: var(--modal-text);
+    border: 1px solid var(--modal-border);
+}
+
+.rating-order-info strong {
+    color: var(--main-yellow);
+    font-size: 1.1rem;
+}
+
+.rating-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-submit-rating {
+    flex: 1;
+    background: linear-gradient(135deg, var(--main-red), #a50301);
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(199, 3, 1, 0.3);
+    font-family: var(--main-font);
+}
+
+.btn-submit-rating:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+}
+
+.btn-skip-rating {
+    background: var(--modal-card-bg);
+    color: var(--modal-text);
+    border: 2px solid var(--modal-border);
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: var(--main-font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 0.5;
+}
+
+.btn-skip-rating:hover {
+    background: var(--modal-border);
+    transform: translateY(-2px);
+}
+
+.rating-privacy {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--modal-text);
+    opacity: 0.7;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.rating-privacy i {
+    color: var(--main-yellow);
+}
+
+/* ============================================ */
+/* 📱 التجاوب للنوافذ */
+/* ============================================ */
+@media (max-width: 480px) {
+    .processing-modal-content,
+    .ban-modal-content,
+    .rating-modal-content {
+        padding: 25px 20px;
+        width: 95%;
+    }
+
+    .processing-icon { font-size: 3rem; }
+    .countdown-timer { font-size: 2.5rem; }
+    .ban-icon { font-size: 3.5rem; }
+    .rating-icon { font-size: 2.5rem; }
+    .star { font-size: 1.8rem; }
+    .ban-actions,
+    .rating-actions {
+        flex-direction: column;
+    }
+    .btn-skip-rating {
+        flex: 1;
+    }
+}
+
+/* ============================================ */
+/* 🎯 تحسينات إضافية للوضع المشرق */
+/* ============================================ */
+body.light-mode .processing-modal-content,
+body.light-mode .ban-modal-content,
+body.light-mode .rating-modal-content {
+    border-color: var(--main-red);
+}
+
+body.light-mode .processing-modal-content h2,
+body.light-mode .ban-modal-content h2,
+body.light-mode .rating-header h2 {
+    color: var(--main-red);
+}
+
+body.light-mode .rating-label {
+    color: var(--main-red);
+}
+
+body.light-mode .rating-order-info strong {
+    color: var(--main-red);
+}
+
+body.light-mode .ban-countdown {
+    background: #fff3cd;
+}
+
+body.light-mode .ban-countdown p i {
+    color: #856404;
+}
+
+body.light-mode .star.active {
+    text-shadow: 0 0 20px rgba(199, 3, 1, 0.3);
+}
+
+body.light-mode .btn-close-ban {
+    background: var(--main-red);
+}
+
+body.light-mode .btn-submit-rating {
+    background: var(--main-red);
+}
+
+body.light-mode .btn-skip-rating {
+    background: #f1f3f5;
+    color: #333;
+    border-color: #ccc;
+}
+
+body.light-mode .btn-skip-rating:hover {
+    background: #e9ecef;
+}
+
+body.light-mode .processing-warning {
+    background: rgba(255, 193, 7, 0.2);
+}
+
+body.light-mode .ban-icon {
+    color: #dc3545;
+}
+
+body.light-mode .ban-modal-content {
+    border-color: #dc3545;
+}
+
+body.light-mode .ban-warning-text {
+    color: #dc3545 !important;
+}
+
+body.light-mode .ban-permanent-text {
+    border-right-color: #dc3545 !important;
 }
 
 * {
@@ -1796,20 +2455,6 @@ body.light-mode .menu-item {
     color: #1a1a1a !important;
 }
 
-/* ============================================ */
-/* 🔄 شاشة معالجة الطلب */
-/* ============================================ */
-.order-processing-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    animation: fadeIn 0.3s ease;
-}
 
 .order-processing-content {
     background: linear-gradient(135deg, #ffffff, #f5f5f5);
@@ -2687,3 +3332,1194 @@ section.info-section.animate-in {
 .floating-cart-btn[style*="opacity: 0.5"] {
     filter: grayscale(100%);
 }
+
+/* ============================================ */
+/* 🚫 مؤشر الحظر بجانب الهاتف */
+/* ============================================ */
+.ban-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, #dc3545, #a71d2a);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-right: 10px;
+    animation: banPulse 1.5s infinite;
+}
+
+@keyframes banPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 10px rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.6);
+    }
+}
+
+#phoneStatusHint {
+    display: block;
+    margin-top: 8px;
+    color: var(--gray);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#phoneStatusHint.error {
+    color: var(--danger);
+}
+
+#phoneStatusHint.success {
+    color: var(--success);
+}
+
+#phoneStatusHint i {
+    font-size: 0.9rem;
+}
+
+/* ============================================ */
+/* 🚫 نافذة الحظر المحسّنة */
+/* ============================================ */
+.ban-modal-content {
+    text-align: center;
+    padding: 40px 30px;
+    max-width: 450px;
+}
+
+.ban-icon {
+    font-size: 5rem;
+    color: var(--danger);
+    margin-bottom: 20px;
+    animation: banShake 0.8s ease;
+}
+
+@keyframes banShake {
+    0%, 100% { transform: rotate(0); }
+    20% { transform: rotate(-15deg); }
+    40% { transform: rotate(15deg); }
+    60% { transform: rotate(-10deg); }
+    80% { transform: rotate(10deg); }
+}
+
+.ban-modal-content h2 {
+    color: var(--danger);
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    font-weight: 800;
+}
+
+#banMessage {
+    color: var(--dark);
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 25px;
+}
+
+#banMessage p {
+    margin-bottom: 12px;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+#banMessage p i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+#banMessage .ban-reason-text {
+    background: #fff3cd;
+    border-right: 4px solid #ffc107;
+}
+
+#banMessage .ban-reason-text i {
+    color: #ffc107;
+}
+
+#banMessage .ban-phone-text {
+    background: #e3f2fd;
+    border-right: 4px solid #2196f3;
+}
+
+#banMessage .ban-phone-text i {
+    color: #2196f3;
+}
+
+#banMessage .ban-permanent-text {
+    background: #ffebee;
+    border-right: 4px solid var(--danger);
+    font-weight: 700;
+}
+
+#banMessage .ban-permanent-text i {
+    color: var(--danger);
+}
+
+#banMessage .ban-temporary-text {
+    background: #fff8e1;
+    border-right: 4px solid #ff9800;
+}
+
+#banMessage .ban-temporary-text i {
+    color: #ff9800;
+}
+
+#banMessage .ban-warning-text {
+    background: #ffebee;
+    border-right: 4px solid var(--danger);
+    color: var(--danger);
+    font-weight: 600;
+}
+
+#banMessage .ban-warning-text i {
+    color: var(--danger);
+}
+
+/* عد تنازلي الحظر */
+.ban-countdown {
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #fff8e1, #fff3c4);
+    border-radius: 15px;
+    border: 2px solid #ffc107;
+}
+
+.ban-countdown p {
+    color: var(--dark);
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ban-countdown p i {
+    color: #ff9800;
+}
+
+#banTimeRemaining {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+/* أزرار نافذة الحظر */
+.ban-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-close-ban {
+    flex: 1;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 4px 15px rgba(199, 3, 1, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-close-ban:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+}
+
+.btn-contact-support {
+    flex: 1;
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Cairo', sans-serif;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.btn-contact-support:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.ban-footer-text {
+    display: block;
+    margin-top: 20px;
+    color: var(--gray);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ban-footer-text i {
+    color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .ban-icon {
+        font-size: 4rem;
+    }
+    
+    .ban-modal-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .ban-actions {
+        flex-direction: column;
+    }
+    
+    #banTimeRemaining {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================ */
+/* ⭐ نظام تقييم الخدمة */
+/* ============================================ */
+.review-btn {
+    background: var(--secondary);
+    color: var(--dark);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.review-btn:hover {
+    background: #e0c000;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(254, 219, 23, 0.4);
+}
+
+
+.review-type-selector {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.review-type-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--light);
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: var(--transition);
+}
+
+.review-type-label:hover {
+    background: #e9ecef;
+}
+
+.review-type-label input {
+    accent-color: var(--primary);
+}
+
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse; /* مهم جداً للعمل بشكل صحيح مع RTL */
+    justify-content: center;
+    gap: 8px;
+    margin: 15px 0;
+    font-size: 2.2rem;
+    color: #ddd;
+    cursor: pointer;
+}
+
+.star-rating i {
+    transition: color 0.2s, transform 0.2s;
+}
+
+.star-rating i.active,
+.star-rating i:hover,
+.star-rating i:hover ~ i {
+    color: var(--secondary);
+    transform: scale(1.15);
+}
+
+.rating-text {
+    color: var(--gray);
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+    min-height: 24px;
+    font-weight: 600;
+}
+
+#reviewMessage {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+
+#reviewMessage:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.1);
+}
+/* ============================================ */
+/* 🎨 متغيرات الألوان للنوافذ (للدعم المظلم والمشرق) */
+/* ============================================ */
+:root {
+    --main-red: #c70301;
+    --main-yellow: #fedb17;
+    --text-color: #ffffff;
+    --item-bg: rgba(199, 3, 1, 0.95);
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --shadow-hover: 0 8px 25px rgba(254, 219, 23, 0.5);
+    --main-font: 'Cairo', sans-serif;
+    --top-bar-height: 75px;
+    
+    /* متغيرات النوافذ الافتراضية (وضع داكن) */
+    --modal-bg: #2c2c2c;
+    --modal-text: #ffffff;
+    --modal-secondary-bg: #3a3a3a;
+    --modal-border: rgba(255, 255, 255, 0.1);
+}
+
+/* تحديث متغيرات الوضع المشرق */
+body.light-mode {
+    --modal-bg: #ffffff;
+    --modal-text: #1a1a1a;
+    --modal-secondary-bg: #f8f9fa;
+    --modal-border: rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================ */
+/* 🔄 تصميم موحد للنوافذ المنبثقة (Modals) */
+/* ============================================ */
+.order-processing-modal, 
+.ban-modal, 
+.review-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: fadeIn 0.3s ease;
+}
+
+.order-processing-content, 
+.ban-modal-content, 
+.review-modal-content {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+    text-align: center;
+    padding: 40px 30px;
+    border-radius: 25px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 450px;
+    width: 90%;
+    animation: slideUpModal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    border: 1px solid var(--modal-border);
+}
+
+/* أيقونة المعالجة */
+.order-processing-spinner {
+    width: 80px;
+    height: 80px;
+    border: 5px solid rgba(199, 3, 1, 0.2);
+    border-top-color: var(--main-red);
+    border-radius: 50%;
+    margin: 0 auto 25px;
+    animation: spin 1s linear infinite;
+}
+
+/* أيقونة الحظر */
+.ban-icon {
+    font-size: 5rem;
+    color: #dc3545;
+    margin-bottom: 20px;
+    animation: banShake 0.8s ease;
+}
+
+@keyframes banShake {
+    0%, 100% { transform: rotate(0); }
+    20% { transform: rotate(-15deg); }
+    40% { transform: rotate(15deg); }
+    60% { transform: rotate(-10deg); }
+    80% { transform: rotate(10deg); }
+}
+
+/* عناوين النوافذ */
+.order-processing-title, 
+.ban-modal-content h2, 
+.review-modal-content h2 {
+    color: var(--main-red);
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    font-family: var(--main-font);
+}
+
+/* النصوص العامة داخل النوافذ */
+.order-processing-text, 
+#banMessage, 
+.rating-text {
+    color: var(--modal-text);
+    opacity: 0.85;
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 25px;
+    font-family: var(--main-font);
+}
+
+/* رسائل الحظر المحددة */
+#banMessage p {
+    margin-bottom: 12px;
+    padding: 12px 15px;
+    background: var(--modal-secondary-bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    font-weight: 600;
+    border: 1px solid var(--modal-border);
+}
+
+#banMessage p i {
+    font-size: 1.2rem;
+}
+
+.ban-reason-text {
+    background: rgba(255, 193, 7, 0.15) !important;
+    border-right: 4px solid #ffc107 !important;
+    color: #ffc107 !important;
+}
+
+.ban-phone-text {
+    background: rgba(33, 150, 243, 0.15) !important;
+    border-right: 4px solid #2196f3 !important;
+    color: #2196f3 !important;
+}
+
+.ban-permanent-text {
+    background: rgba(220, 53, 69, 0.15) !important;
+    border-right: 4px solid #dc3545 !important;
+    color: #dc3545 !important;
+    font-weight: 700;
+}
+
+.ban-temporary-text {
+    background: rgba(255, 152, 0, 0.15) !important;
+    border-right: 4px solid #ff9800 !important;
+    color: #ff9800 !important;
+}
+
+.ban-warning-text {
+    background: rgba(220, 53, 69, 0.1) !important;
+    border-right: 4px solid #dc3545 !important;
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+
+/* عد تنازلي الحظر */
+.ban-countdown {
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 193, 7, 0.1));
+    border-radius: 15px;
+    border: 2px solid #ffc107;
+}
+
+.ban-countdown p {
+    color: var(--modal-text);
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#banTimeRemaining {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--main-red);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+/* أزرار النوافذ */
+.ban-actions, 
+.review-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-close-ban, 
+.btn-submit-review, 
+.btn-cancel-order {
+    flex: 1;
+    background: linear-gradient(135deg, var(--main-red), #8b0000);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: var(--main-font);
+    box-shadow: 0 4px 15px rgba(199, 3, 1, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-close-ban:hover, 
+.btn-submit-review:hover, 
+.btn-cancel-order:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+}
+
+.btn-contact-support {
+    flex: 1;
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: var(--main-font);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.btn-contact-support:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+/* ============================================ */
+/* ⭐ نظام تقييم الخدمة */
+/* ============================================ */
+.review-type-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.review-type-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--modal-text);
+    background: var(--modal-secondary-bg);
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: var(--transition);
+    border: 1px solid var(--modal-border);
+}
+
+.review-type-label:hover {
+    border-color: var(--main-yellow);
+}
+
+.review-type-label input {
+    accent-color: var(--main-red);
+}
+
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse; /* مهم جداً للعمل بشكل صحيح مع RTL */
+    justify-content: center;
+    gap: 8px;
+    margin: 15px 0;
+    font-size: 2.5rem;
+    color: #555; /* لون النجوم غير النشطة في الوضع المشرق */
+    cursor: pointer;
+}
+
+/* تعديل لون النجوم غير النشطة في الوضع الداكن */
+body.dark-mode .star-rating, 
+body.gray-mode .star-rating {
+    color: #666;
+}
+
+.star-rating i {
+    transition: color 0.2s, transform 0.2s;
+}
+
+.star-rating i.active,
+.star-rating i:hover,
+.star-rating i:hover ~ i {
+    color: var(--main-yellow);
+    transform: scale(1.15);
+    text-shadow: 0 0 10px rgba(254, 219, 23, 0.5);
+}
+
+#reviewMessage {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--modal-border);
+    background: var(--modal-secondary-bg);
+    color: var(--modal-text);
+    border-radius: 12px;
+    font-family: var(--main-font);
+    font-size: 1rem;
+    resize: vertical;
+    transition: var(--transition);
+    box-sizing: border-box;
+    min-height: 100px;
+}
+
+#reviewMessage:focus {
+    border-color: var(--main-red);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.15);
+}
+
+/* ============================================ */
+/* 📱 Responsive للنوافذ */
+/* ============================================ */
+@media (max-width: 480px) {
+    .order-processing-content, 
+    .ban-modal-content, 
+    .review-modal-content {
+        padding: 30px 20px;
+        width: 95%;
+    }
+    
+    .ban-icon {
+        font-size: 4rem;
+    }
+    
+    .order-processing-title, 
+    .ban-modal-content h2, 
+    .review-modal-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .ban-actions, 
+    .review-actions {
+        flex-direction: column;
+    }
+    
+    #banTimeRemaining {
+        font-size: 1.8rem;
+    }
+    
+    .star-rating {
+        font-size: 2rem;
+    }
+}
+
+/* ============================================ */
+/* 📢 إشعار الطلب في الشريط العلوي */
+/* ============================================ */
+.order-sent-notification {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--success), #20c997);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    animation: pulseNotification 2s infinite;
+    margin-left: 15px;
+}
+
+.order-sent-notification:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+}
+
+@keyframes pulseNotification {
+    0%, 100% { box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+    50% { box-shadow: 0 4px 25px rgba(40, 167, 69, 0.6); }
+}
+
+/* ============================================ */
+/* ✅ محتوى نافذة استلام الطلب */
+/* ============================================ */
+.order-received-content {
+    text-align: center;
+    padding: 40px 30px;
+    max-width: 400px;
+}
+
+.order-received-content .success-icon {
+    font-size: 5rem;
+    color: var(--success);
+    margin-bottom: 20px;
+    animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+.order-received-content h2 {
+    color: var(--dark);
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+.order-received-content p {
+    color: var(--gray);
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.order-received-content #receivedOrderNumber {
+    color: var(--primary);
+    font-size: 1.4rem;
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.modal-actions .btn-primary {
+    width: 100%;
+}
+
+.modal-actions .btn-secondary {
+    width: 100%;
+    background: var(--gray-light);
+    color: var(--dark);
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.modal-actions .btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+/* ============================================ */
+/* ⭐ محتوى نافذة التقييم */
+/* ============================================ */
+.review-modal-content {
+    text-align: center;
+    padding: 30px;
+    max-width: 450px;
+}
+
+.review-type-selector {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.review-type-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--light);
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: var(--transition);
+}
+
+.review-type-label:hover {
+    background: #e0e0e0;
+}
+
+.review-type-label input {
+    accent-color: var(--primary);
+}
+
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 8px;
+    margin: 15px 0;
+    font-size: 2.5rem;
+    color: #ddd;
+    cursor: pointer;
+}
+
+.star-rating i {
+    transition: color 0.2s, transform 0.2s;
+}
+
+.star-rating i.active,
+.star-rating i:hover,
+.star-rating i:hover ~ i {
+    color: var(--secondary);
+    transform: scale(1.15);
+}
+
+.rating-text {
+    color: var(--gray);
+    font-size: 1rem;
+    margin-bottom: 15px;
+    min-height: 24px;
+    font-weight: 600;
+}
+
+.review-modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    transition: var(--transition);
+    margin-bottom: 20px;
+}
+
+.review-modal-content textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(199, 3, 1, 0.1);
+}
+/* ============================================ */
+/* 🔹 أنماط إضافية لنافذة السلة المحسّنة */
+/* ============================================ */
+
+/* مؤشر الحظر بجانب الهاتف */
+.ban-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #dc3545, #a71d2a);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 8px;
+    animation: banPulse 1.5s infinite;
+}
+
+@keyframes banPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(220, 53, 69, 0.6); }
+}
+
+/* عداد الأحرف للملاحظات */
+.char-counter {
+    font-size: 0.75rem;
+    color: var(--gray);
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.char-counter.near-limit {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+/* شارة حالة الموقع */
+.location-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #856404;
+    font-weight: 600;
+}
+
+.location-status-badge.success {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.location-status-badge.success i {
+    color: #28a745;
+}
+
+/* زر استخدام العنوان المحفوظ */
+.btn-use-saved {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--main-yellow);
+    color: var(--main-red);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    font-family: var(--main-font);
+}
+
+.btn-use-saved:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(254, 219, 23, 0.4);
+}
+
+/* معاينة العنوان المحفوظ */
+.saved-address-preview {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--gray);
+    background: #f8f9fa;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border-right: 3px solid var(--main-yellow);
+}
+
+/* تحسينات للتجاوب */
+@media (max-width: 480px) {
+    .cart-modal-new {
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .customer-info-section {
+        padding: 15px;
+    }
+    
+    .input-group-new label {
+        font-size: 0.9rem;
+    }
+    
+    .input-field-new, .select-field-new {
+        font-size: 0.95rem;
+        padding: 10px 12px;
+    }
+    
+    .ban-indicator {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+}
+
+/* 🆕 زر تتبع الطلب الحالي */
+.floating-cart-btn.tracking-btn {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    border-color: #1e7e34;
+    color: white;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.floating-cart-btn.tracking-btn:hover {
+    background: linear-gradient(135deg, #34ce57, #28a745);
+    box-shadow: 0 12px 30px rgba(40, 167, 69, 0.6);
+}
+
+.floating-cart-btn.tracking-btn .cart-count-badge {
+    background: #ffc107;
+    color: #000;
+    border-color: #fff;
+}
+
+/* تنسيق زر التتبع */
+.floating-track-btn {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    z-index: 998;
+    display: flex; /* سيتم التحكم به عبر JS */
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 28px;
+    min-width: 200px;
+    height: 60px;
+    background: linear-gradient(135deg, #28a745, #20c997); /* لون أخضر للتمييز */
+    color: white;
+    border: 3px solid #fff;
+    border-radius: 50px;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    font-family: var(--main-font);
+    font-size: 1.1rem;
+    font-weight: 700;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    cursor: pointer;
+}
+
+.floating-track-btn.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1);
+}
+
+.floating-track-btn:hover {
+    transform: translateX(-50%) translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(40, 167, 69, 0.5);
+}
+
+/* 🚚 زر تتبع الطلب العائم */
+.floating-track-btn {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    z-index: 998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 28px;
+    min-width: 200px;
+    height: 60px;
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    border: 3px solid #1e7e34;
+    border-radius: 50px;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    font-family: var(--main-font);
+    font-size: 1.1rem;
+    font-weight: 700;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.floating-track-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1);
+    animation: slideUpBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.floating-track-btn:hover {
+    background: linear-gradient(135deg, #34ce57, #28a745);
+    transform: translateX(-50%) translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(40, 167, 69, 0.6);
+}
+
+.floating-track-btn:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+.floating-track-btn i {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.floating-track-btn .track-text {
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive للهواتف */
+@media (max-width: 768px) {
+    .floating-track-btn {
+        bottom: 20px;
+        min-width: 180px;
+        height: 56px;
+        padding: 12px 24px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-track-btn {
+        bottom: 18px;
+        min-width: 170px;
+        height: 54px;
+        font-size: 0.95rem;
+    }
+}
+
