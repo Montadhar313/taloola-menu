@@ -13,11 +13,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     
-    <!-- 🆕 تحميل الثيم من Firebase -->
+    <!-- تحميل الثيم من Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script>
-        // تحميل وتطبيق الثيم
         const firebaseConfig = {
             apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
             authDomain: "talola-food.firebaseapp.com",
@@ -26,27 +25,17 @@
             messagingSenderId: "440585170470",
             appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
         };
-        
         firebase.initializeApp(firebaseConfig);
-        
         firebase.database().ref('theme').on('value', (snapshot) => {
             const theme = snapshot.val();
-            if (theme) {
-                applyTheme(theme);
-            }
+            if (theme) applyTheme(theme);
         });
-        
         function applyTheme(theme) {
             const root = document.documentElement;
-            
-            // تطبيق الألوان
             root.style.setProperty('--main-red', theme.primaryColor || '#c70301');
             root.style.setProperty('--main-yellow', theme.secondaryColor || '#fedb17');
-            
-            // تطبيق الخلفية
             const body = document.body;
             const video = document.getElementById('background-video');
-            
             if (theme.backgroundType === 'video') {
                 body.style.background = '';
                 if (video) {
@@ -63,20 +52,35 @@
             }
         }
     </script>
+
+    <!-- أنماط إضافية لزر التتبع -->
+    <style>
+        .floating-cart-btn.tracking-btn {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            border-color: #1e7e34;
+            color: white;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+        .floating-cart-btn.tracking-btn:hover {
+            background: linear-gradient(135deg, #34ce57, #28a745);
+            box-shadow: 0 12px 30px rgba(40, 167, 69, 0.6);
+        }
+        .floating-cart-btn.tracking-btn .cart-count-badge {
+            background: #ffc107;
+            color: #000;
+            border-color: #fff;
+        }
+    </style>
 </head>
 <body>
 
-<!-- ============================================ -->
-<!-- 🎬 فيديو الخلفية -->
-<!-- ============================================ -->
+<!-- فيديو الخلفية -->
 <video id="background-video" autoplay loop muted playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E">
     <source src="https://v1.pinimg.com/videos/mc/720p/44/0c/df/440cdf2f4bdc8fe1d314c49d4876570a.mp4" type="video/mp4">
 </video>
 <div class="video-overlay"></div>
 
-<!-- ============================================ -->
-<!-- 🏠 الهيدر الرئيسي -->
-<!-- ============================================ -->
+<!-- الهيدر الرئيسي -->
 <header id="mainHeader">
     <img src="assets/images/Logo.gif" alt="شعار تعلولة" class="logo" fetchpriority="high">
     <img src="assets/images/fariq_1.png" alt="فريق تعلولة" loading="lazy" class="team-under-logo">
@@ -84,17 +88,17 @@
     <p class="hours">أوقــــات الــــعمـل : 10ص - 3ص</p>
 </header>
 
-<!-- ============================================ -->
-<!-- 📌 الشريط العلوي الثابت -->
-<!-- ============================================ -->
+<!-- الشريط العلوي الثابت -->
 <div id="topStickyBar" class="top-sticky-bar">
     <div class="top-bar-logo">
         <img src="assets/images/Logo.gif" alt="تعلولة" width="45" height="45" fetchpriority="high">
         <span class="top-bar-title">تعلولة</span>
     </div>
-    
     <div class="top-bar-actions">
-        <!-- 🆕 زر المسؤول - يوجه إلى لوحة التحكم المنفصلة -->
+        <div id="orderSentNotification" class="order-sent-notification" style="display: none;" onclick="window.location.href='tracking/order-tracking.html'">
+            <i class="fas fa-check-circle"></i>
+            <span>تم إرسال طلبك بنجاح! اضغط للتفاصيل</span>
+        </div>
         <a href="admin/admin.html" class="top-bar-btn admin-top-btn" title="لوحة التحكم">
             <i class="fas fa-user-shield"></i>
             <span class="btn-label">المسؤول</span>
@@ -102,9 +106,7 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 🧭 شريط التنقل القابل للتمرير -->
-<!-- ============================================ -->
+<!-- شريط التنقل -->
 <nav class="sections-nav" id="sectionsNav" role="navigation" aria-label="روابط الأقسام">
     <button type="button" data-section="sec0">بركر</button>
     <button type="button" data-section="sec1">زنكر</button>
@@ -122,20 +124,15 @@
     <button type="button" data-section="sec13">مقبلات</button>
 </nav>
 
-<!-- ============================================ -->
-<!-- 🍽️ المحتوى الرئيسي -->
-<!-- ============================================ -->
+<!-- المحتوى الرئيسي -->
 <main>
-    <!-- قسم الإعلانات -->
     <section class="info-section" id="ads">
         <h3>العروض الخاصة</h3>
         <div id="adsContainer"></div>
     </section>
 
-    <!-- 🆕 أقسام المنيو الديناميكية (تُملأ تلقائياً من Firebase) -->
-    <!-- لا تضع أي أقسام هنا - سيتم إنشاؤها تلقائياً -->
+    <!-- الأقسام الديناميكية ستظهر هنا -->
 
-    <!-- باقي الأقسام المعلوماتية -->
     <section class="info-section" id="team">
         <h3>فريق تعلولة</h3>
         <div class="team-content">
@@ -158,43 +155,47 @@
             <a href="https://wa.me/9647755666073" class="social-btn whatsapp" target="_blank">
                 <i class="fab fa-whatsapp"></i> واتساب
             </a>
+            <a href="review.html" class="social-btn review-btn">
+                <i class="fas fa-star"></i> قيّم تجربتك
+            </a>
         </div>
     </section>
 </main>
 
-<!-- ============================================ -->
-<!-- 🎯 الأزرار السفلية المنفصلة -->
-<!-- ============================================ -->
-
-<!-- 📍 زر الموقع (يمين الشاشة) -->
+<!-- الأزرار العائمة -->
 <button id="locationIconBtn" class="floating-btn location-floating-btn" title="تحديد الموقع">
     <i class="fas fa-map-marker-alt"></i>
 </button>
-
-<!-- ⬆️ زر العودة للأعلى (يسار الشاشة) -->
 <button id="scrollToTopBtn" class="floating-btn scroll-floating-btn" aria-label="العودة لأعلى الصفحة" title="العودة لأعلى">
     <i class="fas fa-arrow-up"></i>
 </button>
 
-<!-- 🛒 زر السلة العائم (الوسط - شكل حبوبي) -->
+<!-- 🛒 زر السلة العائم -->
 <button id="floatingCartBtn" class="floating-cart-btn" title="عرض السلة وتأكيد الطلب">
     <i class="fas fa-shopping-cart cart-icon-float"></i>
     <span class="cart-text-float">تأكيد الطلب</span>
     <span id="floatingCartCount" class="cart-count-badge">0</span>
 </button>
 
-<!-- ============================================ -->
-<!-- 🛒 نافذة سلة المشتريات -->
-<!-- ============================================ -->
+
+<button id="floatingTrackBtn" 
+        class="floating-track-btn" 
+        style="display: none;" 
+        onclick="window.location.href='tracking/order-tracking.html'" 
+        title="تتبع حالة طلبك">
+    <i class="fas fa-truck-fast"></i>
+    <span class="track-text">تتبع طلبي</span>
+</button>
+
+
+<!-- نافذة السلة -->
 <div id="cartModal" class="modal">
     <div class="modal-content cart-modal-new">
         <div class="cart-header-new">
             <h2><i class="fas fa-shopping-cart"></i> إتمام الطلب</h2>
             <span class="close" onclick="closeCartModal()">&times;</span>
         </div>
-
         <div class="customer-info-section">
-            <!-- 🆕 حقل رقم الهاتف مع التحقق من الحظر -->
             <div class="input-group-new">
                 <label for="customerPhone">
                     <i class="fas fa-phone"></i> رقم الهاتف
@@ -204,9 +205,7 @@
                     </span>
                 </label>
                 <div class="input-wrapper-new">
-                    <input type="tel" id="customerPhone" class="input-field-new" 
-                           placeholder="07XX XXX XXXX" maxlength="11" 
-                           inputmode="numeric" autocomplete="tel">
+                    <input type="tel" id="customerPhone" class="input-field-new" placeholder="07XX XXX XXXX" maxlength="11" inputmode="numeric" autocomplete="tel">
                     <span class="phone-prefix">+964</span>
                 </div>
                 <small class="form-hint" id="phoneStatusHint">
@@ -214,18 +213,13 @@
                     أدخل رقم هاتفك للتحقق من إمكانية الطلب
                 </small>
             </div>
-
-            <!-- 🆕 حقل ملاحظات الطلب مع عداد الأحرف -->
             <div class="input-group-new">
                 <label for="orderNotes">
                     <i class="fas fa-sticky-note"></i> ملاحظات الطلب
                     <span class="char-counter" id="notesCharCount">0/80</span>
                 </label>
-                <textarea id="orderNotes" class="input-field-new textarea-field" 
-                        placeholder="مثال: بدون بصل، تغليف إضافي..." 
-                        maxlength="80" rows="2"></textarea>
+                <textarea id="orderNotes" class="input-field-new textarea-field" placeholder="مثال: بدون بصل، تغليف إضافي..." maxlength="80" rows="2"></textarea>
             </div>
-
             <div class="input-group-new">
                 <label for="deliveryArea">
                     <i class="fas fa-map-marker-alt"></i> منطقة التوصيل
@@ -316,16 +310,13 @@
                     <i class="fas fa-chevron-down select-icon"></i>
                 </div>
             </div>
-
             <div class="input-group-new">
                 <label for="detailedAddress">
                     <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
                 </label>
-                <input type="text" id="detailedAddress" class="input-field-new" 
-                       placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
+                <input type="text" id="detailedAddress" class="input-field-new" placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
             </div>
         </div>
-
         <div class="cart-items-section">
             <h3 class="cart-section-title">
                 <i class="fas fa-box"></i> منتجاتك
@@ -333,7 +324,6 @@
             </h3>
             <div id="cartItems" class="cart-items-new"></div>
         </div>
-
         <div class="cart-footer-new">
             <div class="cart-total-new">
                 <span class="total-label">المجموع النهائي:</span>
@@ -351,9 +341,7 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 🛍️ نافذة تفاصيل المنتج -->
-<!-- ============================================ -->
+<!-- نافذة المنتج -->
 <div id="productModal" class="modal product-modal">
     <div class="modal-content product-modal-content">
         <button type="button" class="close-product-modal" onclick="closeProductModal()">
@@ -393,9 +381,7 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 📍 نافذة طلب إذن الموقع -->
-<!-- ============================================ -->
+<!-- نافذة الموقع -->
 <div id="locationPermissionModal" class="modal">
     <div class="modal-content location-permission-modal">
         <div class="location-icon-wrapper">
@@ -432,9 +418,7 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 📍 نافذة تحديد الموقع المنبثقة -->
-<!-- ============================================ -->
+<!-- نافذة تحديد الموقع -->
 <div id="locationModal" class="modal">
     <div class="modal-content location-modal-content">
         <span class="close" onclick="closeLocationModal()">&times;</span>
@@ -462,45 +446,7 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- ⏳ نافذة الطلب قيد التحضير -->
-<!-- ============================================ -->
-<div id="processingModal" class="modal">
-    <div class="modal-content processing-modal-content">
-        <div class="processing-icon">
-            <i class="fas fa-hourglass-half fa-spin"></i>
-        </div>
-        <h2>طلبك قيد التحضير 🍳</h2>
-        <p class="processing-message">
-            الدلفري سيتصل بك قريباً، الرجاء الانتظار
-        </p>
-        <div class="countdown-timer">
-            <span id="processingTimer">05:00</span>
-        </div>
-        <div class="processing-warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            <strong>تنبيه:</strong> بعد تقديم الطلب لا يمكنك تعديله إلكترونياً.
-        </div>
-        <div class="processing-contact">
-            <p>للتعديل أو الاستفسار يُرجى التواصل عبر واتساب:</p>
-            <a href="https://wa.me/9647755666073" target="_blank" class="whatsapp-contact-btn">
-                <i class="fab fa-whatsapp"></i> 07755666073
-            </a>
-        </div>
-        <div class="processing-cancel">
-            <button id="cancelOrderBtn" class="btn-cancel-order">
-                <i class="fas fa-times-circle"></i> إلغاء الطلب
-            </button>
-            <small class="cancel-warning-text">
-                ⚠️ في حال الإلغاء سيتم حظر حسابك عن الطلب لمدة 5 ساعات
-            </small>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================ -->
-<!-- 🚫 نافذة الحظر (عند وجود حظر) -->
-<!-- ============================================ -->
+<!-- نافذة الحظر -->
 <div id="banModal" class="modal">
     <div class="modal-content ban-modal-content">
         <div class="ban-icon">
@@ -516,8 +462,7 @@
             <button onclick="closeBanModal()" class="btn-close-ban">
                 <i class="fas fa-check"></i> فهمت
             </button>
-            <a href="https://wa.me/9647755666073?text=أريد%20الاستفسار%20عن%20حظر%20حسابي" 
-               target="_blank" class="btn-contact-support">
+            <a href="https://wa.me/9647755666073?text=أريد%20الاستفسار%20عن%20حظر%20حسابي" target="_blank" class="btn-contact-support">
                 <i class="fab fa-whatsapp"></i> تواصل مع الدعم
             </a>
         </div>
@@ -528,6 +473,60 @@
     </div>
 </div>
 
+<!-- استيراد الملفات -->
 <script src="script.js"></script>
+
+<!-- نص برمجي مُبسط لإدارة زر التتبع - يستدعي الدوال من script.js مباشرة -->
+<script>
+    (function() {
+        // دالة التهيئة
+        function initTracking() {
+            // التحقق من وجود الدوال المطلوبة
+            if (typeof updateTrackingButtonVisibility === 'function') {
+                updateTrackingButtonVisibility();
+            } else {
+                console.warn('⚠️ updateTrackingButtonVisibility غير معرفة، سيتم إعادة المحاولة');
+                setTimeout(initTracking, 500);
+                return;
+            }
+
+            // بدء الاستماع لتحديثات الطلب النشط
+            if (typeof listenToActiveOrderStatus === 'function') {
+                setTimeout(listenToActiveOrderStatus, 2000);
+            }
+        }
+
+        // تشغيل التهيئة عند تحميل الصفحة
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTracking);
+        } else {
+            initTracking();
+        }
+
+        // تحديث الزر عند العودة للصفحة (باستخدام pageshow و focus)
+        function refreshTrackingButton() {
+            if (typeof updateTrackingButtonVisibility === 'function') {
+                updateTrackingButtonVisibility();
+            }
+        }
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                refreshTrackingButton();
+            }
+        });
+
+        window.addEventListener('focus', function() {
+            refreshTrackingButton();
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                refreshTrackingButton();
+            }
+        });
+    })();
+</script>
+
 </body>
 </html>
