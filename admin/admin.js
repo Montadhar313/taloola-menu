@@ -1819,13 +1819,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// 🚫 نظام إدارة الحظر - النسخة الكاملة
+// 🚫 نظام إدارة الحظر المتطور – مؤقت تنازلي ومدة مخصصة
 // ============================================
 let allBannedPhones = [];
 let currentBanFilter = 'all';
 let bannedPhonesListener = null;
+let banTimerInterval = null;
 
-// تحميل الأرقام المحظورة من Firebase
+// --- عناصر المدة المخصصة ---
+const customDurationGroup = document.getElementById('customBanDurationGroup');
+const banDurationSelect = document.getElementById('banDuration');
+const customDurationValue = document.getElementById('customBanDurationValue');
+const customDurationUnit = document.getElementById('customBanDurationUnit');
+
+// إظهار / إخفاء حقل المدة المخصصة
+if (banDurationSelect && customDurationGroup) {
+    banDurationSelect.addEventListener('change', function() {
+        customDurationGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+    });
+}
+
+// ====================== تحميل الأرقام المحظورة ======================
 function loadBannedPhones() {
     const bannedList = document.getElementById('bannedList');
     const totalBannedCount = document.getElementById('totalBannedCount');
@@ -1834,7 +1848,6 @@ function loadBannedPhones() {
     
     if (!bannedList) return;
     
-    // إلغاء المستمع القديم إن وجد
     if (bannedPhonesListener) {
         db.ref('banned_phones').off('value', bannedPhonesListener);
     }
@@ -1856,20 +1869,19 @@ function loadBannedPhones() {
                     <p>جميع الزبائن يمكنهم الطلب بشكل طبيعي</p>
                 </div>
             `;
+            stopBanTimer();
             return;
         }
         
         const now = Date.now();
-        let tempCount = 0;
-        let permCount = 0;
-        let expiredCount = 0;
+        let tempCount = 0, permCount = 0;
         
         Object.keys(banned).forEach(key => {
             const banInfo = banned[key];
             const isPermanent = banInfo.permanent === true;
             const isExpired = !isPermanent && banInfo.banUntil && banInfo.banUntil <= now;
             
-            // حذف الأرقام المنتهية الصلاحية تلقائياً
+            // حذف المنتهية تلقائياً من Firebase
             if (isExpired) {
                 db.ref('banned_phones/' + key).remove().catch(err => {
                     console.warn('⚠️ فشل حذف حظر منتهي:', err);
@@ -1891,12 +1903,12 @@ function loadBannedPhones() {
         // ترتيب حسب التاريخ (الأحدث أولاً)
         allBannedPhones.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         
-        // تحديث الإحصائيات
         if (totalBannedCount) totalBannedCount.textContent = allBannedPhones.length;
         if (temporaryBansCount) temporaryBansCount.textContent = tempCount;
         if (permanentBansCount) permanentBansCount.textContent = permCount;
         
         renderBannedPhones();
+        startBanTimer(); // بدء المؤقت للتحديث الحي
         
     }, (error) => {
         console.error('❌ خطأ في تحميل الأرقام المحظورة:', error);
@@ -1905,15 +1917,13 @@ function loadBannedPhones() {
                 <i class="fas fa-exclamation-circle fa-3x" style="color: #dc3545;"></i>
                 <h3>حدث خطأ</h3>
                 <p>${error.message}</p>
-                <button onclick="loadBannedPhones()" style="margin-top:15px; padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer;">
-                    <i class="fas fa-redo"></i> إعادة المحاولة
-                </button>
+                <button onclick="loadBannedPhones()" style="...">إعادة المحاولة</button>
             </div>
         `;
     });
 }
 
-// عرض الأرقام المحظورة
+// ====================== عرض البطاقات ======================
 function renderBannedPhones() {
     const bannedList = document.getElementById('bannedList');
     if (!bannedList) return;
@@ -1944,27 +1954,13 @@ function renderBannedPhones() {
     filteredBans.forEach(ban => {
         const card = document.createElement('div');
         card.className = `banned-card ${ban.isPermanent ? 'permanent' : 'temporary'}`;
+        card.setAttribute('data-phone', ban.phone);
         
-        // حساب الوقت المتبقي
-        let timeInfo = '';
-        let statusBadge = '';
-        
-        if (ban.isPermanent) {
-            timeInfo = '♾️ حظر دائم';
-            statusBadge = '<span class="ban-badge permanent">دائم</span>';
-        } else if (ban.banUntil) {
-            const remaining = ban.banUntil - now;
-            const hours = Math.ceil(remaining / (60 * 60 * 1000));
-            const days = Math.floor(hours / 24);
-            
-            if (hours > 24) {
-                timeInfo = `⏰ متبقي ${days} يوم و ${hours % 24} ساعة`;
-            } else {
-                timeInfo = `⏰ متبقي ${hours} ساعة`;
-            }
-            
-            statusBadge = `<span class="ban-badge temporary">مؤقت</span>`;
-        }
+        // الوقت المتبقي (سيتم تحديثه لاحقاً بواسطة المؤقت)
+        const timerId = `timer-${ban.phone.replace(/[^0-9]/g, '')}`;
+        const timeDisplay = ban.isPermanent 
+            ? '♾️ حظر دائم' 
+            : `<span id="${timerId}">⏳ جاري الحساب...</span>`;
         
         const banDate = ban.timestamp ? new Date(ban.timestamp).toLocaleString('ar-EG') : 'غير معروف';
         const reason = ban.reason ? `<div class="ban-reason"><i class="fas fa-comment"></i> ${ban.reason}</div>` : '';
@@ -1975,13 +1971,15 @@ function renderBannedPhones() {
                     <i class="fas fa-phone"></i>
                     <a href="tel:${ban.phone}">${ban.phone}</a>
                 </div>
-                ${statusBadge}
+                <span class="ban-badge ${ban.isPermanent ? 'permanent' : 'temporary'}">
+                    ${ban.isPermanent ? 'دائم' : 'مؤقت'}
+                </span>
             </div>
             
             <div class="banned-info">
                 <div class="info-row">
                     <i class="fas fa-clock"></i>
-                    <span>${timeInfo}</span>
+                    <span>${timeDisplay}</span>
                 </div>
                 <div class="info-row">
                     <i class="fas fa-calendar"></i>
@@ -2007,7 +2005,52 @@ function renderBannedPhones() {
     });
 }
 
-// حظر رقم جديد
+// ====================== المؤقت الحي ======================
+function startBanTimer() {
+    stopBanTimer(); // إيقاف أي مؤقت سابق
+    updateAllTimers(); // تحديث فوري
+    banTimerInterval = setInterval(updateAllTimers, 1000);
+}
+
+function stopBanTimer() {
+    if (banTimerInterval) {
+        clearInterval(banTimerInterval);
+        banTimerInterval = null;
+    }
+}
+
+function updateAllTimers() {
+    const now = Date.now();
+    let hasChanges = false;
+    
+    allBannedPhones.forEach(ban => {
+        if (ban.isPermanent) return;
+        
+        const remaining = ban.banUntil - now;
+        const timerId = `timer-${ban.phone.replace(/[^0-9]/g, '')}`;
+        const timerEl = document.getElementById(timerId);
+        
+        if (!timerEl) return;
+        
+        if (remaining <= 0) {
+            // انتهى الحظر -> احذفه من Firebase
+            db.ref('banned_phones/' + ban.phone).remove().catch(err => {
+                console.warn('⚠️ فشل حذف الحظر المنتهي:', err);
+            });
+            hasChanges = true;
+        } else {
+            // تحديث العرض
+            const hours = Math.floor(remaining / 3600000);
+            const minutes = Math.floor((remaining % 3600000) / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            timerEl.textContent = `⏳ ${hours}س ${minutes}د ${seconds}ث`;
+        }
+    });
+    
+    // إذا تم حذف أي عنصر، ستقوم الـ listener بتحديث القائمة تلقائياً
+}
+
+// ====================== حظر رقم ======================
 async function banPhone(phone, durationMs = 5 * 60 * 60 * 1000, permanent = false, reason = '') {
     if (!phone) return false;
     
@@ -2033,36 +2076,27 @@ async function banPhone(phone, durationMs = 5 * 60 * 60 * 1000, permanent = fals
     }
 }
 
-// فك الحظر عن رقم
+// ====================== فك الحظر ======================
 window.unbanPhone = async function(phone) {
-    if (!confirm(`هل أنت متأكد من فك الحظر عن الرقم ${phone}؟\n\nسيتمكن من الطلب مرة أخرى فوراً.`)) return;
-    
+    if (!confirm(`هل أنت متأكد من فك الحظر عن الرقم ${phone}؟`)) return;
     try {
         await db.ref('banned_phones/' + phone).remove();
         showToast(`✅ تم فك الحظر عن ${phone}`, 'success');
     } catch (error) {
         showToast('❌ فشل فك الحظر', 'error');
-        console.error('خطأ في فك الحظر:', error);
     }
 };
 
-// تمديد الحظر
+// ====================== تمديد الحظر (بمدة مخصصة) ======================
 window.extendBan = async function(phone) {
     const ban = allBannedPhones.find(b => b.phone === phone);
     if (!ban) return;
     
-    const extension = prompt(
-        'اختر مدة التمديد (بالساعات):\n\n' +
-        '1 = ساعة واحدة\n' +
-        '5 = 5 ساعات\n' +
-        '24 = يوم واحد\n' +
-        '168 = أسبوع',
-        '5'
-    );
+    // استخدام prompt متطور
+    const newHours = prompt('أدخل عدد الساعات الإضافية للحظر:', '5');
+    if (!newHours) return;
     
-    if (!extension) return;
-    
-    const hours = parseInt(extension);
+    const hours = parseInt(newHours);
     if (isNaN(hours) || hours <= 0) {
         showToast('⚠ مدة غير صالحة', 'error');
         return;
@@ -2071,17 +2105,19 @@ window.extendBan = async function(phone) {
     const newBanUntil = Date.now() + (hours * 60 * 60 * 1000);
     
     try {
-        await db.ref('banned_phones/' + phone + '/banUntil').set(newBanUntil);
+        await db.ref('banned_phones/' + phone).update({
+            banUntil: newBanUntil,
+            permanent: false
+        });
         showToast(`✅ تم تمديد الحظر ${hours} ساعة إضافية`, 'success');
     } catch (error) {
         showToast('❌ فشل تمديد الحظر', 'error');
     }
 };
 
-// حذف حظر نهائي
+// ====================== حذف حظر ======================
 window.deleteBan = async function(phone) {
-    if (!confirm(`هل أنت متأكد من حذف سجل الحظر للرقم ${phone}؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) return;
-    
+    if (!confirm(`هل أنت متأكد من حذف سجل الحظر للرقم ${phone}؟`)) return;
     try {
         await db.ref('banned_phones/' + phone).remove();
         showToast(`✅ تم حذف سجل الحظر`, 'success');
@@ -2090,91 +2126,88 @@ window.deleteBan = async function(phone) {
     }
 };
 
-// تهيئة نموذج الحظر
+// ====================== إرسال نموذج الحظر ======================
 document.addEventListener('DOMContentLoaded', () => {
     const banForm = document.getElementById('banForm');
-    if (banForm) {
-        banForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const saveBtn = document.getElementById('saveBanBtn');
-            
-            if (saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحظر...';
-            }
-            
-            const phone = safeGetValue('banPhone').trim();
-            const duration = safeGetValue('banDuration');
-            const reason = safeGetValue('banReason').trim();
-            
-            // التحقق من صحة الرقم
-            if (!phone) {
-                showToast('⚠ الرجاء إدخال رقم الهاتف', 'error');
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
-                }
+    if (!banForm) return;
+    
+    banForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveBanBtn');
+        if (!saveBtn) return;
+        
+        saveBtn.disabled = true;
+        const originalHTML = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحظر...';
+        
+        const phone = safeGetValue('banPhone').trim();
+        const durationType = safeGetValue('banDuration');
+        const reason = safeGetValue('banReason').trim();
+        
+        if (!phone) {
+            showToast('⚠ الرجاء إدخال رقم الهاتف', 'error');
+            resetSaveButton(saveBtn, originalHTML);
+            return;
+        }
+        if (!/^07[0-9]{9}$/.test(phone)) {
+            showToast('⚠ رقم الهاتف غير صحيح', 'error');
+            resetSaveButton(saveBtn, originalHTML);
+            return;
+        }
+        
+        // التحقق من عدم وجود حظر مسبق
+        const existingBan = allBannedPhones.find(b => b.phone === phone);
+        if (existingBan) {
+            const override = confirm(`⚠️ الرقم ${phone} محظور بالفعل!\nهل تريد استبدال الحظر الحالي؟`);
+            if (!override) {
+                resetSaveButton(saveBtn, originalHTML);
                 return;
             }
+        }
+        
+        try {
+            let durationMs, permanent = false;
             
-            if (!/^07[0-9]{9}$/.test(phone)) {
-                showToast('⚠ رقم الهاتف غير صحيح (يجب أن يبدأ بـ 07 ويتكون من 10 أرقام)', 'error');
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
-                }
-                return;
-            }
-            
-            // التحقق من عدم وجود حظر مسبق
-            const existingBan = allBannedPhones.find(b => b.phone === phone);
-            if (existingBan) {
-                const override = confirm(
-                    `⚠️ الرقم ${phone} محظور بالفعل!\n\n` +
-                    `هل تريد استبدال الحظر الحالي بالحظر الجديد؟`
-                );
-                if (!override) {
-                    if (saveBtn) {
-                        saveBtn.disabled = false;
-                        saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
-                    }
+            if (durationType === 'permanent') {
+                permanent = true;
+            } else if (durationType === 'custom') {
+                const val = parseInt(customDurationValue?.value || '0');
+                const unit = customDurationUnit?.value || 'hours';
+                if (isNaN(val) || val <= 0) {
+                    showToast('⚠ الرجاء إدخال مدة صحيحة', 'error');
+                    resetSaveButton(saveBtn, originalHTML);
                     return;
                 }
+                durationMs = unit === 'days' ? val * 86400000 : val * 3600000;
+            } else {
+                const hours = parseInt(durationType);
+                durationMs = hours * 3600000;
             }
             
-            try {
-                const isPermanent = duration === 'permanent';
-                const hours = isPermanent ? 0 : parseInt(duration);
-                const durationMs = hours * 60 * 60 * 1000;
-                
-                const success = await banPhone(phone, durationMs, isPermanent, reason);
-                
-                if (success) {
-                    banForm.reset();
-                }
-            } catch (error) {
-                showToast('حدث خطأ', 'error');
-                console.error('خطأ:', error);
-            } finally {
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = '<i class="fas fa-ban"></i> حظر الرقم';
-                }
+            const success = await banPhone(phone, durationMs, permanent, reason);
+            if (success) {
+                banForm.reset();
+                if (customDurationGroup) customDurationGroup.style.display = 'none';
             }
-        });
-    }
+        } catch (error) {
+            showToast('حدث خطأ', 'error');
+        } finally {
+            resetSaveButton(saveBtn, originalHTML);
+        }
+    });
     
-    // فلترة الأرقام المحظورة
+    // فلترة البطاقات
     document.querySelectorAll('#tab-bans .chip').forEach(chip => {
         chip.addEventListener('click', function() {
             document.querySelectorAll('#tab-bans .chip').forEach(c => c.classList.remove('active'));
             this.classList.add('active');
             currentBanFilter = this.dataset.banFilter;
             renderBannedPhones();
+            updateAllTimers(); // تحديث فوري بعد الفلترة
         });
     });
     
-    // تحميل الأرقام المحظورة عند فتح التبويب
+    // بدء التحميل عند فتح التبويب
     document.querySelectorAll('.nav-btn[data-tab="bans"]').forEach(btn => {
         btn.addEventListener('click', () => {
             setTimeout(loadBannedPhones, 100);
@@ -2182,16 +2215,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function resetSaveButton(btn, originalHTML) {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+}
 
-// تصدير الدوال للنطاق العام (مهم جداً!)
-window.manualRefreshOrders = manualRefreshOrders;
-window.toggleOrderSound = toggleOrderSound;
-window.markAllOrdersAsSeen = markAllOrdersAsSeen;
+// إيقاف المؤقت عند مغادرة الصفحة (اختياري)
+window.addEventListener('beforeunload', () => {
+    stopBanTimer();
+});
+
+// ============================================
+// 🏁 تصدير الدوال الضرورية
+// ============================================
 window.loadBannedPhones = loadBannedPhones;
 window.banPhone = banPhone;
 window.unbanPhone = unbanPhone;
 window.extendBan = extendBan;
 window.deleteBan = deleteBan;
+
 
 // ✅ تحميل بيانات الحظر تلقائياً عند فتح لوحة الإدارة
 function showDashboard() {
@@ -2208,3 +2250,286 @@ function showDashboard() {
     loadOrders();
     loadBannedPhones(); // ✅ جديد - تحميل بيانات الحظر
 }
+
+// ============================================
+// ⏱️ إدارة مدة انتظار الطلبات (Processing Duration)
+// ============================================
+function setupProcessingDuration() {
+    const processingDurationInput = document.getElementById('processingDurationInput');
+    const saveProcessingDurationBtn = document.getElementById('saveProcessingDurationBtn');
+
+    if (!processingDurationInput || !saveProcessingDurationBtn) {
+        console.warn('⚠️ عناصر مدة الانتظار غير موجودة في الصفحة');
+        return;
+    }
+
+    // 1. دالة لجلب القيمة الحالية من Firebase
+    function loadProcessingDurationAdmin() {
+        db.ref('settings/processing_duration').once('value').then((snapshot) => {
+            const mins = snapshot.val() || 5; // الافتراضي 5 دقائق إذا لم تكن موجودة
+            processingDurationInput.value = mins;
+            console.log(`✅ تم تحميل مدة الانتظار من Firebase: ${mins} دقيقة`);
+        }).catch(error => {
+            console.warn('⚠️ لا يمكن تحميل مدة الانتظار:', error);
+        });
+    }
+
+    // دمجها مع دالة showDashboard الأصلية
+    const originalShowDashboard = window.showDashboard;
+    window.showDashboard = function() {
+        if (typeof originalShowDashboard === 'function') {
+            originalShowDashboard();
+        }
+        loadProcessingDurationAdmin();
+    };
+
+    // 2. حفظ القيمة الجديدة في Firebase عند الضغط على الزر
+    saveProcessingDurationBtn.addEventListener('click', async () => {
+        const mins = parseInt(processingDurationInput.value);
+
+        // التحقق من صحة المدخلات
+        if (!mins || mins < 1 || mins > 120) {
+            showToast('⚠️ الرجاء إدخال رقم صحيح بين 1 و 120 دقيقة', 'error');
+            return;
+        }
+
+        // تعطيل الزر أثناء الحفظ
+        saveProcessingDurationBtn.disabled = true;
+        const originalHTML = saveProcessingDurationBtn.innerHTML;
+        saveProcessingDurationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+        try {
+            // الحفظ في المسار الصحيح
+            await db.ref('settings/processing_duration').set(mins);
+            showToast(`✅ تم تحديث مدة الانتظار إلى ${mins} دقيقة بنجاح`, 'success');
+        } catch (error) {
+            console.error('❌ فشل حفظ مدة الانتظار:', error);
+            showToast('❌ فشل حفظ الإعدادات، تحقق من قواعد Firebase', 'error');
+        } finally {
+            // إعادة تفعيل الزر
+            saveProcessingDurationBtn.disabled = false;
+            saveProcessingDurationBtn.innerHTML = originalHTML;
+        }
+    });
+}
+
+// تشغيل الإعداد عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', setupProcessingDuration);
+
+// ============================================
+// ⏱️ إدارة مدة التوصيل - دوال جديدة
+// ============================================
+
+// تحميل مدة التوصيل الحالية من Firebase
+function loadDeliveryDurationSettings() {
+    const input = document.getElementById('deliveryDurationInput');
+    const statusDiv = document.getElementById('deliveryDurationStatus');
+    
+    if (!input || !db) return;
+    
+    db.ref('settings/delivery_duration_minutes').once('value')
+        .then(snapshot => {
+            const minutes = snapshot.val();
+            if (minutes && !isNaN(minutes)) {
+                input.value = minutes;
+                showStatusMessage(statusDiv, `✅ المدة الحالية: ${minutes} دقيقة`, 'success');
+            } else {
+                input.value = 45; // القيمة الافتراضية
+                showStatusMessage(statusDiv, '⚠️ لم تحدد مدة، سيتم استخدام 45 دقيقة', 'warning');
+            }
+        })
+        .catch(error => {
+            console.warn('⚠️ لا يمكن تحميل مدة التوصيل:', error);
+            showStatusMessage(statusDiv, '❌ فشل تحميل الإعدادات', 'error');
+        });
+}
+
+// حفظ مدة التوصيل في Firebase
+async function saveDeliveryDurationSettings() {
+    const input = document.getElementById('deliveryDurationInput');
+    const statusDiv = document.getElementById('deliveryDurationStatus');
+    const saveBtn = document.getElementById('saveDeliveryDurationBtn');
+    
+    if (!input || !db) return;
+    
+    const minutes = parseInt(input.value);
+    
+    // التحقق من صحة القيمة
+    if (isNaN(minutes) || minutes < 10 || minutes > 180) {
+        showStatusMessage(statusDiv, '⚠️ الرجاء إدخال قيمة بين 10 و 180 دقيقة', 'error');
+        return;
+    }
+    
+    // تعطيل الزر أثناء الحفظ
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    }
+    
+    try {
+        await db.ref('settings/delivery_duration_minutes').set(minutes);
+        showStatusMessage(statusDiv, `✅ تم تحديث مدة التوصيل إلى ${minutes} دقيقة`, 'success');
+        
+        // إشعار للمدير بأن التغيير سيؤثر على جميع الزبائن
+        setTimeout(() => {
+            alert(`✅ تم حفظ الإعدادات بنجاح!\n\nسيتم تطبيق مدة التوصيل (${minutes} دقيقة) على:\n• جميع طلبات التوصيل الجديدة\n• المؤقت في صفحة تتبع الطلب`);
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ فشل حفظ مدة التوصيل:', error);
+        showStatusMessage(statusDiv, '❌ فشل الحفظ، تحقق من اتصالك', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ المدة';
+        }
+    }
+}
+
+// دالة مساعدة لعرض رسائل الحالة
+function showStatusMessage(element, message, type) {
+    if (!element) return;
+    
+    element.style.display = 'block';
+    element.textContent = message;
+    element.className = `status-message ${type}`;
+    
+    // أنماط سريعة للحالات
+    const styles = {
+        success: 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;',
+        error: 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;',
+        warning: 'background: #fff3cd; color: #856404; border: 1px solid #ffeeba;'
+    };
+    
+    element.style.cssText = `
+        display: block;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        margin-top: 15px;
+        ${styles[type] || styles.success}
+    `;
+    
+    // إخفاء الرسالة تلقائياً بعد 5 ثوانٍ (لغير الأخطاء)
+    if (type !== 'error') {
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// ============================================
+// 🔗 ربط الأحداث عند تحميل الصفحة
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (الأحداث السابقة) ...
+    
+    // ✅ أحداث إعدادات مدة التوصيل
+    const saveDeliveryBtn = document.getElementById('saveDeliveryDurationBtn');
+    if (saveDeliveryBtn) {
+        saveDeliveryBtn.addEventListener('click', saveDeliveryDurationSettings);
+    }
+    
+    // تحميل الإعدادات عند فتح تبويب الطلبات
+    document.querySelectorAll('.nav-btn[data-tab="orders"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTimeout(() => {
+                loadOrders();
+                loadOrderCounter();
+                loadDeliveryDurationSettings(); // ✅ تحميل مدة التوصيل
+            }, 100);
+        });
+    });
+});
+
+// ============================================
+// 📤 تصدير الدوال الجديدة
+// ============================================
+window.loadDeliveryDurationSettings = loadDeliveryDurationSettings;
+window.saveDeliveryDurationSettings = saveDeliveryDurationSettings;
+
+// ============================================
+// ⚙️ إدارة إعدادات مدة الحظر
+// ============================================
+function setupBanSettings() {
+    const defaultBanDurationInput = document.getElementById('defaultBanDuration');
+    const saveBanSettingsBtn = document.getElementById('saveBanSettingsBtn');
+
+    if (!defaultBanDurationInput || !saveBanSettingsBtn) return;
+
+    // 1. دالة لجلب المدة المحفوظة من Firebase
+    function loadBanSettings() {
+        db.ref('settings/ban_duration_hours').once('value').then((snapshot) => {
+            const hours = snapshot.val() || 5;
+            defaultBanDurationInput.value = hours;
+            
+            // تحديث القائمة المنسدلة في نموذج الحظر لتتناسب مع الإعداد الجديد
+            const banDurationSelect = document.getElementById('banDuration');
+            if (banDurationSelect) {
+                let found = false;
+                for (let i = 0; i < banDurationSelect.options.length; i++) {
+                    if (parseInt(banDurationSelect.options[i].value) === hours) {
+                        banDurationSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found && hours !== 'permanent') {
+                    const newOption = new Option(`${hours} ساعات`, hours);
+                    banDurationSelect.add(newOption);
+                    banDurationSelect.value = hours;
+                }
+            }
+        }).catch(error => {
+            console.warn('⚠️ لا يمكن تحميل إعدادات الحظر:', error);
+        });
+    }
+
+    // 2. دالة لحفظ المدة الجديدة في Firebase
+    saveBanSettingsBtn.addEventListener('click', async () => {
+        const hours = parseInt(defaultBanDurationInput.value);
+        if (!hours || hours < 1 || hours > 720) {
+            showToast('⚠️ الرجاء إدخال رقم صحيح بين 1 و 720 ساعة', 'error');
+            return;
+        }
+
+        saveBanSettingsBtn.disabled = true;
+        const originalHTML = saveBanSettingsBtn.innerHTML;
+        saveBanSettingsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+        try {
+            await db.ref('settings/ban_duration_hours').set(hours);
+            showToast(`✅ تم تحديث مدة الحظر الافتراضية إلى ${hours} ساعة`, 'success');
+            
+            // تحديث القائمة المنسدلة فوراً بعد الحفظ
+            const banDurationSelect = document.getElementById('banDuration');
+            if (banDurationSelect) {
+                let found = false;
+                for (let i = 0; i < banDurationSelect.options.length; i++) {
+                    if (parseInt(banDurationSelect.options[i].value) === hours) {
+                        banDurationSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    const newOption = new Option(`${hours} ساعات`, hours);
+                    banDurationSelect.add(newOption);
+                    banDurationSelect.value = hours;
+                }
+            }
+        } catch (error) {
+            console.error('❌ فشل حفظ إعدادات الحظر:', error);
+            showToast('❌ فشل حفظ الإعدادات', 'error');
+        } finally {
+            saveBanSettingsBtn.disabled = false;
+            saveBanSettingsBtn.innerHTML = originalHTML;
+        }
+    });
+
+    // تحميل الإعدادات عند بدء التشغيل
+    loadBanSettings();
+}
+
+// تشغيل الإعداد عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', setupBanSettings);
