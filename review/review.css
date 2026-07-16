@@ -1,0 +1,881 @@
+/* ============================================ */
+/* ⭐ صفحة التقييم - أنماط احترافية */
+/* ============================================ */
+
+:root {
+    --review-primary: #c70301;
+    --review-primary-dark: #8b0000;
+    --review-secondary: #fedb17;
+    --review-bg-dark: #1a1a2e;
+    --review-bg-medium: #16213e;
+    --review-bg-light: #0f3460;
+    --review-card-bg: rgba(42, 42, 74, 0.95);
+    --review-text: #ffffff;
+    --review-text-muted: rgba(255, 255, 255, 0.7);
+    --review-gray: #888888;
+    --review-success: #28a745;
+    --review-warning: #ffc107;
+    --review-error: #dc3545;
+    --review-info: #17a2b8;
+    --review-border: rgba(255, 255, 255, 0.2);
+    --review-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --review-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================ */
+/* 🌐 الهيكل العام */
+/* ============================================ */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, var(--review-bg-dark) 0%, var(--review-bg-medium) 50%, var(--review-bg-light) 100%);
+    min-height: 100vh;
+    color: var(--review-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.review-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+}
+
+.review-bg-pattern {
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(254, 219, 23, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(199, 3, 1, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(254, 219, 23, 0.03) 0%, transparent 70%);
+    animation: patternFloat 20s ease-in-out infinite;
+}
+
+@keyframes patternFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+/* ============================================ */
+/* 📐 الهيدر */
+/* ============================================ */
+
+.review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(254, 219, 23, 0.95), rgba(243, 156, 18, 0.95));
+    border-bottom: 3px solid var(--review-primary);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.review-header .back-btn {
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    color: var(--review-primary);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--review-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.review-header .back-btn:hover {
+    background: rgba(0, 0, 0, 0.25);
+    transform: scale(1.05);
+}
+
+.review-header .back-btn:active {
+    transform: scale(0.95);
+}
+
+.review-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--review-primary);
+}
+
+.review-logo img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid var(--review-primary);
+    object-fit: cover;
+    background: #fff;
+}
+
+.header-spacer {
+    width: 42px;
+}
+
+/* ============================================ */
+/* 📦 الحاوية والبطاقات */
+/* ============================================ */
+
+.review-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-top: 80px;
+    padding-bottom: 40px;
+}
+
+.review-card {
+    background: var(--review-card-bg);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(254, 219, 23, 0.3);
+    border-radius: 24px;
+    padding: 35px 28px;
+    color: var(--review-text);
+    text-align: center;
+    box-shadow: var(--review-shadow);
+    animation: cardSlideUp 0.5s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.review-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--review-primary), var(--review-secondary), var(--review-primary));
+    background-size: 200% 100%;
+    animation: gradientFlow 3s ease infinite;
+}
+
+@keyframes gradientFlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes cardSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.review-header-icon {
+    font-size: 4rem;
+    color: var(--review-secondary);
+    margin-bottom: 18px;
+    animation: iconBounce 2s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(254, 219, 23, 0.4);
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+.review-card h2 {
+    color: var(--review-secondary);
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.review-subtitle {
+    color: var(--review-text-muted);
+    margin-bottom: 22px;
+    font-size: 1.05rem;
+}
+
+/* ============================================ */
+/* 🏷️ شارة رقم الطلب */
+/* ============================================ */
+
+.order-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(199, 3, 1, 0.25), rgba(139, 0, 0, 0.2));
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    color: var(--review-secondary);
+    margin-bottom: 25px;
+    border: 1px solid var(--review-secondary);
+    font-weight: 600;
+}
+
+.order-badge i {
+    font-size: 1rem;
+}
+
+/* ============================================ */
+/* 🎯 اختيار نوع التقييم */
+/* ============================================ */
+
+.review-type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+}
+
+.review-type-option input {
+    display: none;
+}
+
+.option-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid var(--review-border);
+    border-radius: 16px;
+    padding: 18px 12px;
+    cursor: pointer;
+    transition: var(--review-transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.option-card:hover {
+    background: rgba(254, 219, 23, 0.12);
+    border-color: rgba(254, 219, 23, 0.5);
+    transform: translateY(-3px);
+}
+
+.option-card i {
+    font-size: 1.6rem;
+    color: var(--review-text-muted);
+    transition: var(--review-transition);
+}
+
+.option-card span {
+    font-size: 0.9rem;
+    color: var(--review-text-muted);
+    font-weight: 600;
+    transition: var(--review-transition);
+}
+
+.review-type-option input:checked + .option-card {
+    background: linear-gradient(135deg, rgba(199, 3, 1, 0.35), rgba(254, 219, 23, 0.25));
+    border-color: var(--review-secondary);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(254, 219, 23, 0.2);
+}
+
+.review-type-option input:checked + .option-card i {
+    color: var(--review-secondary);
+    transform: scale(1.1);
+}
+
+.review-type-option input:checked + .option-card span {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ============================================ */
+/* ⭐ نظام النجوم التفاعلي */
+/* ============================================ */
+
+.rating-section {
+    margin-bottom: 28px;
+}
+
+.rating-label {
+    color: var(--review-text-muted);
+    margin-bottom: 16px;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.star-rating-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    direction: ltr;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    transition: var(--review-transition);
+    position: relative;
+}
+
+.star-btn:hover {
+    transform: scale(1.25);
+}
+
+.star-btn:active {
+    transform: scale(1.1);
+}
+
+.star-btn i {
+    font-size: 2.8rem;
+    color: rgba(255, 255, 255, 0.25);
+    transition: var(--review-transition);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.star-btn.active i,
+.star-btn:hover i {
+    color: var(--review-secondary);
+    text-shadow: 
+        0 0 10px rgba(254, 219, 23, 0.6),
+        0 0 20px rgba(254, 219, 23, 0.3),
+        0 0 30px rgba(254, 219, 23, 0.15);
+    animation: starGlow 0.3s ease;
+}
+
+@keyframes starGlow {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.rating-feedback {
+    color: var(--review-secondary);
+    font-weight: 700;
+    font-size: 1.15rem;
+    min-height: 28px;
+    transition: var(--review-transition);
+}
+
+.rating-feedback[data-rating="5"],
+.rating-feedback[data-rating="4"] {
+    color: var(--review-success);
+}
+
+.rating-feedback[data-rating="3"] {
+    color: var(--review-secondary);
+}
+
+.rating-feedback[data-rating="2"],
+.rating-feedback[data-rating="1"] {
+    color: var(--review-error);
+}
+
+/* ============================================ */
+/* 📝 حقل الملاحظات */
+/* ============================================ */
+
+.feedback-section {
+    margin-bottom: 22px;
+    text-align: right;
+}
+
+.feedback-section label {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--review-text);
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.feedback-section textarea {
+    width: 100%;
+    padding: 16px 18px;
+    border: 2px solid var(--review-border);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--review-text);
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 110px;
+    max-height: 200px;
+    transition: var(--review-transition);
+    direction: rtl;
+    line-height: 1.7;
+}
+
+.feedback-section textarea:focus {
+    outline: none;
+    border-color: var(--review-secondary);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 4px rgba(254, 219, 23, 0.15);
+}
+
+.feedback-section textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.char-counter {
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--review-gray);
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+.char-counter.warning {
+    color: var(--review-warning);
+}
+
+.char-counter.danger {
+    color: var(--review-error);
+    font-weight: 700;
+}
+
+/* ============================================ */
+/* 📎 إرفاق الصورة */
+/* ============================================ */
+
+.attachment-section {
+    margin-bottom: 26px;
+}
+
+.attachment-label {
+    display: block;
+    cursor: pointer;
+}
+
+.attachment-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px dashed var(--review-border);
+    border-radius: 16px;
+    transition: var(--review-transition);
+}
+
+.attachment-box:hover {
+    border-color: var(--review-secondary);
+    background: rgba(254, 219, 23, 0.08);
+}
+
+.attachment-box i {
+    color: var(--review-secondary);
+    font-size: 1.4rem;
+}
+
+.attachment-box span {
+    color: var(--review-text-muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.image-preview {
+    margin-top: 16px;
+    position: relative;
+    max-width: 220px;
+    max-height: 220px;
+    border-radius: 16px;
+    overflow: hidden;
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.image-preview.active {
+    display: block;
+    animation: imageFadeIn 0.3s ease;
+}
+
+@keyframes imageFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 3px solid var(--review-secondary);
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--review-error);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: var(--review-transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.remove-image-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* ============================================ */
+/* 🔘 زر الإرسال */
+/* ============================================ */
+
+.submit-btn {
+    width: 100%;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, var(--review-primary), var(--review-primary-dark));
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: var(--review-transition);
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+}
+
+.submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.submit-btn:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.submit-btn:not(:disabled):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(199, 3, 1, 0.45);
+}
+
+.submit-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.submit-btn .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================ */
+/* 🔐 ملاحظة الخصوصية */
+/* ============================================ */
+
+.privacy-note {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--review-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--review-border);
+}
+
+.privacy-note i {
+    color: var(--review-info);
+}
+
+/* ============================================ */
+/* 🎉 قسم النجاح */
+/* ============================================ */
+
+.success-card {
+    text-align: center;
+    padding: 45px 30px;
+}
+
+.success-animation {
+    font-size: 5rem;
+    color: var(--review-success);
+    margin-bottom: 22px;
+    animation: successPop 0.6s ease-out;
+    text-shadow: 0 0 40px rgba(40, 167, 69, 0.4);
+}
+
+@keyframes successPop {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.3) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.success-card h2 {
+    color: var(--review-success);
+    margin-bottom: 12px;
+    font-size: 2rem;
+}
+
+.success-message {
+    color: var(--review-text-muted);
+    margin: 16px 0 30px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.success-actions .action-btn {
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--review-transition);
+    font-family: inherit;
+    font-size: 1.05rem;
+    border: none;
+    cursor: pointer;
+}
+
+.success-actions .primary {
+    background: linear-gradient(135deg, var(--review-secondary), #f39c12);
+    color: var(--review-primary-dark);
+}
+
+.success-actions .primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(254, 219, 23, 0.4);
+}
+
+.success-actions .secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--review-text);
+    border: 2px solid var(--review-border);
+}
+
+.success-actions .secondary:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: var(--review-secondary);
+    transform: translateY(-2px);
+}
+
+/* ============================================ */
+/* 🔔 نظام الإشعارات (Toast) */
+/* ============================================ */
+
+.review-toast {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--review-card-bg);
+    color: var(--review-text);
+    padding: 14px 22px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    border: 2px solid;
+    font-weight: 600;
+    font-size: 0.95rem;
+    animation: toastSlideIn 0.4s ease forwards;
+    max-width: 90vw;
+}
+
+.review-toast.success {
+    border-color: var(--review-success);
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+}
+
+.review-toast.error {
+    border-color: var(--review-error);
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(220, 53, 69, 0.05));
+}
+
+.review-toast.warning {
+    border-color: var(--review-warning);
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+}
+
+.review-toast.info {
+    border-color: var(--review-info);
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.15), rgba(23, 162, 184, 0.05));
+}
+
+.review-toast i {
+    font-size: 1.2rem;
+}
+
+@keyframes toastSlideIn {
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.review-toast.removing {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideOut {
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+/* ============================================ */
+/* 📱 التجاوب مع الشاشات */
+/* ============================================ */
+
+@media (max-width: 480px) {
+    .review-header {
+        padding: 10px 15px;
+    }
+    
+    .review-logo {
+        font-size: 1.15rem;
+    }
+    
+    .review-logo img {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .review-container {
+        padding: 15px;
+        padding-top: 75px;
+    }
+    
+    .review-card {
+        padding: 28px 22px;
+        border-radius: 20px;
+    }
+    
+    .review-card h2 {
+        font-size: 1.65rem;
+    }
+    
+    .review-type-selector {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .option-card {
+        padding: 16px 14px;
+    }
+    
+    .star-btn i {
+        font-size: 2.4rem;
+    }
+    
+    .feedback-section textarea {
+        min-height: 100px;
+        padding: 14px 16px;
+    }
+    
+    .submit-btn {
+        padding: 16px 20px;
+        font-size: 1.05rem;
+    }
+    
+    .success-animation {
+        font-size: 4rem;
+    }
+    
+    .success-card h2 {
+        font-size: 1.7rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .review-container {
+        padding-top: 100px;
+    }
+    
+    .review-card {
+        padding: 40px 35px;
+    }
+}
+
+/* ============================================ */
+/* ♿ إمكانية الوصول */
+/* ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* تحسين التركيز للعناصر القابلة للتركيز */
+button:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--review-secondary);
+    outline-offset: 2px;
+}
+
+/* إخفاء شريط التمرير مع الحفاظ على الوظيفة */
+.feedback-section textarea {
+    scrollbar-width: thin;
+    scrollbar-color: var(--review-secondary) transparent;
+}
+
+.feedback-section textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+.feedback-section textarea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.feedback-section textarea::-webkit-scrollbar-thumb {
+    background: var(--review-secondary);
+    border-radius: 3px;
+}
