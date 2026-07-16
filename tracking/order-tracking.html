@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تعلولة - تتبع طلبك</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="tracking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- شريط علوي احترافي -->
+    <header class="tracking-header">
+        <a href="../index.html" class="back-btn" title="العودة للمنيو" aria-label="العودة للصفحة الرئيسية">
+            <i class="fas fa-arrow-right"></i>
+        </a>
+        <h1>📦 تتبع طلبك</h1>
+        <div class="order-id-display" id="displayOrderNumber" aria-live="polite">#000</div>
+    </header>
+
+    <!-- محتوى تتبع الطلب -->
+    <main class="tracking-container">
+        
+        <!-- 🔄 قسم التحميل -->
+        <div id="trackLoadingSection" class="tracking-section active">
+            <div class="loading-card">
+                <div class="tracking-spinner"></div>
+                <p>جاري البحث عن طلبك...</p>
+            </div>
+        </div>
+
+        <!-- ❌ قسم عدم العثور على الطلب -->
+        <div id="trackNotFoundSection" class="tracking-section" style="display: none;">
+            <div class="error-card">
+                <i class="fas fa-search tracking-icon"></i>
+                <h3>لم يتم العثور على الطلب</h3>
+                <p>تأكد من صحة رقم الطلب أو رقم الهاتف المدخل</p>
+                <a href="../index.html" class="action-btn secondary">
+                    <i class="fas fa-home"></i> العودة للمنيو
+                </a>
+            </div>
+        </div>
+
+        <!-- ✅ قسم نتيجة التتبع (يحتوي على جميع تفاصيل الطلب) -->
+        <div id="trackResultSection" class="tracking-section" style="display: none;">
+            
+            <!-- قسم حالة الطلب -->
+            <section class="order-status-section" aria-labelledby="status-heading">
+                <h2 id="status-heading" class="visually-hidden">حالة الطلب</h2>
+                <div class="status-badge" id="orderStatusBadge" role="status" aria-live="polite">
+                    <i class="fas fa-clock" aria-hidden="true"></i>
+                    <span>قيد المعالجة</span>
+                </div>
+                
+                <!-- شريط التقدم المحسّن -->
+                <div class="progress-tracker" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="تقدم حالة الطلب">
+                    <div class="progress-step" data-step="1" data-status="received">
+                        <div class="step-icon"><i class="fas fa-check" aria-hidden="true"></i></div>
+                        <div class="step-label">تم الاستلام</div>
+                    </div>
+                    <div class="progress-step" data-step="2" data-status="preparing">
+                        <div class="step-icon"><i class="fas fa-utensils" aria-hidden="true"></i></div>
+                        <div class="step-label">قيد التحضير</div>
+                    </div>
+                    <div class="progress-step" data-step="3" data-status="ready">
+                        <div class="step-icon"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                        <div class="step-label">في الطريق</div>
+                    </div>
+                    <div class="progress-step" data-step="4" data-status="delivered">
+                        <div class="step-icon"><i class="fas fa-home" aria-hidden="true"></i></div>
+                        <div class="step-label">تم التوصيل</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- معلومات الطلب -->
+            <section class="order-details-section" aria-labelledby="details-heading">
+                <h3 id="details-heading" class="visually-hidden">تفاصيل الطلب</h3>
+                <div class="detail-row">
+                    <i class="fas fa-user" aria-hidden="true"></i>
+                    <span id="customerName">زبون</span>
+                </div>
+                <div class="detail-row">
+                    <i class="fas fa-phone" aria-hidden="true"></i>
+                    <a href="tel:" id="customerPhone" class="phone-link">07XXXXXXXXX</a>
+                </div>
+                <div class="detail-row">
+                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                    <span id="deliveryAddress">غير محدد</span>
+                </div>
+                <div class="detail-row">
+                    <i class="fas fa-clock" aria-hidden="true"></i>
+                    <span id="orderTime">--:--</span>
+                </div>
+            </section>
+
+            <!-- قائمة الأصناف -->
+            <section class="order-items-section" aria-labelledby="items-heading">
+                <h3 id="items-heading">🛒 الأصناف المطلوبة</h3>
+                <ul id="orderItemsList" class="items-list" aria-live="polite">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </ul>
+                <div class="order-total">
+                    <strong>المجموع النهائي:</strong>
+                    <span id="orderTotalAmount" aria-live="polite">0 د.ع</span>
+                </div>
+            </section>
+
+            <!-- عداد الوقت المتبقي -->
+            <section class="countdown-section" id="countdownContainer" style="display: none;" aria-labelledby="countdown-heading">
+                <h4 id="countdown-heading">⏱️ الوقت المتوقع للتوصيل</h4>
+                <div class="countdown-timer" role="timer" aria-live="polite">
+                    <span id="countdownHours">00</span>:
+                    <span id="countdownMinutes">00</span>:
+                    <span id="countdownSeconds">00</span>
+                </div>
+                <small style="display: block; text-align: center; margin-top: 8px; opacity: 0.7;">
+                    (ساعات : دقائق : ثواني)
+                </small>
+            </section>
+
+            <!-- رسالة حالة الإلغاء -->
+            <section class="cancelled-info-section" id="cancelledInfo" style="display: none;">
+                <div class="cancelled-badge">
+                    <i class="fas fa-times-circle"></i>
+                    <span>تم إلغاء هذا الطلب</span>
+                </div>
+                <p class="cancelled-message">عذراً، تم إلغاء طلبك. يرجى التواصل مع الدعم للمزيد من التفاصيل.</p>
+                <a href="https://wa.me/9647755666073" class="action-btn whatsapp" target="_blank">
+                    <i class="fab fa-whatsapp"></i> تواصل مع الدعم
+                </a>
+            </section>
+
+            <!-- أزرار الإجراءات -->
+            <section class="action-buttons" aria-label="إجراءات الطلب">
+                <a href="#" id="whatsappContactBtn" class="action-btn whatsapp" target="_blank" rel="noopener">
+                    <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                    تواصل عبر واتساب
+                </a>
+                
+                <button class="action-btn secondary" id="refreshTrackingBtn" aria-label="تحديث حالة الطلب">
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                    تحديث الحالة
+                </button>
+                
+                <a href="#" id="reviewBtn" class="action-btn review" style="display: none;" aria-label="تقييم الخدمة">
+                    <i class="fas fa-star" aria-hidden="true"></i>
+                    قيّم تجربتك
+                </a>
+            </section>
+
+        </div> <!-- نهاية trackResultSection -->
+
+    </main>
+
+    <!-- إشعارات النظام -->
+    <div id="trackingNotification" class="tracking-notification" role="alert" aria-live="assertive"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="tracking.js"></script>
+</body>
+</html>
