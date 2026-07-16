@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#c70301">
+    <meta name="description" content="قيّم تجربتك مع مطعم تعلولة">
+    <title>تعلولة - قيّم تجربتك</title>
+    
+    <!-- خطوط وأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- الأنماط -->
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="review.css">
+</head>
+<body>
+
+<!-- خلفية الصفحة -->
+<div class="review-bg">
+    <div class="review-bg-pattern"></div>
+</div>
+
+<!-- الهيدر -->
+<header class="review-header">
+    <button class="back-btn" id="backBtn" title="العودة للمنيو">
+        <i class="fas fa-arrow-right"></i>
+    </button>
+    <div class="review-logo">
+        <img src="../assets/images/Logo.gif" alt="تعلولة" onerror="this.src='https://via.placeholder.com/40?text=🍔'">
+        <span>تعلولة</span>
+    </div>
+    <div class="header-spacer"></div>
+</header>
+
+<!-- المحتوى الرئيسي -->
+<main class="review-container">
+    
+    <!-- قسم نموذج التقييم -->
+    <section id="reviewFormSection" class="review-section active">
+        <div class="review-card">
+            <div class="review-header-icon">
+                <i class="fas fa-star-half-alt"></i>
+            </div>
+            <h2>⭐ قيّم تجربتك</h2>
+            <p class="review-subtitle">رأيك يهمنا ويساعدنا في التحسين!</p>
+            
+            <!-- رقم الطلب -->
+            <div class="order-badge" id="orderBadge" style="display: none;">
+                <i class="fas fa-receipt"></i>
+                <span>طلب رقم #<span id="orderNumberDisplay">000</span></span>
+            </div>
+
+            <!-- اختيار نوع التقييم -->
+            <div class="review-type-selector">
+                <label class="review-type-option">
+                    <input type="radio" name="reviewType" value="restaurant" checked hidden>
+                    <div class="option-card">
+                        <i class="fas fa-utensils"></i>
+                        <span>جودة المطعم</span>
+                    </div>
+                </label>
+                <label class="review-type-option">
+                    <input type="radio" name="reviewType" value="delivery" hidden>
+                    <div class="option-card">
+                        <i class="fas fa-motorcycle"></i>
+                        <span>خدمة التوصيل</span>
+                    </div>
+                </label>
+                <label class="review-type-option">
+                    <input type="radio" name="reviewType" value="speed" hidden>
+                    <div class="option-card">
+                        <i class="fas fa-bolt"></i>
+                        <span>سرعة الاستجابة</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- نظام النجوم -->
+            <div class="rating-section">
+                <p class="rating-label">ما هو تقييمك؟</p>
+                <div class="star-rating-container" id="starRating">
+                    <button class="star-btn" data-value="5" type="button" aria-label="5 نجوم">
+                        <i class="far fa-star"></i>
+                    </button>
+                    <button class="star-btn" data-value="4" type="button" aria-label="4 نجوم">
+                        <i class="far fa-star"></i>
+                    </button>
+                    <button class="star-btn" data-value="3" type="button" aria-label="3 نجوم">
+                        <i class="far fa-star"></i>
+                    </button>
+                    <button class="star-btn" data-value="2" type="button" aria-label="نجمتين">
+                        <i class="far fa-star"></i>
+                    </button>
+                    <button class="star-btn" data-value="1" type="button" aria-label="نجمة واحدة">
+                        <i class="far fa-star"></i>
+                    </button>
+                </div>
+                <p class="rating-feedback" id="ratingFeedback">اختر تقييمك</p>
+            </div>
+
+            <!-- حقل الملاحظات -->
+            <div class="feedback-section">
+                <label for="reviewMessage">ملاحظاتك (اختياري)</label>
+                <textarea id="reviewMessage" placeholder="شاركنا تجربتك لنتمكن من تحسين خدماتنا..." maxlength="300"></textarea>
+                <div class="char-counter">
+                    <span id="charCount">0</span> / 300
+                </div>
+            </div>
+
+            <!-- إرفاق صورة -->
+            <div class="attachment-section">
+                <label class="attachment-label" for="reviewImage">
+                    <div class="attachment-box">
+                        <i class="fas fa-camera"></i>
+                        <span>أضف صورة لتجربتك (اختياري)</span>
+                    </div>
+                    <input type="file" id="reviewImage" accept="image/*" hidden>
+                </label>
+                <div class="image-preview" id="imagePreview">
+                    <img src="" alt="معاينة الصورة">
+                    <button class="remove-image-btn" id="removeImageBtn" title="إزالة الصورة">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- زر الإرسال -->
+            <button class="submit-btn" id="submitReviewBtn" disabled>
+                <i class="fas fa-paper-plane"></i>
+                <span>إرسال التقييم</span>
+            </button>
+
+            <!-- ملاحظة الخصوصية -->
+            <p class="privacy-note">
+                <i class="fas fa-shield-alt"></i>
+                تقييمك سري ولن يُنشر إلا بموافقتك
+            </p>
+        </div>
+    </section>
+
+    <!-- قسم النجاح -->
+    <section id="successSection" class="review-section">
+        <div class="review-card success-card">
+            <div class="success-animation">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>شكراً لك! 🎉</h2>
+            <p class="success-message">تم إرسال تقييمك بنجاح، رأيك يساعدنا في تقديم خدمة أفضل للجميع</p>
+            
+            <div class="success-actions">
+                <a href="../index.html" class="action-btn primary" id="goToMenuBtn">
+                    <i class="fas fa-utensils"></i>
+                    العودة للمنيو الإلكتروني
+                </a>
+                <a href="order-tracking.html" class="action-btn secondary" id="goToTrackingBtn" style="display: none;">
+                    <i class="fas fa-truck"></i>
+                    تتبع طلبي
+                </a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<!-- كود التقييم -->
+<script src="review.js"></script>
+
+</body>
+</html>
