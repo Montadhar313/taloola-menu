@@ -1,0 +1,913 @@
+/* ============================================
+/ 🚚 تنسيقات صفحة تتبع الطلب - النسخة الاحترافية
+/ ============================================ */
+
+/* متغيرات الألوان */
+:root {
+    --main-red: #c70301;
+    --main-yellow: #fedb17;
+    --success-green: #28a745;
+    --warning-orange: #ffc107;
+    --error-red: #dc3545;
+    --info-blue: #17a2b8;
+    --text-dark: #1a1a2e;
+    --text-light: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+    --border-color: rgba(254, 219, 23, 0.3);
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.15);
+    --shadow-strong: 0 8px 30px rgba(0, 0, 0, 0.25);
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* الهيكل العام */
+body {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: var(--text-light);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* الهيدر */
+.tracking-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--main-red), #8b0000);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-strong);
+    backdrop-filter: blur(10px);
+}
+
+.tracking-header .back-btn {
+    position: absolute;
+    right: 20px;
+    color: white;
+    font-size: 1.2rem;
+    padding: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.tracking-header .back-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1) translateX(-3px);
+}
+
+.tracking-header h1 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.order-id-display {
+    position: absolute;
+    left: 20px;
+    background: var(--main-yellow);
+    color: var(--main-red);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.tracking-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 15px;
+}
+
+/* قسم حالة الطلب */
+.order-status-section {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 25px 20px;
+    margin-bottom: 20px;
+    border: 2px solid var(--main-yellow);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-dark);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 25px;
+    transition: all var(--transition-normal);
+}
+
+.status-badge.pending { 
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
+    color: #856404; 
+    border: 2px solid #ffc107;
+}
+.status-badge.preparing { 
+    background: linear-gradient(135deg, #cce5ff, #99d6ff); 
+    color: #004085; 
+    border: 2px solid #17a2b8;
+}
+.status-badge.ready { 
+    background: linear-gradient(135deg, #d4edda, #a3e6b5); 
+    color: #155724; 
+    border: 2px solid #28a745;
+}
+.status-badge.delivered,
+.status-badge.completed { 
+    background: linear-gradient(135deg, #28a745, #20c997); 
+    color: white; 
+    border: 2px solid #28a745;
+    animation: successPulse 2s infinite;
+}
+.status-badge.cancelled { 
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
+    color: #721c24; 
+    border: 2px solid #dc3545;
+}
+
+@keyframes successPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+    50% { box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
+}
+
+/* ============================================
+/ 📊 شريط التقدم - احترافي مع RTL
+/ ============================================ */
+.progress-tracker {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding: 30px 10px 20px;
+    direction: rtl;
+    margin: 0 -10px;
+}
+
+.progress-tracker::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: 15%;
+    left: 15%;
+    height: 4px;
+    background: linear-gradient(90deg, #e0e0e0, #ccc);
+    z-index: 1;
+    border-radius: 2px;
+}
+
+.progress-tracker::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: 15%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--main-yellow), var(--main-red), var(--success-green));
+    z-index: 2;
+    transition: width var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+    width: var(--progress-width, 0%);
+    box-shadow: 0 2px 10px rgba(254, 219, 23, 0.3);
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 3;
+    flex: 1;
+    padding: 0 5px;
+    transition: all var(--transition-normal);
+}
+
+.step-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    transition: all var(--transition-normal);
+    color: #999;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.progress-step.completed .step-icon {
+    background: var(--main-yellow);
+    border-color: var(--main-yellow);
+    color: var(--main-red);
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(254, 219, 23, 0.4);
+}
+
+.progress-step.active .step-icon {
+    background: var(--main-red);
+    border-color: var(--main-red);
+    color: white;
+    animation: pulse 2s infinite, bounce 1s ease-in-out;
+    box-shadow: 0 4px 20px rgba(199, 3, 1, 0.4);
+}
+
+.progress-step.cancelled .step-icon {
+    background: var(--error-red);
+    border-color: var(--error-red);
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(199, 3, 1, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(199, 3, 1, 0); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.step-label {
+    font-size: 0.7rem;
+    text-align: center;
+    color: #666;
+    opacity: 0.7;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    max-width: 70px;
+    line-height: 1.3;
+}
+
+.progress-step.completed .step-label,
+.progress-step.active .step-label {
+    font-weight: 700;
+    opacity: 1;
+    color: var(--main-red);
+}
+
+.progress-step.cancelled .step-label {
+    color: var(--error-red);
+}
+
+/* معلومات الطلب */
+.order-details-section {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-dark);
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row i {
+    color: var(--main-yellow);
+    width: 22px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.detail-row span,
+.detail-row a {
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.phone-link {
+    color: var(--main-red);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.phone-link:hover {
+    text-decoration: underline;
+}
+
+/* قائمة الأصناف */
+.order-items-section {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-dark);
+}
+
+.order-items-section h3 {
+    margin: 0 0 15px 0;
+    color: var(--main-red);
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-bottom: 2px solid var(--main-yellow);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.item-row:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    flex: 2;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.item-qty {
+    flex: 1;
+    text-align: center;
+    color: var(--main-yellow);
+    font-weight: 700;
+    background: rgba(254, 219, 23, 0.15);
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+}
+
+.item-price {
+    flex: 1;
+    text-align: left;
+    color: var(--main-red);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    margin-top: 15px;
+    border-top: 3px solid var(--main-yellow);
+    font-size: 1.15rem;
+}
+
+.order-total strong {
+    color: var(--main-red);
+    font-size: 1.1rem;
+}
+
+.order-total span {
+    color: var(--main-red);
+    font-weight: 800;
+    font-size: 1.4rem;
+}
+
+/* عداد الوقت */
+.countdown-section {
+    text-align: center;
+    background: linear-gradient(135deg, rgba(254, 219, 23, 0.15), rgba(199, 3, 1, 0.1));
+    border-radius: 20px;
+    padding: 25px 20px;
+    margin-bottom: 20px;
+    border: 2px solid var(--main-yellow);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-dark);
+}
+
+.countdown-section h4 {
+    margin: 0 0 15px 0;
+    color: var(--main-red);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.countdown-timer {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--main-red);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.countdown-timer span {
+    min-width: 45px;
+    background: white;
+    padding: 8px 5px;
+    border-radius: 8px;
+    border: 2px solid var(--main-yellow);
+}
+
+/* قسم الإلغاء */
+.cancelled-info-section {
+    background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+    border-radius: 20px;
+    padding: 25px 20px;
+    margin-bottom: 20px;
+    border: 2px solid var(--error-red);
+    text-align: center;
+    color: #721c24;
+}
+
+.cancelled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--error-red);
+    color: white;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.cancelled-message {
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* أزرار الإجراءات */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn.whatsapp {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.action-btn.whatsapp:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.5);
+}
+
+.action-btn.secondary {
+    background: white;
+    color: var(--text-dark);
+    border: 2px solid var(--border-color);
+}
+
+.action-btn.secondary:hover {
+    background: var(--main-yellow);
+    border-color: var(--main-yellow);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+}
+
+.action-btn.review {
+    background: linear-gradient(135deg, var(--main-yellow), #f39c12);
+    color: var(--main-red);
+    box-shadow: 0 4px 15px rgba(254, 219, 23, 0.3);
+}
+
+.action-btn.review:hover:not(.disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(254, 219, 23, 0.5);
+}
+
+.action-btn:active {
+    transform: translateY(-1px);
+}
+
+.action-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: #e0e0e0;
+    color: #999;
+    box-shadow: none;
+}
+
+.action-btn.disabled:hover {
+    transform: none;
+}
+
+/* الإشعارات */
+.tracking-notification {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    animation: slideIn 0.4s ease;
+    box-shadow: var(--shadow-strong);
+    max-width: 90%;
+    text-align: center;
+}
+
+.tracking-notification.success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.tracking-notification.error {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.tracking-notification.warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #1a1a2e;
+}
+
+.tracking-notification.info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+    }
+}
+
+/* أقسام التحكم في العرض */
+.tracking-section {
+    display: none;
+}
+
+.tracking-section.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* حالة التحميل */
+.loading-card {
+    text-align: center;
+    padding: 50px 20px;
+    background: var(--bg-card);
+    border-radius: 20px;
+    color: var(--text-dark);
+}
+
+.tracking-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(254, 219, 23, 0.2);
+    border-top-color: var(--main-yellow);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-card p {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* حالة عدم العثور على الطلب */
+.trackNotFoundSection {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.error-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 40px 25px;
+    color: var(--text-dark);
+    box-shadow: var(--shadow-soft);
+}
+
+.error-card .tracking-icon {
+    font-size: 4rem;
+    color: var(--warning-orange);
+    margin-bottom: 20px;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.error-card h3 {
+    color: var(--text-dark);
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+}
+
+.error-card p {
+    color: #666;
+    margin-bottom: 25px;
+    font-size: 0.95rem;
+}
+
+/* التجاوب */
+@media (max-width: 480px) {
+    .tracking-header {
+        padding: 12px 15px;
+    }
+    
+    .tracking-header h1 {
+        font-size: 1.1rem;
+    }
+    
+    .order-id-display {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+    
+    .tracking-container {
+        padding: 15px 10px;
+    }
+    
+    .order-status-section,
+    .order-details-section,
+    .order-items-section,
+    .countdown-section {
+        padding: 20px 15px;
+        border-radius: 16px;
+    }
+    
+    .progress-tracker::before,
+    .progress-tracker::after {
+        top: 18px;
+        right: 8%;
+        left: 8%;
+    }
+    
+    .step-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 0.95rem;
+    }
+    
+    .step-label {
+        font-size: 0.65rem;
+        max-width: 60px;
+    }
+    
+    .countdown-timer {
+        font-size: 1.8rem;
+    }
+    
+    .countdown-timer span {
+        min-width: 38px;
+        padding: 6px 4px;
+        font-size: 1.1rem;
+    }
+    
+    .action-btn {
+        padding: 13px 18px;
+        font-size: 0.95rem;
+    }
+    
+    .item-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .item-name {
+        flex: 1 1 100%;
+        margin-bottom: 5px;
+    }
+    
+    .item-qty,
+    .item-price {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* دعم الوضع الليلي التلقائي */
+@media (prefers-color-scheme: dark) {
+    .order-status-section,
+    .order-details-section,
+    .order-items-section,
+    .loading-card,
+    .error-card {
+        background: rgba(30, 30, 50, 0.95);
+        color: white;
+    }
+    
+    .detail-row span,
+    .detail-row a,
+    .item-name,
+    .item-price,
+    .loading-card p,
+    .error-card h3 {
+        color: white;
+    }
+    
+    .step-label {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .progress-tracker::before {
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* تحسينات إمكانية الوصول */
+:focus-visible {
+    outline: 3px solid var(--main-yellow);
+    outline-offset: 2px;
+}
+
+/* تأثيرات الحركة عند تغيير الحالة */
+.status-change-animation {
+    animation: statusChange 0.5s ease;
+}
+
+@keyframes statusChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* شريط التقدم عند الاكتمال */
+.progress-tracker.completed-animation::after {
+    animation: progressComplete 0.8s ease-out;
+}
+
+@keyframes progressComplete {
+    0% { width: var(--progress-width); }
+    50% { width: 100%; box-shadow: 0 0 20px 5px rgba(40, 167, 69, 0.6); }
+    100% { width: var(--progress-width); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+/* ============================================
+/ 📊 شريط التقدم - دعم RTL
+/ ============================================ */
+.progress-tracker {
+    direction: rtl;
+}
+
+.progress-tracker::before {
+    right: 10%;
+    left: 10%;
+}
+
+.progress-tracker::after {
+    right: 10%;
+    width: var(--progress-width, 0%);
+}
+
+/* ============================================
+/ ⭐ زر التقييم المحسّن
+/ ============================================ */
+#reviewBtn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #e0e0e0;
+    color: #999;
+    box-shadow: none;
+}
+#reviewBtn.disabled:hover {
+    transform: none;
+}
+
+/* ============================================
+/ 🎬 تأثير تغيير الحالة
+/ ============================================ */
+.status-change-animation {
+    animation: statusPulse 0.5s ease;
+}
+@keyframes statusPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* ============================================
+/ 📱 تحسين التجاوب
+/ ============================================ */
+@media (max-width: 480px) {
+    .progress-tracker::before,
+    .progress-tracker::after {
+        right: 5%;
+        left: 5%;
+    }
+}
