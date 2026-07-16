@@ -1,17 +1,87 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي - النسخة المُحسَّنة v3.0 (مُصلَّحة)
+// 🍽️ تحميل المنيو الديناميكي - النسخة النهائية المُحسَّنة والمصححة
 // ============================================
 
 // 🔑 الثوابت العامة
 const PROCESSING_KEY = 'taloola_processing_order';
-const PROCESSING_DURATION = 15 * 60 * 1000;
 const BAN_KEY = 'taloola_ban_until';
-const BAN_DURATION = 5 * 60 * 60 * 1000;
 const BAN_DATA_KEY = 'taloola_ban_data';
+const ACTIVE_ORDER_KEY = 'taloola_active_order';
+
+// متغيرات ديناميكية تُحدث من Firebase
+let processingDurationMs = 5 * 60 * 1000;
+let banDurationMs = 5 * 60 * 60 * 1000;
 
 let cachedCategories = [];
 let cachedMenuItems = null;
 let isMenuInitialized = false;
+
+// متغير لتخزين مرجع الاستماع للطلب النشط
+let activeOrderListener = null;
+let processingInterval = null;
+let banCountdownInterval = null;
+
+// ============================================
+// 🔄 إدارة الطلب النشط - دوال موحدة
+// ============================================
+
+function saveActiveOrder(orderData) {
+    try {
+        const activeOrder = {
+            orderId: orderData.orderId || null,
+            orderNumber: orderData.orderNumber || null,
+            phone: orderData.phone,
+            status: orderData.status || 'pending',
+            timestamp: Date.now()
+        };
+        localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(activeOrder));
+        console.log('✅ تم حفظ الطلب النشط:', activeOrder);
+    } catch (e) {
+        console.warn('⚠️ فشل حفظ الطلب النشط:', e);
+    }
+}
+
+function getActiveOrder() {
+    try {
+        const data = localStorage.getItem(ACTIVE_ORDER_KEY);
+        return data ? JSON.parse(data) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function clearActiveOrder() {
+    try {
+        localStorage.removeItem(ACTIVE_ORDER_KEY);
+        sessionStorage.removeItem('active_order_id');
+        console.log('🗑️ تم مسح الطلب النشط');
+    } catch (e) {
+        console.warn('⚠️ فشل مسح الطلب النشط');
+    }
+}
+
+function isOrderActive() {
+    const active = getActiveOrder();
+    if (!active || !active.orderId) return false;
+    
+    // 1. التحقق من انتهاء صلاحية الطلب (24 ساعة)
+    const expiryTime = 24 * 60 * 60 * 1000;
+    if ((Date.now() - active.timestamp) >= expiryTime) {
+        clearActiveOrder();
+        return false;
+    }
+    
+    // 2. إذا كانت الحالة نهائية، نعتبر الطلب غير نشط
+    const finalStatuses = ['completed', 'delivered', 'cancelled'];
+    if (finalStatuses.includes(active.status)) {
+        clearActiveOrder();
+        return false;
+    }
+    
+    // 3. الطلب نشط فقط إذا كانت حالته قيد المعالجة
+    const activeStatuses = ['pending', 'preparing', 'ready'];
+    return activeStatuses.includes(active.status);
+}
 
 // ============================================
 // 🛡️ دوال مساعدة آمنة
@@ -134,9 +204,7 @@ function rebuildMenuSections(categoriesArray) {
     oldSections.forEach(section => section.remove());
     
     const teamSection = mainElement.querySelector('#team');
-    const referenceElement = teamSection || 
-                             mainElement.querySelector('#support') || 
-                             mainElement.querySelector('#social');
+    const referenceElement = teamSection || mainElement.querySelector('#support') || mainElement.querySelector('#social');
     
     categoriesArray.forEach((category) => {
         const newSection = document.createElement('section');
@@ -213,11 +281,7 @@ function populateMenuItems(categoriesArray, menuItems) {
         if (!itemsContainer) return;
         
         const rawImage = (item.image || '').trim();
-        const hasValidImage = rawImage && 
-            (rawImage.startsWith('http://') || 
-             rawImage.startsWith('https://') || 
-             rawImage.startsWith('data:image/') ||
-             rawImage.startsWith('/'));
+        const hasValidImage = rawImage && (rawImage.startsWith('http://') || rawImage.startsWith('https://') || rawImage.startsWith('data:image/') || rawImage.startsWith('/'));
         
         const menuElement = document.createElement('div');
         menuElement.className = 'menu-item';
@@ -230,15 +294,7 @@ function populateMenuItems(categoriesArray, menuItems) {
             menuElement.innerHTML = `
                 <div class="item-image">
                     <div class="image-skeleton"></div>
-                    <img data-src="${rawImage}" 
-                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f5f5f5'/%3E%3C/svg%3E" 
-                         alt="${item.name || 'منتج'}" 
-                         class="lazy-image" 
-                         decoding="async" 
-                         loading="lazy"
-                         width="400" 
-                         height="400"
-                         onerror="handleImageError(this)">
+                    <img data-src="${rawImage}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f5f5f5'/%3E%3C/svg%3E" alt="${item.name || 'منتج'}" class="lazy-image" decoding="async" loading="lazy" width="400" height="400" onerror="handleImageError(this)">
                 </div>
                 <h4>${item.name || 'منتج'}</h4>
                 <p class="price">${(item.price || 0).toLocaleString('ar-EG')} د.ع</p>
@@ -246,12 +302,7 @@ function populateMenuItems(categoriesArray, menuItems) {
         } else {
             menuElement.innerHTML = `
                 <div class="item-image">
-                    <img src="${PLACEHOLDER_IMAGE}" 
-                         alt="${item.name || 'منتج'}" 
-                         class="loaded placeholder"
-                         decoding="async"
-                         width="400" 
-                         height="400">
+                    <img src="${PLACEHOLDER_IMAGE}" alt="${item.name || 'منتج'}" class="loaded placeholder" decoding="async" width="400" height="400">
                 </div>
                 <h4>${item.name || 'منتج'}</h4>
                 <p class="price">${(item.price || 0).toLocaleString('ar-EG')} د.ع</p>
@@ -350,58 +401,39 @@ class SmartSequentialImageLoader {
                 }
             });
             
-            if (hasNewImages) {
-                setTimeout(() => this.observeAllImages(), 100);
-            }
+            if (hasNewImages) setTimeout(() => this.observeAllImages(), 100);
         });
         
         const mainElement = document.querySelector('main');
         if (mainElement) {
-            this.mutationObserver.observe(mainElement, {
-                childList: true,
-                subtree: true
-            });
+            this.mutationObserver.observe(mainElement, { childList: true, subtree: true });
         }
     }
     
     setupObservers() {
-        this.visibilityObserver = new IntersectionObserver(
-            (entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        if (!document.body.contains(img)) {
-                            this.visibilityObserver.unobserve(img);
-                            return;
-                        }
-                        const priority = this.calculatePriority(img);
-                        this.enqueue(img, priority);
+        this.visibilityObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (!document.body.contains(img)) {
                         this.visibilityObserver.unobserve(img);
+                        return;
                     }
-                });
-            },
-            {
-                rootMargin: `${this.config.preloadDistance}px 0px`,
-                threshold: 0.01
-            }
-        );
+                    const priority = this.calculatePriority(img);
+                    this.enqueue(img, priority);
+                    this.visibilityObserver.unobserve(img);
+                }
+            });
+        }, { rootMargin: `${this.config.preloadDistance}px 0px`, threshold: 0.01 });
         
-        this.preloadObserver = new IntersectionObserver(
-            (entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        if (document.body.contains(entry.target)) {
-                            this.preloadSectionImages(entry.target);
-                        }
-                        this.preloadObserver.unobserve(entry.target);
-                    }
-                });
-            },
-            {
-                rootMargin: '500px 0px',
-                threshold: 0
-            }
-        );
+        this.preloadObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (document.body.contains(entry.target)) this.preloadSectionImages(entry.target);
+                    this.preloadObserver.unobserve(entry.target);
+                }
+            });
+        }, { rootMargin: '500px 0px', threshold: 0 });
     }
     
     calculatePriority(img) {
@@ -414,19 +446,10 @@ class SmartSequentialImageLoader {
         const imgCenterX = rect.left + rect.width / 2;
         const imgCenterY = rect.top + rect.height / 2;
         
-        const distance = Math.sqrt(
-            Math.pow(imgCenterX - centerX, 2) + 
-            Math.pow(imgCenterY - centerY, 2)
-        );
+        const distance = Math.sqrt(Math.pow(imgCenterX - centerX, 2) + Math.pow(imgCenterY - centerY, 2));
         
-        if (rect.top < viewportHeight && rect.bottom > 0) {
-            return 1 + (distance / 1000);
-        }
-        
-        if (rect.top < viewportHeight + this.config.highPriorityDistance) {
-            return 10 + (distance / 500);
-        }
-        
+        if (rect.top < viewportHeight && rect.bottom > 0) return 1 + (distance / 1000);
+        if (rect.top < viewportHeight + this.config.highPriorityDistance) return 10 + (distance / 500);
         return 100 + (distance / 200);
     }
     
@@ -452,9 +475,7 @@ class SmartSequentialImageLoader {
             }
             
             const section = img.closest('.menu-section');
-            if (section && this.preloadObserver) {
-                this.preloadObserver.observe(section);
-            }
+            if (section && this.preloadObserver) this.preloadObserver.observe(section);
             
             img.dataset.observed = 'true';
         });
@@ -463,15 +484,10 @@ class SmartSequentialImageLoader {
     }
     
     loadImageImmediately(img, src) {
-        if (this.cache.has(src)) {
-            this.applyImage(img, src);
-            return;
-        }
+        if (this.cache.has(src)) { this.applyImage(img, src); return; }
         
         if (this.currentlyLoading.has(src)) {
-            if (!this.waitingElements.has(src)) {
-                this.waitingElements.set(src, []);
-            }
+            if (!this.waitingElements.has(src)) this.waitingElements.set(src, []);
             this.waitingElements.get(src).push(img);
             img.classList.add('loading');
             return;
@@ -488,11 +504,7 @@ class SmartSequentialImageLoader {
             this.cache.set(src, src);
             
             const waiting = this.waitingElements.get(src) || [img];
-            waiting.forEach(el => {
-                if (document.body.contains(el)) {
-                    this.applyImage(el, src);
-                }
-            });
+            waiting.forEach(el => { if (document.body.contains(el)) this.applyImage(el, src); });
             this.waitingElements.delete(src);
             this.processQueue();
         };
@@ -509,15 +521,9 @@ class SmartSequentialImageLoader {
         if (!document.body.contains(img)) return;
         
         const src = img.getAttribute('data-src');
-        if (!src || src.trim() === '') {
-            this.applyFallback(img);
-            return;
-        }
+        if (!src || src.trim() === '') { this.applyFallback(img); return; }
         
-        if (this.cache.has(src)) {
-            this.applyImage(img, src);
-            return;
-        }
+        if (this.cache.has(src)) { this.applyImage(img, src); return; }
         
         if (!this.waitingElements.has(src)) {
             this.waitingElements.set(src, []);
@@ -530,19 +536,12 @@ class SmartSequentialImageLoader {
         this.processQueue();
     }
     
-    sortQueue() {
-        this.queue.sort((a, b) => a.priority - b.priority);
-    }
+    sortQueue() { this.queue.sort((a, b) => a.priority - b.priority); }
     
     processQueue() {
-        while (
-            this.currentlyLoading.size < this.config.maxConcurrent && 
-            this.queue.length > 0
-        ) {
+        while (this.currentlyLoading.size < this.config.maxConcurrent && this.queue.length > 0) {
             const next = this.queue.shift();
-            if (next) {
-                this.loadImage(next.src);
-            }
+            if (next) this.loadImage(next.src);
         }
     }
     
@@ -552,13 +551,8 @@ class SmartSequentialImageLoader {
         const img = new Image();
         img.decoding = 'async';
         
-        img.onload = () => {
-            this.handleImageLoad(src, img);
-        };
-        
-        img.onerror = () => {
-            this.handleImageError(src);
-        };
+        img.onload = () => { this.handleImageLoad(src, img); };
+        img.onerror = () => { this.handleImageError(src); };
         
         img.src = src;
     }
@@ -569,11 +563,7 @@ class SmartSequentialImageLoader {
         this.retryCount.delete(src);
         
         const waitingElements = this.waitingElements.get(src) || [];
-        waitingElements.forEach(element => {
-            if (document.body.contains(element)) {
-                this.applyImage(element, src);
-            }
-        });
+        waitingElements.forEach(element => { if (document.body.contains(element)) this.applyImage(element, src); });
         
         this.waitingElements.delete(src);
         this.saveToSessionCache(src);
@@ -589,22 +579,15 @@ class SmartSequentialImageLoader {
         const retries = this.retryCount.get(src) || 0;
         if (retries < this.maxRetries) {
             this.retryCount.set(src, retries + 1);
-            setTimeout(() => {
-                if (!this.cache.has(src)) {
-                    this.loadImage(src);
-                }
-            }, 1000 * (retries + 1));
+            console.log(`🔄 إعادة المحاولة ${retries + 1}/${this.maxRetries} لـ ${src.split('/').pop()}`);
+            setTimeout(() => { if (!this.cache.has(src)) this.loadImage(src); }, 1000 * (retries + 1));
             return;
         }
         
         this.retryCount.delete(src);
         
         const waitingElements = this.waitingElements.get(src) || [];
-        waitingElements.forEach(element => {
-            if (document.body.contains(element)) {
-                this.applyFallback(element);
-            }
-        });
+        waitingElements.forEach(element => { if (document.body.contains(element)) this.applyFallback(element); });
         this.waitingElements.delete(src);
         this.processQueue();
     }
@@ -614,10 +597,7 @@ class SmartSequentialImageLoader {
         img.classList.remove('loading', 'lazy-image');
         img.classList.add('loaded', 'error-img');
         const skeleton = img.parentElement?.querySelector('.image-skeleton');
-        if (skeleton) {
-            skeleton.style.opacity = '0';
-            setTimeout(() => skeleton.remove(), 400);
-        }
+        if (skeleton) { skeleton.style.opacity = '0'; setTimeout(() => skeleton.remove(), 400); }
     }
     
     applyImage(img, src) {
@@ -629,11 +609,7 @@ class SmartSequentialImageLoader {
         if (skeleton) {
             skeleton.style.transition = 'opacity 0.4s ease';
             skeleton.style.opacity = '0';
-            setTimeout(() => {
-                if (skeleton.parentElement) {
-                    skeleton.remove();
-                }
-            }, 400);
+            setTimeout(() => { if (skeleton.parentElement) skeleton.remove(); }, 400);
         }
     }
     
@@ -645,10 +621,7 @@ class SmartSequentialImageLoader {
             const src = img.getAttribute('data-src');
             if (src && src.trim() !== '' && !this.cache.has(src) && !this.currentlyLoading.has(src)) {
                 this.queue.push({ src, priority: 20 + index });
-                
-                if (!this.waitingElements.has(src)) {
-                    this.waitingElements.set(src, []);
-                }
+                if (!this.waitingElements.has(src)) this.waitingElements.set(src, []);
                 this.waitingElements.get(src).push(img);
             }
         });
@@ -680,9 +653,7 @@ class SmartSequentialImageLoader {
                 img.src = src;
             });
             
-            if (cached.length > 0) {
-                console.log(`⚡ تم استرجاع ${Math.min(cached.length, 15)} صورة من الكاش`);
-            }
+            if (cached.length > 0) console.log(`⚡ تم استرجاع ${Math.min(cached.length, 15)} صورة من الكاش`);
         } catch (e) {}
     }
     
@@ -693,20 +664,11 @@ class SmartSequentialImageLoader {
                 const newConcurrency = this.detectOptimalConcurrency();
                 if (newConcurrency !== this.config.maxConcurrent) {
                     this.config.maxConcurrent = newConcurrency;
+                    console.log(`📶 تغيير السرعة - Concurrent: ${newConcurrency}`);
                     this.processQueue();
                 }
             });
         }
-    }
-    
-    getStats() {
-        return {
-            cached: this.cache.size,
-            loading: this.currentlyLoading.size,
-            queued: this.queue.length,
-            waiting: this.waitingElements.size,
-            maxConcurrent: this.config.maxConcurrent
-        };
     }
 }
 
@@ -714,9 +676,7 @@ let smartImageLoader = null;
 
 function initSmartImageLoading() {
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            smartImageLoader = new SmartSequentialImageLoader();
-        });
+        document.addEventListener('DOMContentLoaded', () => { smartImageLoader = new SmartSequentialImageLoader(); });
     } else {
         smartImageLoader = new SmartSequentialImageLoader();
     }
@@ -780,51 +740,26 @@ function showAndroidSettingsGuide() {
     
     if (statusDiv && textSpan) {
         statusDiv.className = 'location-modal-status error';
-        textSpan.innerHTML = `
-            ⚠ تم رفض إذن الموقع سابقاً<br>
-            <small style="display:block; margin-top:10px; line-height:1.8; text-align:right;">
-                📱 <strong>لتفعيل الموقع في Chrome:</strong><br>
-                1️⃣ اضغط على أيقونة القفل 🔒<br>
-                2️⃣ اختر "أذونات الموقع"<br>
-                3️⃣ فعّل "الموقع"<br>
-                4️⃣ أعد تحميل الصفحة
-            </small>
-        `;
+        textSpan.innerHTML = `⚠ تم رفض إذن الموقع سابقاً<br><small style="display:block; margin-top:10px; line-height:1.8; text-align:right;">📱 <strong>لتفعيل الموقع في Chrome:</strong><br>1️⃣ اضغط على أيقونة القفل 🔒<br>2️⃣ اختر "أذونات الموقع"<br>3️⃣ فعّل "الموقع"<br>4️⃣ أعد تحميل الصفحة</small>`;
     }
 }
 
 function requestLocationPermission() {
     return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error('المتصفح لا يدعم تحديد الموقع'));
-            return;
-        }
+        if (!navigator.geolocation) { reject(new Error('المتصفح لا يدعم تحديد الموقع')); return; }
         
         const os = detectOS();
         
         if (os === 'android') {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    resolve({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    });
-                },
+                (position) => { resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy }); },
                 (error) => {
                     let errorMessage = 'خطأ في تحديد الموقع';
                     let detailedMessage = '';
                     switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMessage = 'تم رفض إذن الموقع';
-                            detailedMessage = 'PERMISSION_DENIED';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMessage = 'المعلومات غير متوفرة';
-                            break;
-                        case error.TIMEOUT:
-                            errorMessage = 'انتهت المهلة';
-                            break;
+                        case error.PERMISSION_DENIED: errorMessage = 'تم رفض إذن الموقع'; detailedMessage = 'PERMISSION_DENIED'; break;
+                        case error.POSITION_UNAVAILABLE: errorMessage = 'المعلومات غير متوفرة'; break;
+                        case error.TIMEOUT: errorMessage = 'انتهت المهلة'; break;
                     }
                     const fullError = new Error(errorMessage);
                     fullError.detailedMessage = detailedMessage;
@@ -843,11 +778,7 @@ function requestLocationPermission() {
                 (position) => {
                     clearTimeout(timeoutId);
                     if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-                    resolve({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    });
+                    resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
                 },
                 (error) => {
                     clearTimeout(timeoutId);
@@ -858,11 +789,7 @@ function requestLocationPermission() {
             );
         } else {
             navigator.geolocation.getCurrentPosition(
-                (position) => resolve({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
-                }),
+                (position) => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy }),
                 () => reject(new Error('خطأ في تحديد الموقع')),
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
@@ -924,29 +851,20 @@ function initLocationIcon() {
     const locationIconBtn = document.getElementById('locationIconBtn');
     if (!locationIconBtn) return;
     updateLocationIconStatus();
-    locationIconBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        openLocationModal();
-    });
+    locationIconBtn.addEventListener('click', function(e) { e.preventDefault(); openLocationModal(); });
 }
 
 function updateLocationIconStatus() {
     const locationIconBtn = document.getElementById('locationIconBtn');
     if (!locationIconBtn) return;
     const storedLocation = getLocationFromStorage();
-    if (storedLocation || userLocation) {
-        locationIconBtn.classList.add('located');
-    } else {
-        locationIconBtn.classList.remove('located');
-    }
+    if (storedLocation || userLocation) locationIconBtn.classList.add('located');
+    else locationIconBtn.classList.remove('located');
 }
 
 function openLocationModal() {
     const modal = document.getElementById('locationModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        updateLocationModalStatus();
-    }
+    if (modal) { modal.style.display = 'flex'; updateLocationModalStatus(); }
 }
 
 function closeLocationModal() {
@@ -959,9 +877,11 @@ function updateLocationModalStatus() {
     const textSpan = document.getElementById('locationModalText');
     const infoDiv = document.getElementById('locationModalInfo');
     const coordsP = document.getElementById('locationCoords');
+    
     if (!statusDiv || !textSpan) return;
     
     const location = userLocation || getLocationFromStorage();
+    
     if (location) {
         statusDiv.className = 'location-modal-status success';
         textSpan.textContent = '✓ تم تحديد موقعك بنجاح';
@@ -979,8 +899,11 @@ function updateLocationModalStatus() {
 function updateLocationInCart() {
     const badge = document.getElementById('locationStatusBadge');
     const text = document.getElementById('locationStatusText');
+    
     if (!badge || !text) return;
+    
     badge.classList.remove('success', 'error', 'warning');
+    
     if (userLocation || getLocationFromStorage()) {
         badge.classList.add('success');
         text.textContent = '✓ الموقع محدد';
@@ -1010,16 +933,11 @@ let shoppingCart = [];
 try {
     shoppingCart = safeJsonParse(safeLocalStorageGet('taloola_cart') || '[]', []);
     if (!Array.isArray(shoppingCart)) shoppingCart = [];
-} catch (e) {
-    shoppingCart = [];
-}
+} catch (e) { shoppingCart = []; }
 
 function saveCart() {
-    try {
-        safeLocalStorageSet('taloola_cart', JSON.stringify(shoppingCart));
-    } catch (e) {
-        console.warn('⚠️ فشل حفظ السلة');
-    }
+    try { safeLocalStorageSet('taloola_cart', JSON.stringify(shoppingCart)); }
+    catch (e) { console.warn('⚠️ فشل حفظ السلة'); }
     updateCartUI();
 }
 
@@ -1032,9 +950,7 @@ function updateCartUI() {
         floatingCartCount.textContent = totalItems;
         
         if (totalItems > 0) {
-            if (!floatingCartBtn.classList.contains('has-items')) {
-                floatingCartBtn.classList.add('has-items');
-            }
+            if (!floatingCartBtn.classList.contains('has-items')) floatingCartBtn.classList.add('has-items');
         } else {
             floatingCartBtn.classList.remove('has-items');
         }
@@ -1047,46 +963,30 @@ function showCartAddEffect() {
         floatingCartBtn.classList.remove('item-added');
         void floatingCartBtn.offsetWidth;
         floatingCartBtn.classList.add('item-added');
-        
-        setTimeout(() => {
-            floatingCartBtn.classList.remove('item-added');
-        }, 600);
+        setTimeout(() => { floatingCartBtn.classList.remove('item-added'); }, 600);
     }
 }
 
 function addToCart(name, price, quantity = 1) {
-    if (!name || typeof name !== 'string' || name.trim() === '') {
-        showNotification('⚠ اسم المنتج غير صالح');
-        return false;
-    }
+    if (!name || typeof name !== 'string' || name.trim() === '') { showNotification('⚠ اسم المنتج غير صالح'); return false; }
     
     const numPrice = parseInt(price);
-    if (isNaN(numPrice) || numPrice < 0) {
-        showNotification('⚠ سعر المنتج غير صالح');
-        return false;
-    }
+    if (isNaN(numPrice) || numPrice < 0) { showNotification('⚠ سعر المنتج غير صالح'); return false; }
     
     const numQty = parseInt(quantity);
-    if (isNaN(numQty) || numQty < 1) {
-        showNotification('⚠ الكمية غير صالحة');
-        return false;
-    }
+    if (isNaN(numQty) || numQty < 1) { showNotification('⚠ الكمية غير صالحة'); return false; }
     
     const trimmedName = name.trim();
     const existingItem = shoppingCart.find(item => item.name === trimmedName);
-    if (existingItem) {
-        existingItem.quantity += numQty;
-    } else {
-        shoppingCart.push({ name: trimmedName, price: numPrice, quantity: numQty });
-    }
+    
+    if (existingItem) { existingItem.quantity += numQty; } 
+    else { shoppingCart.push({ name: trimmedName, price: numPrice, quantity: numQty }); }
+    
     saveCart();
     showNotification(`✓ تم إضافة ${numQty} × ${trimmedName}`);
-    
     showCartAddEffect();
     
-    if (navigator.vibrate) {
-        navigator.vibrate([10, 30, 10]);
-    }
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
     return true;
 }
 
@@ -1100,20 +1000,14 @@ function removeFromCart(index) {
 function changeQuantity(index, change) {
     if (index < 0 || index >= shoppingCart.length) return;
     const newQty = (shoppingCart[index].quantity || 0) + change;
-    if (newQty <= 0) {
-        shoppingCart.splice(index, 1);
-    } else {
-        shoppingCart[index].quantity = newQty;
-    }
+    if (newQty <= 0) { shoppingCart.splice(index, 1); }
+    else { shoppingCart[index].quantity = newQty; }
     saveCart();
     displayCartItems();
 }
 
 function clearCart() {
-    if (shoppingCart.length === 0) { 
-        showNotification('السلة فارغة بالفعل');
-        return; 
-    }
+    if (shoppingCart.length === 0) { showNotification('السلة فارغة بالفعل'); return; }
     if (confirm('هل أنت متأكد من تفريغ السلة؟')) {
         shoppingCart = [];
         saveCart();
@@ -1130,13 +1024,7 @@ function displayCartItems() {
     if (!cartItemsContainer) return;
     
     if (shoppingCart.length === 0) {
-        cartItemsContainer.innerHTML = `
-            <div class="empty-cart-new">
-                <i class="fas fa-shopping-cart"></i>
-                <h3>السلة فارغة</h3>
-                <p>لم تضف أي منتجات بعد</p>
-            </div>
-        `;
+        cartItemsContainer.innerHTML = `<div class="empty-cart-new"><i class="fas fa-shopping-cart"></i><h3>السلة فارغة</h3><p>لم تضف أي منتجات بعد</p></div>`;
         if (cartTotalElement) cartTotalElement.textContent = '0 د.ع';
         if (cartItemsCount) cartItemsCount.textContent = '0';
         return;
@@ -1162,16 +1050,10 @@ function displayCartItems() {
                 <div class="cart-item-total-new">${itemTotal.toLocaleString('ar-EG')} د.ع</div>
             </div>
             <div class="cart-item-controls-new">
-                <button class="cart-item-remove-new" onclick="removeFromCart(${index})" title="حذف">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="qty-btn-new" onclick="changeQuantity(${index}, -1)">
-                    <i class="fas fa-minus"></i>
-                </button>
+                <button class="cart-item-remove-new" onclick="removeFromCart(${index})" title="حذف"><i class="fas fa-trash"></i></button>
+                <button class="qty-btn-new" onclick="changeQuantity(${index}, -1)"><i class="fas fa-minus"></i></button>
                 <span class="qty-display-new">${itemQty}</span>
-                <button class="qty-btn-new" onclick="changeQuantity(${index}, 1)">
-                    <i class="fas fa-plus"></i>
-                </button>
+                <button class="qty-btn-new" onclick="changeQuantity(${index}, 1)"><i class="fas fa-plus"></i></button>
             </div>
         `;
         cartItemsContainer.appendChild(itemElement);
@@ -1185,7 +1067,7 @@ function updateNotesCounter() {
     const textarea = document.getElementById('orderNotes');
     const counter = document.getElementById('notesCharCount');
     if (!textarea || !counter) return;
-
+    
     const len = textarea.value.length;
     counter.textContent = len + '/80';
     counter.classList.toggle('near-limit', len > 70);
@@ -1231,22 +1113,10 @@ function openProductModal(element) {
     const image = imgElement ? (imgElement.src || imgElement.getAttribute('data-src') || '') : '';
     const description = element.getAttribute('data-description') || 'منتج لذيذ من مطعم تعلولة';
     
-    if (!name || name.trim() === '') {
-        showNotification('⚠ بيانات المنتج غير صالحة');
-        return;
-    }
+    if (!name || name.trim() === '') { showNotification('⚠ بيانات المنتج غير صالحة'); return; }
+    if (isNaN(price) || price <= 0) { showNotification('⚠ سعر المنتج غير صالح'); return; }
     
-    if (isNaN(price) || price <= 0) {
-        showNotification('⚠ سعر المنتج غير صالح');
-        return;
-    }
-    
-    currentProduct = { 
-        name: name.trim(), 
-        price, 
-        image: image || PLACEHOLDER_IMAGE, 
-        description 
-    };
+    currentProduct = { name: name.trim(), price, image: image || PLACEHOLDER_IMAGE, description };
     modalQuantity = 1;
     
     const nameEl = document.getElementById('productModalName');
@@ -1261,10 +1131,7 @@ function openProductModal(element) {
     if (modalImg) {
         modalImg.classList.remove('loaded');
         modalImg.onload = () => modalImg.classList.add('loaded');
-        modalImg.onerror = () => {
-            modalImg.src = PLACEHOLDER_IMAGE;
-            modalImg.classList.add('loaded');
-        };
+        modalImg.onerror = () => { modalImg.src = PLACEHOLDER_IMAGE; modalImg.classList.add('loaded'); };
         modalImg.src = currentProduct.image;
         modalImg.alt = currentProduct.name;
     }
@@ -1305,10 +1172,8 @@ function updateModalTotal() {
 function changeModalQuantity(change) {
     modalQuantity += change;
     if (modalQuantity < 1) modalQuantity = 1;
-    if (modalQuantity > 99) {
-        modalQuantity = 99;
-        showNotification('الحد الأقصى 99');
-    }
+    if (modalQuantity > 99) { modalQuantity = 99; showNotification('الحد الأقصى 99'); }
+    
     const display = document.getElementById('modalQtyDisplay');
     if (display) {
         display.textContent = modalQuantity;
@@ -1316,14 +1181,12 @@ function changeModalQuantity(change) {
         setTimeout(() => { display.style.transform = 'scale(1)'; }, 200);
     }
     updateModalTotal();
+    
     if (navigator.vibrate) navigator.vibrate(5);
 }
 
 function addCurrentProductToCart() {
-    if (!currentProduct) {
-        showNotification('⚠ لا يوجد منتج محدد');
-        return;
-    }
+    if (!currentProduct) { showNotification('⚠ لا يوجد منتج محدد'); return; }
     
     const success = addToCart(currentProduct.name, currentProduct.price, modalQuantity);
     if (!success) return;
@@ -1349,16 +1212,10 @@ function addCurrentProductToCart() {
 // 📋 نافذة مراجعة الطلب
 // ============================================
 function showOrderReview() {
-    if (!shoppingCart || shoppingCart.length === 0) { 
-        showNotification('السلة فارغة!');
-        return; 
-    }
+    if (!shoppingCart || shoppingCart.length === 0) { showNotification('السلة فارغة!'); return; }
     closeCartModal();
     const reviewModal = document.getElementById('orderReviewModal');
-    if (reviewModal) { 
-        reviewModal.style.display = 'flex'; 
-        displayOrderReview(); 
-    }
+    if (reviewModal) { reviewModal.style.display = 'flex'; displayOrderReview(); }
 }
 
 function displayOrderReview() {
@@ -1367,31 +1224,31 @@ function displayOrderReview() {
     const reviewTotalQuantity = document.getElementById('reviewTotalQuantity');
     const reviewTotalAmount = document.getElementById('reviewTotalAmount');
     const locationInput = document.getElementById('locationDescription');
+    
     if (!reviewItemsContainer) return;
-
+    
     const btn = document.getElementById('useSavedAddressBtn');
     const preview = document.getElementById('savedAddressPreview');
+    
     if (btn && preview && savedAddressText) {
         btn.style.display = 'flex';
         preview.textContent = savedAddressText.substring(0, 50) + (savedAddressText.length > 50 ? '...' : '');
-        btn.onclick = function() {
-            if (locationInput) locationInput.value = savedAddressText;
-        };
+        btn.onclick = function() { if (locationInput) locationInput.value = savedAddressText; };
     }
-
+    
     const currentOrderAddress = sessionStorage.getItem('current_order_address');
-    if (locationInput && currentOrderAddress) {
-        locationInput.value = currentOrderAddress;
-    }
-
+    if (locationInput && currentOrderAddress) locationInput.value = currentOrderAddress;
+    
     reviewItemsContainer.innerHTML = '';
     let totalQuantity = 0, totalAmount = 0;
+    
     shoppingCart.forEach((item) => {
         const itemPrice = parseInt(item.price) || 0;
         const itemQty = parseInt(item.quantity) || 0;
         const itemTotal = itemPrice * itemQty;
         totalQuantity += itemQty;
         totalAmount += itemTotal;
+        
         const reviewItem = document.createElement('div');
         reviewItem.className = 'review-item';
         reviewItem.innerHTML = `
@@ -1418,7 +1275,7 @@ function closeOrderReview() {
 }
 
 // ============================================
-// 🚫 نظام حظر الأجهزة (v3)
+// 🚫 نظام حظر الأجهزة (v3) - ديناميكي
 // ============================================
 let bannedPhonesRef = null;
 let currentBannedPhone = null;
@@ -1428,14 +1285,11 @@ function initBanSystem() {
     if (typeof firebase !== 'undefined' && firebase.database) {
         bannedPhonesRef = firebase.database().ref('banned_phones');
         console.log('✅ نظام الحظر جاهز (Firebase)');
-        
         listenToBanChanges();
         
         banCheckInterval = setInterval(() => {
             const currentPhone = getCurrentPhoneInput();
-            if (currentPhone) {
-                checkPhoneBanRealtime(currentPhone);
-            }
+            if (currentPhone) checkPhoneBanRealtime(currentPhone);
         }, 30000);
     } else {
         setTimeout(initBanSystem, 1000);
@@ -1453,8 +1307,7 @@ function listenToBanChanges() {
             const banInfo = bannedPhones[currentPhone];
             const now = Date.now();
             
-            if (banInfo.permanent === true || 
-                (typeof banInfo.banUntil === 'number' && banInfo.banUntil > now)) {
+            if (banInfo.permanent === true || (typeof banInfo.banUntil === 'number' && banInfo.banUntil > now)) {
                 currentBannedPhone = currentPhone;
                 showBanWindowFromFirebase(banInfo);
                 disableOrdering();
@@ -1466,9 +1319,7 @@ function listenToBanChanges() {
             currentBannedPhone = null;
             enableOrdering();
         }
-    }, (error) => {
-        console.warn('⚠️ خطأ في الاستماع لقائمة الحظر:', error.message);
-    });
+    }, (error) => { console.warn('⚠️ خطأ في الاستماع لقائمة الحظر:', error.message); });
 }
 
 function getCurrentPhoneInput() {
@@ -1476,17 +1327,10 @@ function getCurrentPhoneInput() {
     if (!phoneInput) return null;
     
     let phone = phoneInput.value.trim();
+    if (phone.startsWith('+964')) phone = '0' + phone.substring(4);
+    else if (phone.startsWith('964')) phone = '0' + phone.substring(3);
     
-    if (phone.startsWith('+964')) {
-        phone = '0' + phone.substring(4);
-    } else if (phone.startsWith('964')) {
-        phone = '0' + phone.substring(3);
-    }
-    
-    if (/^07[0-9]{9}$/.test(phone)) {
-        return phone;
-    }
-    
+    if (/^07[0-9]{9}$/.test(phone)) return phone;
     return null;
 }
 
@@ -1497,11 +1341,7 @@ async function checkPhoneBanRealtime(phone) {
         const snapshot = await bannedPhonesRef.child(phone).once('value');
         const banInfo = snapshot.val();
         
-        if (!banInfo) {
-            currentBannedPhone = null;
-            enableOrdering();
-            return false;
-        }
+        if (!banInfo) { currentBannedPhone = null; enableOrdering(); return false; }
         
         const now = Date.now();
         
@@ -1533,55 +1373,26 @@ async function checkPhoneBanRealtime(phone) {
     }
 }
 
-function enableOrdering() {
-    const cartBtn = document.getElementById('floatingCartBtn');
-    if (cartBtn) {
-        cartBtn.style.pointerEvents = '';
-        cartBtn.style.opacity = '';
-        cartBtn.title = 'عرض السلة وتأكيد الطلب';
-    }
-    
-    const banModal = document.getElementById('banModal');
-    if (banModal) {
-        banModal.style.display = 'none';
-    }
-}
-
 function showBanWindowFromFirebase(banInfo) {
     const modal = document.getElementById('banModal');
     const message = document.getElementById('banMessage');
+    
     if (!modal || !message) return;
     
     let messageHtml = '';
     
-    if (banInfo.reason) {
-        messageHtml += `<p class="ban-reason-text"><i class="fas fa-info-circle"></i> <strong>السبب:</strong> ${banInfo.reason}</p>`;
-    }
-    
-    if (banInfo.phone) {
-        messageHtml += `<p class="ban-phone-text"><i class="fas fa-phone"></i> <strong>الرقم:</strong> ${banInfo.phone}</p>`;
-    }
+    if (banInfo.reason) messageHtml += `<p class="ban-reason-text"><i class="fas fa-info-circle"></i> <strong>السبب:</strong> ${banInfo.reason}</p>`;
+    if (banInfo.phone) messageHtml += `<p class="ban-phone-text"><i class="fas fa-phone"></i> <strong>الرقم:</strong> ${banInfo.phone}</p>`;
     
     if (banInfo.permanent === true) {
-        messageHtml += `<p class="ban-permanent-text"><i class="fas fa-infinity"></i> <strong>حظر دائم</strong></p>`;
-        messageHtml += `<p>تم تعليق حسابك بشكل دائم بسبب مخالفة شروط الاستخدام.</p>`;
-        messageHtml += `<p>للاستفسار، يرجى التواصل مع الإدارة عبر واتساب.</p>`;
+        messageHtml += `<p class="ban-permanent-text"><i class="fas fa-infinity"></i> <strong>حظر دائم</strong></p><p>تم تعليق حسابك بشكل دائم بسبب مخالفة شروط الاستخدام.</p><p>للاستفسار، يرجى التواصل مع الإدارة عبر واتساب.</p>`;
     } else if (typeof banInfo.banUntil === 'number') {
         const now = Date.now();
         const remaining = banInfo.banUntil - now;
         const hours = Math.ceil(remaining / (60 * 60 * 1000));
         const days = Math.floor(hours / 24);
-        
-        let timeText = '';
-        if (days > 0) {
-            timeText = `${days} يوم و ${hours % 24} ساعة`;
-        } else {
-            timeText = `${hours} ساعة`;
-        }
-        
-        messageHtml += `<p class="ban-temporary-text"><i class="fas fa-clock"></i> <strong>المدة المتبقية:</strong> ${timeText}</p>`;
-        messageHtml += `<p>يمكنك الطلب مرة أخرى بعد انتهاء المدة.</p>`;
-        messageHtml += `<p class="ban-warning-text"><i class="fas fa-exclamation-triangle"></i> أي محاولة للتلاعب ستؤدي إلى حظر دائم.</p>`;
+        let timeText = days > 0 ? `${days} يوم و ${hours % 24} ساعة` : `${hours} ساعة`;
+        messageHtml += `<p class="ban-temporary-text"><i class="fas fa-clock"></i> <strong>المدة المتبقية:</strong> ${timeText}</p><p>يمكنك الطلب مرة أخرى بعد انتهاء المدة.</p><p class="ban-warning-text"><i class="fas fa-exclamation-triangle"></i> أي محاولة للتلاعب ستؤدي إلى حظر دائم.</p>`;
     }
     
     message.innerHTML = messageHtml;
@@ -1597,28 +1408,18 @@ function getLastOrderPhone() {
     return safeLocalStorageGet('taloola_last_order_phone');
 }
 
-async function banPhone(phone, durationMs = BAN_DURATION, permanent = false) {
+async function banPhone(phone, durationMs = banDurationMs, permanent = false) {
     if (!phone) return false;
-
+    
     const banUntil = permanent ? 'permanent' : Date.now() + durationMs;
-
-    const banData = {
-        phone: phone,
-        banUntil: banUntil,
-        permanent: permanent
-    };
+    const banData = { phone: phone, banUntil: banUntil, permanent: permanent, timestamp: Date.now(), reason: 'تم الحظر من لوحة الإدارة' };
+    
     safeLocalStorageSet(BAN_DATA_KEY, JSON.stringify(banData));
     safeLocalStorageSet(BAN_KEY, permanent ? 'permanent' : banUntil.toString());
-
+    
     if (bannedPhonesRef) {
         try {
-            await bannedPhonesRef.child(phone).set({
-                phone: phone,
-                banUntil: banUntil,
-                permanent: permanent,
-                timestamp: Date.now(),
-                reason: 'تم الحظر من لوحة الإدارة'
-            });
+            await bannedPhonesRef.child(phone).set(banData);
             console.log(`🚫 تم حظر ${phone} في Firebase حتى ${banUntil}`);
             return true;
         } catch (error) {
@@ -1631,7 +1432,7 @@ async function banPhone(phone, durationMs = BAN_DURATION, permanent = false) {
 
 async function isPhoneBanned(phone) {
     if (!phone) return false;
-
+    
     if (bannedPhonesRef) {
         try {
             const snapshot = await bannedPhonesRef.child(phone).once('value');
@@ -1639,62 +1440,117 @@ async function isPhoneBanned(phone) {
             
             if (banInfo) {
                 const now = Date.now();
-                
-                if (banInfo.permanent === true) {
-                    currentBannedPhone = phone;
-                    return true;
-                }
-                
-                if (typeof banInfo.banUntil === 'number' && banInfo.banUntil > now) {
-                    currentBannedPhone = phone;
-                    return true;
-                }
-                
+                if (banInfo.permanent === true) { currentBannedPhone = phone; return true; }
+                if (typeof banInfo.banUntil === 'number' && banInfo.banUntil > now) { currentBannedPhone = phone; return true; }
                 if (typeof banInfo.banUntil === 'number' && banInfo.banUntil <= now) {
                     await bannedPhonesRef.child(phone).remove();
                     console.log(`✅ انتهى حظر ${phone} وتم حذفه`);
                     return false;
                 }
             }
-        } catch (error) {
-            console.warn('⚠ تعذر فحص Firebase:', error.message);
-        }
+        } catch (error) { console.warn('⚠ تعذر فحص Firebase:', error.message); }
     }
-
+    
     const localBanData = safeJsonParse(safeLocalStorageGet(BAN_DATA_KEY));
     if (localBanData && localBanData.phone === phone) {
         if (localBanData.permanent === true) return true;
         if (typeof localBanData.banUntil === 'number' && localBanData.banUntil > Date.now()) return true;
     }
-
+    
     return false;
 }
 
 async function unbanPhone(phone) {
     safeLocalStorageRemove(BAN_DATA_KEY);
     safeLocalStorageRemove(BAN_KEY);
-    if (bannedPhonesRef && phone) {
-        await bannedPhonesRef.child(phone).remove();
-    }
+    if (bannedPhonesRef && phone) await bannedPhonesRef.child(phone).remove();
 }
 
 // ============================================
-// 🪟 نوافذ المعالجة والحظر
+// ⏱️ دوال جلب المدد من Firebase
+// ============================================
+function loadProcessingDuration() {
+    if (typeof firebase === 'undefined' || !firebase.database) return;
+    
+    firebase.database().ref('settings/processing_duration').on('value', (snapshot) => {
+        const mins = snapshot.val() || 5;
+        processingDurationMs = mins * 60 * 1000;
+        console.log(`⏱️ مدة الانتظار المحدثة من Firebase: ${mins} دقيقة`);
+    });
+}
+
+function loadBanDuration() {
+    if (typeof firebase === 'undefined' || !firebase.database) return;
+    
+    firebase.database().ref('settings/ban_duration_hours').on('value', (snapshot) => {
+        const hours = snapshot.val() || 5;
+        banDurationMs = hours * 60 * 60 * 1000;
+        console.log(`⏱️ مدة الحظر المحدثة من Firebase: ${hours} ساعة`);
+    });
+}
+
+// ============================================
+// 🔄 نافذة معالجة الطلب (مُحسَّنة)
 // ============================================
 function showProcessingWindow() {
     const modal = document.getElementById('processingModal');
-    if (modal) {
-        modal.style.display = 'flex';
+    if (!modal) {
+        console.error('❌ عنصر processingModal غير موجود');
+        redirectToTrackingPage();
+        return;
+    }
+    
+    if (!safeLocalStorageGet(PROCESSING_KEY)) {
         safeLocalStorageSet(PROCESSING_KEY, Date.now().toString());
     }
+    
+    modal.style.display = 'flex';
+    disableOrdering();
+    startProcessingCountdown();
 }
 
-function closeProcessingWindow() {
-    const modal = document.getElementById('processingModal');
-    if (modal) {
-        modal.style.display = 'none';
-        safeLocalStorageRemove(PROCESSING_KEY);
+function startProcessingCountdown() {
+    const timerElement = document.getElementById('processingTimer');
+    if (!timerElement) return;
+    
+    const startTime = parseInt(safeLocalStorageGet(PROCESSING_KEY, Date.now().toString()));
+    const duration = processingDurationMs || (5 * 60 * 1000);
+    
+    if (processingInterval) {
+        clearInterval(processingInterval);
     }
+    
+    processingInterval = setInterval(() => {
+        const now = Date.now();
+        const remaining = duration - (now - startTime);
+        
+        if (remaining <= 0) {
+            clearInterval(processingInterval);
+            if (timerElement) timerElement.textContent = "00:00";
+            safeLocalStorageRemove(PROCESSING_KEY);
+            redirectToTrackingPage();
+        } else {
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            if (timerElement) {
+                timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+        }
+    }, 1000);
+}
+
+function redirectToTrackingPage(orderNumber = null) {
+    const lastOrder = sessionStorage.getItem('lastOrderNumber');
+    const targetOrder = orderNumber || lastOrder || '#000';
+    
+    sessionStorage.setItem('tracking_order_id', targetOrder);
+    
+    setTimeout(() => {
+        const currentPath = window.location.pathname;
+        const isRoot = currentPath.endsWith('index.html') || currentPath.endsWith('/');
+        const basePath = isRoot ? '' : '../';
+        window.location.href = `${basePath}tracking/order-tracking.html?order=${encodeURIComponent(targetOrder)}`;
+    }, 1500);
 }
 
 function disableOrdering() {
@@ -1706,49 +1562,151 @@ function disableOrdering() {
     }
 }
 
+function enableOrdering() {
+    const cartBtn = document.getElementById('floatingCartBtn');
+    if (cartBtn) {
+        cartBtn.style.pointerEvents = '';
+        cartBtn.style.opacity = '';
+        cartBtn.title = 'عرض السلة وتأكيد الطلب';
+    }
+}
+
+// ============================================
+// 🎯 تحديث ظهور أزرار السلة/التتبع (دالة واحدة موحدة)
+// ============================================
+function updateTrackingButtonVisibility() {
+    const trackBtn = document.getElementById('floatingTrackBtn');
+    const cartBtn = document.getElementById('floatingCartBtn');
+    
+    if (!trackBtn || !cartBtn) return;
+    
+    const activeOrder = getActiveOrder();
+    const isActive = isOrderActive(); // استخدام الدالة المحسّنة
+    
+    if (isActive && activeOrder) {
+        // ✅ إظهار زر التتبع وإخفاء السلة
+        trackBtn.style.display = 'flex';
+        trackBtn.classList.add('visible');
+        cartBtn.style.display = 'none';
+        
+        // تحديث نص الزر ليشمل رقم الطلب
+        const trackText = trackBtn.querySelector('.track-text');
+        if (trackText && activeOrder.orderNumber) {
+            trackText.textContent = `تتبع طلب #${activeOrder.orderNumber}`;
+        }
+        
+        trackBtn.onclick = function(e) {
+            e.preventDefault();
+            if (activeOrder?.orderNumber) {
+                const currentPath = window.location.pathname;
+                const isRoot = currentPath.endsWith('index.html') || currentPath.endsWith('/');
+                const basePath = isRoot ? '' : '../';
+                window.location.href = `${basePath}tracking/order-tracking.html?order=${activeOrder.orderNumber}`;
+            } else {
+                showNotification('⚠ لا يوجد طلب نشط للتتبع');
+            }
+        };
+        
+    } else {
+        // ✅ إظهار زر السلة وإخفاء التتبع
+        trackBtn.style.display = 'none';
+        trackBtn.classList.remove('visible');
+        cartBtn.style.display = 'flex';
+        
+        cartBtn.onclick = function(e) {
+            e.preventDefault();
+            openCartModal();
+        };
+    }
+}
+
+// ============================================
+// 👂 الاستماع لتحديثات حالة الطلب (دالة واحدة موحدة)
+// ============================================
+function startListeningToActiveOrder() {
+    const activeOrder = getActiveOrder();
+    if (!activeOrder || !activeOrder.phone || typeof firebase === 'undefined' || !firebase.database) {
+        updateTrackingButtonVisibility();
+        return;
+    }
+    
+    // إيقاف أي مستمع سابق
+    if (activeOrderListener) {
+        activeOrderListener.off();
+        activeOrderListener = null;
+    }
+    
+    const phone = activeOrder.phone;
+    const ordersRef = firebase.database().ref('orders/list');
+    
+    activeOrderListener = ordersRef.orderByChild('phone').equalTo(phone).limitToLast(1);
+    
+    activeOrderListener.on('value', (snapshot) => {
+        const orders = snapshot.val();
+        if (!orders) return;
+        
+        const orderKeys = Object.keys(orders);
+        const lastOrderKey = orderKeys[orderKeys.length - 1];
+        const updatedOrder = orders[lastOrderKey];
+        
+        if (updatedOrder && updatedOrder.status) {
+            const currentActive = getActiveOrder();
+            if (currentActive) {
+                currentActive.status = updatedOrder.status;
+                localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(currentActive));
+                
+                updateTrackingButtonVisibility();
+                
+                if (['completed', 'delivered', 'cancelled'].includes(updatedOrder.status)) {
+                    showNotification('✅ تم تحديث حالة طلبك! يمكنك الآن تقديم طلب جديد.');
+                    setTimeout(() => {
+                        clearActiveOrder();
+                        updateTrackingButtonVisibility();
+                    }, 3000);
+                }
+            }
+        }
+    }, (error) => {
+        console.warn('⚠️ خطأ في مراقبة حالة الطلب:', error);
+    });
+}
+
 // ============================================
 // 📱 إرسال الطلب عبر واتساب + حفظ في Firebase
-// ✅ تم إصلاح التكرار بالكامل
 // ============================================
 async function confirmAndSendOrder() {
-    // 1️⃣ فحص المعالجة السابقة
+    if (isOrderActive()) {
+        showNotification('⚠️ لديك طلب قيد المعالجة حالياً، يرجى الانتظار حتى اكتماله');
+        return;
+    }
+
     if (safeLocalStorageGet(PROCESSING_KEY)) {
         showNotification('لديك طلب قيد التحضير بالفعل');
         return;
     }
-
-    // 2️⃣ فحص السلة
     if (!shoppingCart || shoppingCart.length === 0) {
         showNotification('السلة فارغة!');
         return;
     }
-    
-    // 3️⃣ فحص Firebase
     if (typeof firebase === 'undefined' || !firebase.database) {
         console.error('❌ Firebase غير متاح');
         showNotification('⚠ لا يمكن حفظ الطلب حالياً، يرجى إعادة تحميل الصفحة');
         return;
     }
-    
-    // 4️⃣ جمع البيانات
+
     const phoneInput = document.getElementById('customerPhone');
     const areaSelect = document.getElementById('deliveryArea');
     const detailedInput = document.getElementById('detailedAddress');
     const notesInput = document.getElementById('orderNotes');
-    
+
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const area = areaSelect ? areaSelect.value.trim() : '';
     const detailed = detailedInput ? detailedInput.value.trim() : '';
     const notes = notesInput ? notesInput.value.trim() : '';
 
-    // 5️⃣ التحقق من صحة البيانات
     let hasError = false;
-    
     if (!phone) {
-        if (phoneInput) {
-            phoneInput.classList.add('error');
-            phoneInput.focus();
-        }
+        if (phoneInput) { phoneInput.classList.add('error'); phoneInput.focus(); }
         showNotification('⚠ الرجاء إدخال رقم الهاتف');
         hasError = true;
     } else if (!/^07[0-9]{9}$/.test(phone)) {
@@ -1756,114 +1714,76 @@ async function confirmAndSendOrder() {
         showNotification('⚠ رقم الهاتف غير صحيح (يجب أن يبدأ بـ 07)');
         hasError = true;
     }
-    
     if (!area) {
-        if (areaSelect) {
-            areaSelect.classList.add('error');
-            if (!hasError && phoneInput) areaSelect.focus();
-        }
+        if (areaSelect) { areaSelect.classList.add('error'); if (!hasError && phoneInput) areaSelect.focus(); }
         showNotification('⚠ الرجاء اختيار منطقة التوصيل');
         hasError = true;
     }
-    
     if (hasError) return;
 
-    // 6️⃣ فحص الحظر (مرة واحدة فقط)
     showNotification('⏳ جاري التحقق من الحساب...');
     const banned = await isPhoneBanned(phone);
     if (banned) {
         showNotification('⛔ رقم الهاتف محظور ولا يمكنه الطلب حالياً');
-        
         if (bannedPhonesRef) {
             try {
                 const snapshot = await bannedPhonesRef.child(phone).once('value');
                 const banInfo = snapshot.val();
-                if (banInfo) {
-                    showBanWindowFromFirebase(banInfo);
-                } else {
-                    showBanWindow(Date.now() + BAN_DURATION);
-                }
-            } catch (e) {
-                showBanWindow(Date.now() + BAN_DURATION);
-            }
+                if (banInfo) showBanWindowFromFirebase(banInfo);
+                else showBanWindow(Date.now() + banDurationMs);
+            } catch (e) { showBanWindow(Date.now() + banDurationMs); }
         } else {
-            showBanWindow(Date.now() + BAN_DURATION);
+            showBanWindow(Date.now() + banDurationMs);
         }
-        
         disableOrdering();
         return;
     }
 
-    // 7️⃣ حفظ بيانات الزبون
     saveLastOrderPhone(phone);
     try {
         safeLocalStorageSet('taloola_saved_phone', phone);
         safeLocalStorageSet('taloola_saved_area', area);
-    } catch (e) {
-        console.warn('⚠️ فشل حفظ بيانات الزبون:', e);
-    }
-    
-    // 8️⃣ حساب الإجمالي
+    } catch (e) { console.warn('⚠️ فشل حفظ بيانات الزبون:', e); }
+
     let totalAmount = 0;
     shoppingCart.forEach((item) => {
         const itemPrice = parseInt(item.price) || 0;
         const itemQty = parseInt(item.quantity) || 0;
         totalAmount += (itemPrice * itemQty);
     });
-    
+
     const gpsLocation = userLocation || getLocationFromStorage();
-    
     showNotification('⏳ جاري حفظ طلبك...');
-    
+
     try {
-        // 9️⃣ الحصول على رقم الطلب
         let orderNumber = 0;
         const counterRef = firebase.database().ref('orders/counter');
         const ordersRef = firebase.database().ref('orders/list');
-        
+
         try {
-            const counterSnapshot = await counterRef.transaction((currentValue) => {
-                return (currentValue || 0) + 1;
-            });
-            
+            const counterSnapshot = await counterRef.transaction((currentValue) => { return (currentValue || 0) + 1; });
             if (counterSnapshot && counterSnapshot.val() !== null) {
                 orderNumber = counterSnapshot.val();
                 console.log(`✅ رقم الطلب: ${orderNumber}`);
-            } else {
-                throw new Error('فشل الحصول على رقم الطلب');
-            }
+            } else { throw new Error('فشل الحصول على رقم الطلب'); }
         } catch (transactionError) {
             console.warn('⚠️ فشل transaction، استخدام الطريقة البديلة:', transactionError.message);
-            
             try {
-                const lastOrderSnapshot = await ordersRef
-                    .orderByChild('timestamp')
-                    .limitToLast(1)
-                    .once('value');
-                
+                const lastOrderSnapshot = await ordersRef.orderByChild('timestamp').limitToLast(1).once('value');
                 const lastOrder = lastOrderSnapshot.val();
                 if (lastOrder) {
                     const lastKey = Object.keys(lastOrder)[0];
                     const lastNum = lastOrder[lastKey].orderNumber || 0;
                     orderNumber = lastNum + 1;
-                } else {
-                    orderNumber = 1;
-                }
-                
+                } else { orderNumber = 1; }
                 console.log(`✅ رقم الطلب (بديل): ${orderNumber}`);
-                
-                try {
-                    await counterRef.set(orderNumber);
-                } catch (e) {
-                    console.warn('⚠️ لا يمكن تحديث العداد:', e.message);
-                }
+                try { await counterRef.set(orderNumber); } catch (e) { console.warn('⚠️ لا يمكن تحديث العداد:', e.message); }
             } catch (fallbackError) {
                 console.error('❌ فشل الحصول على رقم الطلب:', fallbackError);
                 orderNumber = Math.floor(Date.now() / 1000) % 100000;
             }
         }
-        
-        // 🔟 بناء بيانات الطلب
+
         const orderData = {
             orderNumber: orderNumber,
             customerName: 'زبون',
@@ -1881,99 +1801,97 @@ async function confirmAndSendOrder() {
             status: 'pending',
             timestamp: Date.now(),
             date: new Date().toLocaleString('ar-EG'),
-            time: new Date().toLocaleTimeString('ar-EG', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            }),
+            time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
             location: gpsLocation ? {
                 latitude: gpsLocation.latitude,
                 longitude: gpsLocation.longitude,
-                googleMapsUrl: gpsLocation.googleMapsUrl || 
-                    `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
+                googleMapsUrl: gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
             } : null,
             notificationSent: false
         };
-        
+
         console.log('📦 بيانات الطلب:', orderData);
-        
-        // 1️⃣1️⃣ حفظ الطلب في Firebase
+
         const newOrderRef = await ordersRef.push(orderData);
-        
         console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
+
+        // ✅ حفظ الطلب النشط بشكل صحيح
+        saveActiveOrder({
+            orderId: newOrderRef.key,
+            orderNumber: orderNumber,
+            phone: phone,
+            status: 'pending'
+        });
+
+        // ✅ تحديث أزرار الواجهة
+        updateTrackingButtonVisibility();
         
-        // 1️⃣2️⃣ بناء رسالة الواتساب
+        // ✅ بدء الاستماع لتحديثات الحالة
+        startListeningToActiveOrder();
+
+        // ✅ حفظ الطلب في مسار المستخدم
+        const userOrdersRef = firebase.database().ref(`users/${phone}/orders`);
+        const userOrderData = {
+            ...orderData,
+            orderId: newOrderRef.key
+        };
+        await userOrdersRef.push(userOrderData);
+        console.log(`✅ تم حفظ الطلب في حساب المستخدم ${phone}`);
+
+        // ✅ حفظ معلومات للتتبع
+        sessionStorage.setItem('lastOrderNumber', String(orderNumber));
+        sessionStorage.setItem('lastOrderPhone', phone);
+        localStorage.setItem('taloola_tracking_phone', phone);
+
+        // بناء رسالة واتساب
         const whatsappNumber = '9647755666073';
-        let message = `🛎️ طلب جديد #${orderNumber}\n`;
-        message += `━━━━━━━━━━━━━━━\n\n`;
-        message += `📞 رقم الهاتف: ${phone}\n`;
-        message += `📍 منطقة التوصيل: ${area}\n`;
+        let message = `🛎️ طلب جديد #${orderNumber}\n━━━━━━━━━━━━━━━\n\n📞 رقم الهاتف: ${phone}\n📍 منطقة التوصيل: ${area}\n`;
         if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
         if (notes) message += `📝 ملاحظات: ${notes}\n`;
-        
-        message += `\n━━━━━━━━━━━━━━━\n`;
-        message += `🛒 تفاصيل الطلب:\n\n`;
-        
+        message += `\n━━━━━━━━━━━━━━━\n🛒 تفاصيل الطلب:\n\n`;
+
         shoppingCart.forEach((item, index) => {
             const itemPrice = parseInt(item.price) || 0;
             const itemQty = parseInt(item.quantity) || 0;
             const itemTotal = itemPrice * itemQty;
-            
-            message += `${index + 1}. ${item.name}\n`;
-            message += `   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n`;
-            message += `   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n\n`;
+            message += `${index + 1}. ${item.name}\n   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n\n`;
         });
-        
-        message += `━━━━━━━━━━━━━━━\n`;
-        message += `💰 المجموع النهائي: ${totalAmount.toLocaleString('ar-EG')} د.ع\n`;
-        
-        if (gpsLocation) {
-            const mapUrl = gpsLocation.googleMapsUrl || 
-                `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`;
-            message += `\n📍 الموقع على الخريطة:\n${mapUrl}\n`;
-        }
-        
-        message += `\n━━━━━━━━━━━━━━━\n`;
-        message += `⏰ وقت الطلب: ${new Date().toLocaleTimeString('ar-EG')}\n`;
-        message += `📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}`;
-        
-        // 1️⃣3️⃣ فتح واتساب
+
+        message += `━━━━━━━━━━━━━━━\n💰 المجموع النهائي: ${totalAmount.toLocaleString('ar-EG')} د.ع\n`;
+        if (gpsLocation) message += `\n📍 الموقع على الخريطة:\n${gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`}\n`;
+        message += `\n━━━━━━━━━━━━━━━\n⏰ وقت الطلب: ${new Date().toLocaleTimeString('ar-EG')}\n📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}`;
+
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
-        
-        // 1️⃣4️⃣ رسالة نجاح + نافذة المعالجة
+
         showNotification(`✅ تم إرسال طلبك بنجاح! رقم الطلب: #${orderNumber}`);
-        showProcessingWindow();
-        
-        // 1️⃣5️⃣ تفريغ السلة والنموذج
+
+        // تفريغ السلة والنموذج
         shoppingCart = [];
         saveCart();
         displayCartItems();
-        
+
         if (phoneInput) phoneInput.value = '';
         if (areaSelect) areaSelect.value = '';
         if (detailedInput) detailedInput.value = '';
         if (notesInput) notesInput.value = '';
         updateNotesCounter();
         closeCartModal();
-                
+        
+        // ✅ تحديث الأزرار
+        updateTrackingButtonVisibility(); 
+
+        // ✅ الانتقال إلى صفحة تتبع الطلب
+        setTimeout(() => {
+            redirectToTrackingPage(orderNumber);
+        }, 1500);
+
     } catch (error) {
         console.error('❌ خطأ في حفظ الطلب:', error);
-        console.error('📋 تفاصيل الخطأ:', {
-            message: error.message,
-            code: error.code,
-            stack: error.stack
-        });
-        
         let errorMessage = '⚠ فشل حفظ الطلب';
-        
-        if (error.code === 'PERMISSION_DENIED') {
-            errorMessage = '⚠ خطأ في الصلاحيات - تحقق من قواعد Firebase';
-        } else if (error.code === 'NETWORK_ERROR') {
-            errorMessage = '⚠ خطأ في الاتصال بالإنترنت';
-        } else if (error.message) {
-            errorMessage = `⚠ ${error.message}`;
-        }
-        
+        if (error.code === 'PERMISSION_DENIED') errorMessage = '⚠ خطأ في الصلاحيات - تحقق من قواعد Firebase';
+        else if (error.code === 'NETWORK_ERROR') errorMessage = '⚠ خطأ في الاتصال بالإنترنت';
+        else if (error.message) errorMessage = `⚠ ${error.message}`;
         showNotification(errorMessage);
     }
 }
@@ -1984,25 +1902,22 @@ async function confirmAndSendOrder() {
 function showNotification(message) {
     const existing = document.querySelector('.cart-notification');
     if (existing) existing.remove();
+    
     const notification = document.createElement('div');
     notification.className = 'cart-notification';
     notification.textContent = message;
     notification.style.display = 'block';
     document.body.appendChild(notification);
+    
     setTimeout(() => {
         notification.style.animation = 'slideInDown 0.5s ease reverse';
-        setTimeout(() => {
-            if (notification.parentElement) notification.remove();
-        }, 500);
+        setTimeout(() => { if (notification.parentElement) notification.remove(); }, 500);
     }, 3000);
 }
 
 function openSupport() {
-    try {
-        window.open(`https://wa.me/9647755666073?text=${encodeURIComponent('أحتاج إلى مساعدة')}`, '_blank');
-    } catch (e) {
-        showNotification('⚠ فشل فتح واتساب');
-    }
+    try { window.open(`https://wa.me/9647755666073?text=${encodeURIComponent('أحتاج إلى مساعدة')}`, '_blank'); }
+    catch (e) { showNotification('⚠ فشل فتح واتساب'); }
 }
 
 // ============================================
@@ -2033,11 +1948,8 @@ function displayAds() {
     
     if (typeof firebase === 'undefined' || !firebase.database) {
         setTimeout(() => {
-            if (typeof firebase !== 'undefined' && firebase.database) {
-                listenToAds();
-            } else {
-                adsContainer.innerHTML = '<div class="no-ads">تعذر تحميل العروض حالياً</div>';
-            }
+            if (typeof firebase !== 'undefined' && firebase.database) listenToAds();
+            else adsContainer.innerHTML = '<div class="no-ads">تعذر تحميل العروض حالياً</div>';
         }, 1000);
         return;
     }
@@ -2049,10 +1961,7 @@ function displayAds() {
             adsContainer.innerHTML = '';
             const ads = snapshot.val();
             
-            if (!ads) {
-                adsContainer.innerHTML = '<div class="no-ads">لا توجد عروض خاصة حالياً</div>';
-                return;
-            }
+            if (!ads) { adsContainer.innerHTML = '<div class="no-ads">لا توجد عروض خاصة حالياً</div>'; return; }
             
             const sortedKeys = Object.keys(ads).reverse();
             
@@ -2067,70 +1976,24 @@ function displayAds() {
                 if (mediaType === 'youtube' && (ad.youtubeUrl || ad.youtubeId)) {
                     const videoId = ad.youtubeId || extractYouTubeId(ad.youtubeUrl);
                     if (videoId) {
-                        mediaHtml = `
-                            <div class="ad-video-wrapper youtube">
-                                <div class="video-responsive">
-                                    <iframe 
-                                        src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" 
-                                        frameborder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                        allowfullscreen
-                                        loading="lazy"
-                                        title="${ad.title || 'فيديو'}">
-                                    </iframe>
-                                </div>
-                                <div class="media-type-badge youtube">
-                                    <i class="fab fa-youtube"></i>
-                                </div>
-                            </div>
-                        `;
+                        mediaHtml = `<div class="ad-video-wrapper youtube"><div class="video-responsive"><iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy" title="${ad.title || 'فيديو'}"></iframe></div><div class="media-type-badge youtube"><i class="fab fa-youtube"></i></div></div>`;
                     }
                 } else if (mediaType === 'video' && ad.videoUrl) {
-                    mediaHtml = `
-                        <div class="ad-video-wrapper direct">
-                            <video 
-                                controls 
-                                preload="metadata" 
-                                playsinline
-                                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23000'/%3E%3C/svg%3E"
-                                style="width: 100%; border-radius: 10px;">
-                                <source src="${ad.videoUrl}" type="video/mp4">
-                                المتصفح لا يدعم تشغيل الفيديو
-                            </video>
-                            <div class="media-type-badge video">
-                                <i class="fas fa-video"></i>
-                            </div>
-                        </div>
-                    `;
+                    mediaHtml = `<div class="ad-video-wrapper direct"><video controls preload="metadata" playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23000'/%3E%3C/svg%3E" style="width: 100%; border-radius: 10px;"><source src="${ad.videoUrl}" type="video/mp4">المتصفح لا يدعم تشغيل الفيديو</video><div class="media-type-badge video"><i class="fas fa-video"></i></div></div>`;
                 } else if (mediaType === 'image' && ad.imageUrl) {
                     const imageUrl = (ad.imageUrl || '').trim();
-                    const hasImage = imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'));
-                    
-                    if (hasImage) {
-                        mediaHtml = `
-                            <div class="ad-image">
-                                <img src="${imageUrl}" alt="${ad.title || ''}" loading="lazy" onerror="handleImageError(this)">
-                                <div class="media-type-badge image">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                            </div>
-                        `;
+                    if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'))) {
+                        mediaHtml = `<div class="ad-image"><img src="${imageUrl}" alt="${ad.title || ''}" loading="lazy" onerror="handleImageError(this)"><div class="media-type-badge image"><i class="fas fa-image"></i></div></div>`;
                     }
+                } else {
+                    mediaHtml = `<div class="media-type-badge text-only"><i class="fas fa-font"></i> نص فقط</div>`;
                 }
                 
-                adElement.innerHTML = `
-                    ${mediaHtml}
-                    <div class="ad-card-content">
-                        <h4>${ad.title || 'عرض'}</h4>
-                        <p>${ad.description || ''}</p>
-                        ${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}
-                    </div>
-                `;
+                adElement.innerHTML = `${mediaHtml}<div class="ad-card-content"><h4>${ad.title || 'عرض'}</h4><p>${ad.description || ''}</p>${ad.price ? `<p class="ad-price">السعر: ${ad.price} د.ع</p>` : ''}</div>`;
                 adsContainer.appendChild(adElement);
             });
             
             console.log(`✅ تم تحميل ${sortedKeys.length} إعلان`);
-            
         }, (error) => {
             console.error('خطأ في جلب الإعلانات:', error);
             adsContainer.innerHTML = '<div class="no-ads">تعذر تحميل العروض حالياً</div>';
@@ -2139,19 +2002,16 @@ function displayAds() {
 }
 
 // ============================================
-// 🎯 Event Delegation
+// 🎯 Event Delegation و معالجات النوافذ
 // ============================================
 function setupProductClickDelegation() {
     const mainElement = document.querySelector('main');
     if (!mainElement) return;
     
-    if (mainElement._productClickHandler) {
-        mainElement.removeEventListener('click', mainElement._productClickHandler);
-    }
+    if (mainElement._productClickHandler) mainElement.removeEventListener('click', mainElement._productClickHandler);
     
     const handler = function(e) {
         if (e.target.closest('button, a, .qty-btn-new')) return;
-        
         const menuItem = e.target.closest('.menu-item');
         if (menuItem) {
             e.preventDefault();
@@ -2166,9 +2026,6 @@ function setupProductClickDelegation() {
     console.log('✅ تم إعداد Event Delegation للمنتجات');
 }
 
-// ============================================
-// 🔥 إعداد معالجات نافذة المنتج
-// ============================================
 function setupProductModalHandlers() {
     const decreaseBtn = document.getElementById('modalQtyDecrease');
     const increaseBtn = document.getElementById('modalQtyIncrease');
@@ -2210,13 +2067,10 @@ function setupProductModalHandlers() {
     console.log('✅ تم إعداد معالجات نافذة المنتج بنجاح');
 }
 
-// ============================================
-// 🛒 فتح نافذة السلة
-// ============================================
 function openCartModal() {
     const modal = document.getElementById('cartModal');
     if (!modal) return;
-
+    
     loadSavedCustomerInfo();
     displayCartItems();
     updateNotesCounter();
@@ -2229,7 +2083,7 @@ function openCartModal() {
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchstart', function(){}, {passive: true});
-
+    
     const firebaseConfig = {
         apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
         authDomain: "talola-food.firebaseapp.com",
@@ -2246,14 +2100,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const firebaseDbScript = document.createElement('script');
     firebaseDbScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
     document.head.appendChild(firebaseDbScript);
-
+    
     const topStickyBar = document.getElementById('topStickyBar');
     const mainHeader = document.getElementById('mainHeader');
     
     function getHeaderOffset() {
         return mainHeader ? mainHeader.offsetHeight - 50 : 200;
     }
-
+    
     function handleScroll() {
         if (!topStickyBar) return;
         
@@ -2272,10 +2126,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-
+    
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
     const floatingCartBtn = document.getElementById('floatingCartBtn');
-
+    
     if (floatingCartBtn) {
         floatingCartBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -2290,14 +2144,11 @@ document.addEventListener('DOMContentLoaded', function() {
             await requestLocationAndUpdate();
         });
     }
-
+    
     window.addEventListener('scroll', () => {
         if (scrollToTopBtn) {
-            if (window.pageYOffset > 300) {
-                scrollToTopBtn.classList.add('visible');
-            } else {
-                scrollToTopBtn.classList.remove('visible');
-            }
+            if (window.pageYOffset > 300) scrollToTopBtn.classList.add('visible');
+            else scrollToTopBtn.classList.remove('visible');
         }
     }, { passive: true });
     
@@ -2306,107 +2157,110 @@ document.addEventListener('DOMContentLoaded', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
-
+    
     window.addEventListener('click', function(event) {
         if (event.target === document.getElementById('cartModal')) closeCartModal();
         if (event.target === document.getElementById('orderReviewModal')) closeOrderReview();
         if (event.target === document.getElementById('locationModal')) closeLocationModal();
         if (event.target === document.getElementById('productModal')) closeProductModal();
     });
-
+    
     updateCartUI();
     initLocationIcon();
     initializeLocationSystem();
-    
     setupProductClickDelegation();
     setupProductModalHandlers();
     initSmartImageLoading();
     
-    // ✅ تهيئة عداد الملاحظات
     const notesTextarea = document.getElementById('orderNotes');
     if (notesTextarea) {
         notesTextarea.addEventListener('input', updateNotesCounter);
         updateNotesCounter();
     }
-
-    // ✅ مراقبة تغييرات رقم الهاتف للكشف عن الحظر فوراً
+    
     const phoneInput = document.getElementById('customerPhone');
     if (phoneInput) {
         let phoneCheckTimeout;
-        
         phoneInput.addEventListener('input', function() {
             clearTimeout(phoneCheckTimeout);
-            
             phoneCheckTimeout = setTimeout(async () => {
                 const phone = getCurrentPhoneInput();
-                if (phone) {
-                    await checkPhoneBanRealtime(phone);
-                } else {
-                    enableOrdering();
-                }
+                if (phone) await checkPhoneBanRealtime(phone);
+                else enableOrdering();
             }, 800);
         });
-        
         phoneInput.addEventListener('blur', async function() {
             const phone = getCurrentPhoneInput();
-            if (phone) {
-                await checkPhoneBanRealtime(phone);
-            }
+            if (phone) await checkPhoneBanRealtime(phone);
         });
     }
-
+    
     firebaseDbScript.onload = function() {
         setTimeout(() => {
             if (typeof firebase !== 'undefined') {
                 try {
                     firebase.initializeApp(firebaseConfig);
                     console.log('✅ تم تهيئة Firebase بنجاح');
-                    initBanSystem();
+                    loadProcessingDuration();
+                    loadBanDuration();
                     displayAds();
                     loadMenuFromFirebase();
+                    
+                    // بدء الاستماع لتحديثات الطلب النشط
+                    startListeningToActiveOrder();
+                    
                 } catch (error) {
                     console.error('خطأ في تهيئة Firebase:', error);
                 }
             }
         }, 500);
     };
-
-    // التحقق من وجود طلب قيد التحضير
+    
     const processingStart = parseInt(safeLocalStorageGet(PROCESSING_KEY, '0'));
-    if (processingStart && (Date.now() - processingStart < PROCESSING_DURATION)) {
-        showProcessingWindow();
-    } else if (processingStart) {
-        safeLocalStorageRemove(PROCESSING_KEY);
+    if (processingStart) {
+        const now = Date.now();
+        if (now - processingStart < processingDurationMs) showProcessingWindow();
+        else {
+            safeLocalStorageRemove(PROCESSING_KEY);
+            enableOrdering();
+        }
     }
-
-    // فحص الحظر عند التحميل
+    
     setTimeout(async () => {
         const currentPhone = getCurrentPhoneInput();
-        if (currentPhone) {
-            await checkPhoneBanRealtime(currentPhone);
-        } else {
-            checkBanStatus();
-        }
+        if (currentPhone) await checkPhoneBanRealtime(currentPhone);
+        else checkBanStatus();
+        
+        // تحديث ظهور الأزرار بعد التأكد من حالة الحظر
+        updateTrackingButtonVisibility();
     }, 1000);
+
+    // تحديث الأزرار عند العودة للصفحة
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || document.visibilityState === 'visible') {
+            setTimeout(updateTrackingButtonVisibility, 500);
+        }
+    });
+
+    window.addEventListener('focus', function() {
+        setTimeout(updateTrackingButtonVisibility, 300);
+    });
 });
 
+// ============================================
 // ✅ معالج زر إلغاء الطلب
+// ============================================
 document.addEventListener('DOMContentLoaded', function() {
     const cancelBtn = document.getElementById('cancelOrderBtn');
     if (cancelBtn) {
         cancelBtn.addEventListener('click', async function() {
-            const confirmCancel = confirm(
-                'هل أنت متأكد من إلغاء الطلب؟\n\n' +
-                'سيتم حظر رقم هاتفك لمدة 5 ساعات كاملة.'
-            );
+            const confirmCancel = confirm('هل أنت متأكد من إلغاء الطلب؟\n\nسيتم حظر رقم هاتفك مؤقتاً وفقاً لإعدادات المطعم.');
             
             if (confirmCancel) {
                 const lastPhone = getLastOrderPhone();
-                
-                if (lastPhone) {
-                    await banPhone(lastPhone, BAN_DURATION);
-                } else {
-                    const banUntil = Date.now() + BAN_DURATION;
+                if (lastPhone) await banPhone(lastPhone, banDurationMs);
+                else {
+                    const banUntil = Date.now() + banDurationMs;
                     safeLocalStorageSet(BAN_KEY, banUntil.toString());
                 }
                 
@@ -2414,7 +2268,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 shoppingCart = [];
                 saveCart();
                 displayCartItems();
-                showNotification('تم إلغاء الطلب. رقم هاتفك محظور لمدة 5 ساعات');
+                showNotification('تم إلغاء الطلب. تم حظر رقمك مؤقتاً وفقاً لإعدادات المطعم.');
+                
+                // مسح الطلب النشط عند الإلغاء
+                clearActiveOrder();
+                updateTrackingButtonVisibility();
             }
         });
     }
@@ -2440,36 +2298,59 @@ function checkBanStatus() {
 function showBanWindow(banUntil) {
     const modal = document.getElementById('banModal');
     const message = document.getElementById('banMessage');
+    
     if (!modal || !message) return;
+    
+    if (banCountdownInterval) {
+        clearInterval(banCountdownInterval);
+        banCountdownInterval = null;
+    }
     
     const banData = safeJsonParse(safeLocalStorageGet(BAN_DATA_KEY));
     let phoneInfo = '';
-    if (banData && banData.phone) {
-        phoneInfo = `<p class="ban-phone-text"><i class="fas fa-phone"></i> <strong>الرقم:</strong> ${banData.phone}</p>`;
-    }
+    if (banData && banData.phone) phoneInfo = `<p class="ban-phone-text"><i class="fas fa-phone"></i> <strong>الرقم:</strong> ${banData.phone}</p>`;
     
     let timeInfo = '';
-    if (banUntil === 'permanent' || banUntil === 0) {
-        timeInfo = '<p class="ban-permanent-text"><i class="fas fa-infinity"></i> <strong>حظر دائم</strong></p>';
-    } else {
-        const remainingHours = Math.ceil((banUntil - Date.now()) / (60 * 60 * 1000));
-        timeInfo = `<p class="ban-temporary-text"><i class="fas fa-clock"></i> <strong>المدة المتبقية:</strong> ${remainingHours} ساعة</p>`;
-    }
+    if (banUntil === 'permanent' || banUntil === 0) timeInfo = '<p class="ban-permanent-text"><i class="fas fa-infinity"></i> <strong>حظر دائم</strong></p>';
+    else timeInfo = `<p class="ban-temporary-text"><i class="fas fa-clock"></i> <strong>المدة المتبقية:</strong> <span id="banTimeCountdown">جاري الحساب...</span></p>`;
     
-    message.innerHTML = `
-        ${phoneInfo}
-        ${timeInfo}
-        <p>تم تعليق حسابك بسبب إلغاء طلب سابق أو مخالفة شروط الاستخدام.</p>
-        <p class="ban-warning-text"><i class="fas fa-exclamation-triangle"></i> أي محاولة للتلاعب ستؤدي إلى حظر دائم.</p>
-    `;
+    message.innerHTML = `${phoneInfo}${timeInfo}<p>تم تعليق حسابك بسبب إلغاء طلب سابق أو مخالفة شروط الاستخدام.</p><p class="ban-warning-text"><i class="fas fa-exclamation-triangle"></i> أي محاولة للتلاعب ستؤدي إلى حظر دائم.</p>`;
     
     modal.style.display = 'flex';
     disableOrdering();
+    
+    if (banUntil !== 'permanent' && banUntil !== 0) {
+        const countdownEl = document.getElementById('banTimeCountdown');
+        banCountdownInterval = setInterval(() => {
+            const now = Date.now();
+            const remaining = banUntil - now;
+            
+            if (remaining <= 0) {
+                clearInterval(banCountdownInterval);
+                banCountdownInterval = null;
+                if (countdownEl) countdownEl.textContent = "انتهى الحظر!";
+                safeLocalStorageRemove(BAN_KEY);
+                safeLocalStorageRemove(BAN_DATA_KEY);
+                enableOrdering();
+                modal.style.display = 'none';
+                showNotification('✅ تم رفع الحظر عن حسابك، يمكنك تقديم طلب جديد الآن.');
+            } else {
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                if (countdownEl) countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+        }, 1000);
+    }
 }
 
 function closeBanModal() {
     const modal = document.getElementById('banModal');
     if (modal) modal.style.display = 'none';
+    if (banCountdownInterval) {
+        clearInterval(banCountdownInterval);
+        banCountdownInterval = null;
+    }
 }
 
 // ============================================
@@ -2496,3 +2377,14 @@ window.smartImageLoader = smartImageLoader;
 window.handleImageError = handleImageError;
 window.closeBanModal = closeBanModal;
 window.updateNotesCounter = updateNotesCounter;
+window.showProcessingWindow = showProcessingWindow;
+window.startProcessingCountdown = startProcessingCountdown;
+window.redirectToTrackingPage = redirectToTrackingPage;
+window.disableOrdering = disableOrdering;
+window.enableOrdering = enableOrdering;
+window.updateTrackingButtonVisibility = updateTrackingButtonVisibility;
+window.startListeningToActiveOrder = startListeningToActiveOrder;
+window.getActiveOrder = getActiveOrder;
+window.saveActiveOrder = saveActiveOrder;
+window.clearActiveOrder = clearActiveOrder;
+window.isOrderActive = isOrderActive;
