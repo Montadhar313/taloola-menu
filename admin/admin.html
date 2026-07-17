@@ -36,12 +36,12 @@
                 <p class="sidebar-subtitle">لوحة الإدارة</p>
             </div>
             <nav class="sidebar-nav">
-                <button class="nav-btn" data-tab="orders">
+                <button class="nav-btn active" data-tab="orders">
                     <i class="fas fa-clipboard-list"></i>
                     <span>الطلبات</span>
                     <span class="badge" id="newOrdersBadge" style="display:none;">0</span>
                 </button>
-                <button class="nav-btn active" data-tab="menu">
+                <button class="nav-btn" data-tab="menu">
                     <i class="fas fa-utensils"></i>
                     <span>إدارة المنيو</span>
                 </button>
@@ -61,6 +61,10 @@
                     <i class="fas fa-ban"></i>
                     <span>إدارة الحظر</span>
                 </button>
+                <button class="nav-btn" data-tab="delivery-areas">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>مناطق التوصيل</span>
+                </button>
                 <button class="nav-btn" id="closeRestaurantBtn" style="background: linear-gradient(135deg, #dc3545, #a71d2a); color: white; margin-top: 10px;">
                     <i class="fas fa-door-closed"></i>
                     <span>إغلاق المطعم</span>
@@ -77,8 +81,105 @@
         <!-- المحتوى الرئيسي -->
         <main class="main-content">
             
+            <!-- تبويب إدارة الطلبات -->
+            <section id="tab-orders" class="tab-content active">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-clipboard-list"></i> إدارة الطلبات</h1>
+                        <p>متابعة وعرض جميع الطلبات الواردة من الزبائن وتحديث حالاتها</p>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-clock" style="color:#ffc107;"></i>
+                            <div class="stat-info">
+                                <div class="stat-number" id="pendingOrdersCount">0</div>
+                                <div class="stat-label">طلبات معلقة</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-check-circle" style="color:#28a745;"></i>
+                            <div class="stat-info">
+                                <div class="stat-number" id="completedOrdersCount">0</div>
+                                <div class="stat-label">طلبات مكتملة</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-shopping-bag"></i>
+                            <div class="stat-info">
+                                <div class="stat-number" id="totalOrdersCount">0</div>
+                                <div class="stat-label">الإجمالي</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-receipt" style="color: var(--primary);"></i>
+                            <div class="stat-info">
+                                <div class="stat-number" id="currentOrderNumber">0</div>
+                                <div class="stat-label">رقم الطلب التالي</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إعدادات مدة الانتظار والتوصيل -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-cogs"></i> إعدادات توقيت الطلبات</h2>
+                        <p class="card-subtitle">تحكم في فترات الانتظار والتوصيل المطبقة على جميع الزبائن</p>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="processingDurationInput"><i class="fas fa-hourglass-half"></i> مدة الانتظار بين الطلبات (دقائق)</label>
+                            <input type="number" id="processingDurationInput" min="1" max="120" value="5" placeholder="مثال: 5">
+                            <small class="form-hint">يمنع الزبون من الطلب مجدداً قبل انقضاء هذه المدة.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="deliveryDurationInput"><i class="fas fa-truck-fast"></i> مدة التوصيل المتوقعة (دقائق)</label>
+                            <input type="number" id="deliveryDurationInput" min="10" max="180" value="45" placeholder="مثال: 45">
+                            <small class="form-hint">تظهر للزبون في صفحة تتبع الطلب.</small>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px; border-top: 1px solid var(--gray-light); padding-top: 20px;">
+                        <button id="saveProcessingDurationBtn" class="btn-primary" style="width: auto;">
+                            <i class="fas fa-save"></i> حفظ مدة الانتظار
+                        </button>
+                        <button id="saveDeliveryDurationBtn" class="btn-secondary" style="width: auto;">
+                            <i class="fas fa-save"></i> حفظ مدة التوصيل
+                        </button>
+                    </div>
+                    <div id="deliveryDurationStatus" class="status-message" style="display: none; margin-top: 15px; padding: 10px; border-radius: 8px;"></div>
+                </div>
+
+                <!-- قائمة الطلبات مع شريط الأدوات الاحترافي -->
+                <div class="card">
+                    <div class="card-header" style="border-bottom: none; padding-bottom: 0;">
+                        <h2 class="card-title"><i class="fas fa-list"></i> قائمة الطلبات</h2>
+                        <p class="card-subtitle">قم بفلترة الطلبات حسب الحالة أو مصدر الطلب</p>
+                    </div>
+                    
+                    <!-- فلاتر الحالة -->
+                    <div class="filter-chips" style="padding: 20px 20px 0 20px;">
+                        <button class="chip active" data-filter="all">الكل</button>
+                        <button class="chip" data-filter="pending">⏳ معلقة</button>
+                        <button class="chip" data-filter="preparing">🔥 قيد التحضير</button>
+                        <button class="chip" data-filter="ready">✓ جاهزة</button>
+                        <button class="chip" data-filter="completed">✅ مكتملة</button>
+                        <button class="chip" data-filter="cancelled">❌ ملغية</button>
+                    </div>
+
+                    <!-- هنا سيتم حقن شريط الأدوات الاحترافي (أزرار التبديل + البحث) بواسطة JavaScript -->
+                    <div style="padding: 20px;">
+                        <div id="ordersList" class="orders-grid">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                                <p>جاري تحميل الطلبات...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- تبويب إدارة المنيو -->
-            <section id="tab-menu" class="tab-content active">
+            <section id="tab-menu" class="tab-content">
                 <div class="page-header">
                     <div class="header-content">
                         <h1><i class="fas fa-utensils"></i> إدارة المنيو</h1>
@@ -689,134 +790,6 @@
                 </div>
             </section>
 
-            <!-- تبويب إدارة الطلبات -->
-            <section id="tab-orders" class="tab-content">
-                <div class="page-header">
-                    <div class="header-content">
-                        <h1><i class="fas fa-clipboard-list"></i> إدارة الطلبات</h1>
-                        <p>متابعة وعرض جميع الطلبات الواردة من الزبائن</p>
-                    </div>
-                    <div class="header-stats">
-                        <div class="stat-card">
-                            <i class="fas fa-clock" style="color:#ffc107;"></i>
-                            <div class="stat-info">
-                                <div class="stat-number" id="pendingOrdersCount">0</div>
-                                <div class="stat-label">طلبات معلقة</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-check-circle" style="color:#28a745;"></i>
-                            <div class="stat-info">
-                                <div class="stat-number" id="completedOrdersCount">0</div>
-                                <div class="stat-label">طلبات مكتملة</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-shopping-bag"></i>
-                            <div class="stat-info">
-                                <div class="stat-number" id="totalOrdersCount">0</div>
-                                <div class="stat-label">الإجمالي</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-receipt" style="color: var(--primary);"></i>
-                            <div class="stat-info">
-                                <div class="stat-number" id="currentOrderNumber">0</div>
-                                <div class="stat-label">رقم الطلب التالي</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ⏱️ إعدادات مدة الانتظار -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-hourglass-half"></i> إعدادات مدة الانتظار</h2>
-                        <p class="card-subtitle">تحكم في المدة التي يمنع فيها الزبون من تقديم طلب جديد بعد إتمام طلب سابق</p>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="processingDurationInput">
-                                <i class="fas fa-clock"></i> مدة الانتظار (بالدقائق)
-                            </label>
-                            <input type="number" id="processingDurationInput" min="1" max="120" value="5" placeholder="مثال: 5">
-                            <small class="form-hint">القيمة الافتراضية هي 5 دقائق. سيتم تطبيق التغيير فوراً على جميع الزبائن.</small>
-                        </div>
-                        <div class="form-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
-                            <button id="saveProcessingDurationBtn" class="btn-primary" style="width: auto; padding: 12px 30px;">
-                                <i class="fas fa-save"></i> حفظ المدة
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fas fa-truck"></i> إعدادات مدة التوصيل</h2>
-                        <p class="card-subtitle">تحكم في الوقت المتوقع لتوصيل الطلبات للزبائن</p>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="deliveryDurationInput">
-                                <i class="fas fa-clock"></i> مدة التوصيل المتوقعة (بالدقائق)
-                            </label>
-                            <input type="number" id="deliveryDurationInput" min="10" max="180" value="45" placeholder="مثال: 45">
-                            <small class="form-hint">
-                                <i class="fas fa-info-circle"></i> 
-                                القيمة الافتراضية 45 دقيقة. سيتم تحديث المؤقت في صفحة التتبع فوراً لجميع الزبائن.
-                            </small>
-                        </div>
-                        <div class="form-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
-                            <button id="saveDeliveryDurationBtn" class="btn-primary" style="width: auto; padding: 12px 30px;">
-                                <i class="fas fa-save"></i> حفظ المدة
-                            </button>
-                        </div>
-                    </div>
-                    <div id="deliveryDurationStatus" class="status-message" style="display: none; margin-top: 15px; padding: 10px; border-radius: 8px;"></div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-header">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                            <div>
-                                <h3 class="card-title"><i class="fas fa-list"></i> قائمة الطلبات</h3>
-                                <p class="card-subtitle">جميع الطلبات الواردة</p>
-                            </div>
-                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                <div id="newOrdersLiveBadge" style="display:none;">
-                                    <i class="fas fa-bell"></i>
-                                    <span id="newOrdersLiveCount">0</span> جديد
-                                </div>
-                                <button class="refresh-orders-btn" id="refreshOrdersBtn" onclick="manualRefreshOrders()" title="تحديث الطلبات">
-                                    <i class="fas fa-sync-alt"></i>
-                                    <span>تحديث</span>
-                                </button>
-                                <button class="sound-toggle-btn" id="toggleSoundBtn" onclick="toggleOrderSound()" title="تفعيل/تعطيل الصوت">
-                                    <i class="fas fa-volume-up"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-chips" style="padding: 0 20px 20px 20px;">
-                        <button class="chip active" data-filter="all">الكل</button>
-                        <button class="chip" data-filter="pending">⏳ معلقة</button>
-                        <button class="chip" data-filter="preparing">🔥 قيد التحضير</button>
-                        <button class="chip" data-filter="ready">✓ جاهزة</button>
-                        <button class="chip" data-filter="completed">✅ مكتملة</button>
-                        <button class="chip" data-filter="cancelled">❌ ملغية</button>
-                    </div>
-                    <div style="padding: 0 20px 20px 20px;">
-                        <div id="ordersList" class="orders-grid">
-                            <div class="loading-state">
-                                <i class="fas fa-spinner fa-spin fa-3x"></i>
-                                <p>جاري تحميل الطلبات...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- تبويب إدارة الحظر -->
             <section id="tab-bans" class="tab-content">
                 <div class="page-header">
@@ -824,27 +797,7 @@
                         <h1><i class="fas fa-ban"></i> إدارة الحظر</h1>
                         <p>حظر أو فك الحظر عن أرقام الهواتف التي تقوم بالتلاعب</p>
                     </div>
-                    <!-- ⚙️ إعدادات الحظر العامة -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title"><i class="fas fa-cog"></i> إعدادات الحظر العامة</h2>
-                            <p class="card-subtitle">تحكم في مدة الحظر الافتراضية عند حظر رقم جديد</p>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="defaultBanDuration">
-                                    <i class="fas fa-clock"></i> مدة الحظر الافتراضية (بالساعات)
-                                </label>
-                                <input type="number" id="defaultBanDuration" min="1" max="720" value="5" placeholder="مثال: 5">
-                                <small class="form-hint">سيتم استخدام هذه المدة عند حظر أي رقم جديد.</small>
-                            </div>
-                            <div class="form-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
-                                <button id="saveBanSettingsBtn" class="btn-primary" style="width: auto; padding: 12px 30px;">
-                                    <i class="fas fa-save"></i> حفظ إعدادات الحظر
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    
                     <div class="header-stats">
                         <div class="stat-card">
                             <i class="fas fa-ban" style="color: #dc3545;"></i>
@@ -870,6 +823,29 @@
                     </div>
                 </div>
 
+                <!-- بطاقة إعدادات الحظر العامة -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-cog"></i> إعدادات الحظر العامة</h2>
+                        <p class="card-subtitle">تحكم في مدة الحظر الافتراضية عند حظر رقم جديد</p>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="defaultBanDuration">
+                                <i class="fas fa-clock"></i> مدة الحظر الافتراضية (بالساعات)
+                            </label>
+                            <input type="number" id="defaultBanDuration" min="1" max="720" value="5" placeholder="مثال: 5">
+                            <small class="form-hint">سيتم استخدام هذه المدة عند حظر أي رقم جديد.</small>
+                        </div>
+                        <div class="form-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
+                            <button id="saveBanSettingsBtn" class="btn-primary" style="width: auto; padding: 12px 30px;">
+                                <i class="fas fa-save"></i> حفظ إعدادات الحظر
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة حظر رقم جديد -->
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-user-slash"></i> حظر رقم جديد</h2>
@@ -894,23 +870,23 @@
                                     <option value="48">يومين (48 ساعة)</option>
                                     <option value="168">أسبوع (7 أيام)</option>
                                     <option value="permanent">حظر دائم ⚠️</option>
+                                    <option value="custom">⚙️ مدة مخصصة</option>
                                 </select>
                             </div>
-                            <div id="customBanDurationGroup" style="display:none; margin-top:10px;">
-                        <label>المدة المخصصة:</label>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <input type="number" id="customBanDurationValue" 
-                                placeholder="المدة" min="1" style="width:100px; padding:8px;">
-                            <select id="customBanDurationUnit" style="padding:8px;">
-                                <option value="1">ساعة واحدة</option>
-                                <option value="5">5 ساعات</option>
-                                <option value="24">يوم واحد</option>
-                                <option value="168">أسبوع</option>
-                                <option value="permanent">دائم</option>
-                                <option value="custom">⚙️ مدة مخصصة</option>
-                            </select>
                         </div>
-                    </div>
+                        
+                        <!-- قسم المدة المخصصة -->
+                        <div id="customBanDurationGroup" class="form-group" style="display: none; margin-top: 10px; padding: 15px; background: var(--light); border-radius: 12px; border: 2px solid var(--gray-light);">
+                            <label><i class="fas fa-cog"></i> تحديد مدة مخصصة:</label>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <input type="number" id="customBanDurationValue" 
+                                    placeholder="القيمة" min="1" style="width: 100px; padding: 10px; border: 2px solid var(--gray-light); border-radius: 8px;">
+                                <select id="customBanDurationUnit" style="padding: 10px; border: 2px solid var(--gray-light); border-radius: 8px;">
+                                    <option value="hours">ساعات</option>
+                                    <option value="days">أيام</option>
+                                </select>
+                                <small style="color: var(--gray);">مثال: 3 أيام، أو 12 ساعة</small>
+                            </div>
                         </div>
                         
                         <div class="form-group">
@@ -929,6 +905,7 @@
                     </form>
                 </div>
 
+                <!-- بطاقة الأرقام المحظورة -->
                 <div class="card">
                     <div class="card-header">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -962,13 +939,74 @@
                 </div>
             </section>
 
+            <!-- تبويب إدارة مناطق التوصيل -->
+            <section id="tab-delivery-areas" class="tab-content">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1><i class="fas fa-map-marked-alt"></i> إدارة مناطق التوصيل</h1>
+                        <p>إضافة وتعديل مناطق التوصيل والوقت المتوقع للوصول لكل منطقة</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-plus-circle"></i> إضافة منطقة جديدة</h2>
+                    </div>
+                    <form id="deliveryAreaForm" class="ad-form">
+                        <input type="hidden" id="areaId">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="areaName">اسم المنطقة <span class="required">*</span></label>
+                                <input type="text" id="areaName" required placeholder="مثال: قطاع 14">
+                            </div>
+                            <div class="form-group">
+                                <label for="areaCategory">التصنيف <span class="required">*</span></label>
+                                <select id="areaCategory" required>
+                                    <option value="التقاطعات">📍 التقاطعات</option>
+                                    <option value="القطاعات">🏘️ القطاعات</option>
+                                    <option value="الأسواق">🛒 الأسواق</option>
+                                    <option value="المناطق">🏡 المناطق</option>
+                                    <option value="الأحياء">🏘️ الأحياء</option>
+                                    <option value="معالم">🏥 معالم</option>
+                                    <option value="الكوفيات">☕ الكوفيات</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="areaTime">الوقت المتوقع (بالدقائق) <span class="required">*</span></label>
+                                <input type="number" id="areaTime" required min="5" max="120" value="20" placeholder="20">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="saveAreaBtn" class="btn-primary" style="width: auto;">
+                                <i class="fas fa-save"></i> حفظ المنطقة
+                            </button>
+                            <button type="button" id="cancelAreaEditBtn" class="btn-secondary" style="display: none; width: auto;">
+                                <i class="fas fa-times"></i> إلغاء التعديل
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-list"></i> المناطق الحالية</h2>
+                    </div>
+                    <div id="deliveryAreasList" class="menu-grid">
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin fa-3x"></i>
+                            <p>جاري التحميل...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <!-- إشعارات Toast -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- firebase scripts -->
+    <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
