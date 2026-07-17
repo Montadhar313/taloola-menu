@@ -32,19 +32,31 @@ function saveActiveOrder(orderData) {
             orderNumber: orderData.orderNumber || null,
             phone: orderData.phone,
             status: orderData.status || 'pending',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            lastChecked: Date.now() // ✅ جديد: لتتبع آخر تحقق
         };
         localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(activeOrder));
         console.log('✅ تم حفظ الطلب النشط:', activeOrder);
+        return true;
     } catch (e) {
         console.warn('⚠️ فشل حفظ الطلب النشط:', e);
+        return false;
     }
 }
 
 function getActiveOrder() {
     try {
         const data = localStorage.getItem(ACTIVE_ORDER_KEY);
-        return data ? JSON.parse(data) : null;
+        if (!data) return null;
+        const order = JSON.parse(data);
+        
+        // ✅ التحقق من انتهاء الصلاحية (24 ساعة)
+        const expiryTime = 24 * 60 * 60 * 1000;
+        if ((Date.now() - order.timestamp) >= expiryTime) {
+            clearActiveOrder();
+            return null;
+        }
+        return order;
     } catch (e) {
         return null;
     }
@@ -54,34 +66,87 @@ function clearActiveOrder() {
     try {
         localStorage.removeItem(ACTIVE_ORDER_KEY);
         sessionStorage.removeItem('active_order_id');
+        sessionStorage.removeItem('lastOrderNumber');
         console.log('🗑️ تم مسح الطلب النشط');
+        return true;
     } catch (e) {
         console.warn('⚠️ فشل مسح الطلب النشط');
+        return false;
     }
 }
 
-function isOrderActive() {
-    const active = getActiveOrder();
-    if (!active || !active.orderId) return false;
+function isOrderActive(activeOrder = null) {
+    const order = activeOrder || getActiveOrder();
+    if (!order || !order.orderId) return false;
     
-    // 1. التحقق من انتهاء صلاحية الطلب (24 ساعة)
-    const expiryTime = 24 * 60 * 60 * 1000;
-    if ((Date.now() - active.timestamp) >= expiryTime) {
-        clearActiveOrder();
+    // ✅ الحالات النهائية التي يعتبر فيها الطلب غير نشط
+    const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
+    if (finalStatuses.includes(order.status)) {
         return false;
     }
     
-    // 2. إذا كانت الحالة نهائية، نعتبر الطلب غير نشط
-    const finalStatuses = ['completed', 'delivered', 'cancelled'];
-    if (finalStatuses.includes(active.status)) {
-        clearActiveOrder();
-        return false;
-    }
-    
-    // 3. الطلب نشط فقط إذا كانت حالته قيد المعالجة
-    const activeStatuses = ['pending', 'preparing', 'ready'];
-    return activeStatuses.includes(active.status);
+    // ✅ الحالات النشطة
+    const activeStatuses = ['pending', 'preparing', 'ready', 'on_the_way'];
+    return activeStatuses.includes(order.status);
 }
+
+
+// ✅ دالة جديدة: التحقق الفوري من حالة الطلب في Firebase (مسار المستخدمين)
+async function refreshActiveOrderStatus() {
+    const order = getActiveOrder();
+    if (!order || !order.phone || !order.orderNumber || typeof firebase === 'undefined' || !firebase.database) {
+        updateTrackingButtonVisibility();
+        return false;
+    }
+    
+    try {
+        // 🔍 البحث في قسم المستخدمين عن الطلبات الخاصة بهذا الرقم
+        const snapshot = await firebase.database()
+            .ref(`users/${order.phone}/orders`)
+            .orderByChild('orderNumber')
+            .equalTo(parseInt(order.orderNumber))
+            .limitToLast(1)
+            .once('value');
+        
+        const data = snapshot.val();
+        if (!data) {
+            // الطلب غير موجود = تم حذفه أو إلغاؤه
+            clearActiveOrder();
+            updateTrackingButtonVisibility();
+            return false;
+        }
+        
+        const orderId = Object.keys(data)[0];
+        const freshOrder = data[orderId];
+        
+        // ✅ تحديث الحالة المحلية إذا تغيرت
+        if (freshOrder.status !== order.status) {
+            order.status = freshOrder.status;
+            order.lastChecked = Date.now();
+            localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(order));
+            console.log(`🔄 تم تحديث حالة الطلب #${order.orderNumber} إلى: ${freshOrder.status}`);
+        }
+        
+        updateTrackingButtonVisibility();
+        
+        // ✅ إذا أصبحت الحالة نهائية، نمسح الطلب بعد 3 ثوانٍ
+        const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
+        if (finalStatuses.includes(freshOrder.status)) {
+            setTimeout(() => {
+                clearActiveOrder();
+                updateTrackingButtonVisibility();
+                showNotification('✅ تم تحديث حالة طلبك! يمكنك الآن تقديم طلب جديد.');
+            }, 3000);
+        }
+        
+        return true;
+    } catch (error) {
+        console.warn('⚠️ فشل التحقق من حالة الطلب:', error);
+        updateTrackingButtonVisibility();
+        return false;
+    }
+}
+
 
 // ============================================
 // 🛡️ دوال مساعدة آمنة
@@ -1574,6 +1639,10 @@ function enableOrdering() {
 // ============================================
 // 🎯 تحديث ظهور أزرار السلة/التتبع (دالة واحدة موحدة)
 // ============================================
+
+// ============================================
+// 🎯 تحديث ظهور أزرار السلة/التتبع (النسخة المحسّنة)
+// ============================================
 function updateTrackingButtonVisibility() {
     const trackBtn = document.getElementById('floatingTrackBtn');
     const cartBtn = document.getElementById('floatingCartBtn');
@@ -1581,34 +1650,32 @@ function updateTrackingButtonVisibility() {
     if (!trackBtn || !cartBtn) return;
     
     const activeOrder = getActiveOrder();
-    const isActive = isOrderActive(); // استخدام الدالة المحسّنة
+    const isActive = isOrderActive(activeOrder);
     
+    // ✅ حالة 1: طلب نشط → إظهار زر التتبع
     if (isActive && activeOrder) {
-        // ✅ إظهار زر التتبع وإخفاء السلة
         trackBtn.style.display = 'flex';
         trackBtn.classList.add('visible');
         cartBtn.style.display = 'none';
         
-        // تحديث نص الزر ليشمل رقم الطلب
+        // تحديث نص الزر
         const trackText = trackBtn.querySelector('.track-text');
         if (trackText && activeOrder.orderNumber) {
-            trackText.textContent = `تتبع طلب #${activeOrder.orderNumber}`;
+            trackText.textContent = `تتبع #${activeOrder.orderNumber}`;
         }
         
+        // تحديث حدث النقر
         trackBtn.onclick = function(e) {
             e.preventDefault();
             if (activeOrder?.orderNumber) {
-                const currentPath = window.location.pathname;
-                const isRoot = currentPath.endsWith('index.html') || currentPath.endsWith('/');
-                const basePath = isRoot ? '' : '../';
+                const basePath = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' ? '' : '../';
                 window.location.href = `${basePath}tracking/order-tracking.html?order=${activeOrder.orderNumber}`;
-            } else {
-                showNotification('⚠ لا يوجد طلب نشط للتتبع');
             }
         };
         
-    } else {
-        // ✅ إظهار زر السلة وإخفاء التتبع
+    } 
+    // ✅ حالة 2: لا يوجد طلب نشط → إظهار زر السلة
+    else {
         trackBtn.style.display = 'none';
         trackBtn.classList.remove('visible');
         cartBtn.style.display = 'flex';
@@ -1620,55 +1687,85 @@ function updateTrackingButtonVisibility() {
     }
 }
 
-// ============================================
-// 👂 الاستماع لتحديثات حالة الطلب (دالة واحدة موحدة)
-// ============================================
+
+// 👂 الاستماع لتحديثات حالة الطلب (النسخة المحسّنة - مسار المستخدمين)
 function startListeningToActiveOrder() {
     const activeOrder = getActiveOrder();
-    if (!activeOrder || !activeOrder.phone || typeof firebase === 'undefined' || !firebase.database) {
+    
+    // ✅ إذا لم يكن هناك طلب نشط أو Firebase غير جاهز
+    if (!activeOrder || !activeOrder.phone || !activeOrder.orderNumber || typeof firebase === 'undefined' || !firebase.database) {
         updateTrackingButtonVisibility();
         return;
     }
     
-    // إيقاف أي مستمع سابق
+    // ✅ إيقاف أي مستمع سابق لمنع التكرار
     if (activeOrderListener) {
-        activeOrderListener.off();
+        try {
+            firebase.database().ref(`users/${activeOrder.phone}/orders`).off('value');
+        } catch (e) {}
         activeOrderListener = null;
     }
     
     const phone = activeOrder.phone;
-    const ordersRef = firebase.database().ref('orders/list');
+    const orderNumber = parseInt(activeOrder.orderNumber);
+    const ordersRef = firebase.database().ref(`users/${phone}/orders`);
     
-    activeOrderListener = ordersRef.orderByChild('phone').equalTo(phone).limitToLast(1);
+    // ✅ إنشاء مستمع جديد مع الفلترة برقم الطلب
+    activeOrderListener = ordersRef
+        .orderByChild('orderNumber')
+        .equalTo(orderNumber);
     
     activeOrderListener.on('value', (snapshot) => {
-        const orders = snapshot.val();
-        if (!orders) return;
+        const data = snapshot.val();
+        if (!data) {
+            // الطلب حُذف من Firebase
+            clearActiveOrder();
+            updateTrackingButtonVisibility();
+            return;
+        }
         
-        const orderKeys = Object.keys(orders);
-        const lastOrderKey = orderKeys[orderKeys.length - 1];
-        const updatedOrder = orders[lastOrderKey];
+        const orderId = Object.keys(data)[0];
+        const updatedOrder = data[orderId];
         
-        if (updatedOrder && updatedOrder.status) {
-            const currentActive = getActiveOrder();
-            if (currentActive) {
-                currentActive.status = updatedOrder.status;
-                localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(currentActive));
+        // ✅ تحديث الحالة المحلية
+        const currentActive = getActiveOrder();
+        if (currentActive && updatedOrder.status !== currentActive.status) {
+            currentActive.status = updatedOrder.status;
+            currentActive.lastChecked = Date.now();
+            localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(currentActive));
+            
+            console.log(`🔄 حالة الطلب #${currentActive.orderNumber} تغيرت إلى: ${updatedOrder.status}`);
+            
+            // ✅ تحديث الواجهة فوراً
+            updateTrackingButtonVisibility();
+            
+            // ✅ إذا أصبحت الحالة نهائية
+            const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
+            if (finalStatuses.includes(updatedOrder.status)) {
+                showNotification(`✅ ${getStatusMessage(updatedOrder.status)}`);
                 
-                updateTrackingButtonVisibility();
-                
-                if (['completed', 'delivered', 'cancelled'].includes(updatedOrder.status)) {
-                    showNotification('✅ تم تحديث حالة طلبك! يمكنك الآن تقديم طلب جديد.');
-                    setTimeout(() => {
-                        clearActiveOrder();
-                        updateTrackingButtonVisibility();
-                    }, 3000);
-                }
+                // مسح الطلب النشط بعد 3 ثوانٍ للسماح للمستخدم برؤية الرسالة
+                setTimeout(() => {
+                    clearActiveOrder();
+                    updateTrackingButtonVisibility();
+                }, 3000);
             }
         }
     }, (error) => {
         console.warn('⚠️ خطأ في مراقبة حالة الطلب:', error);
+        updateTrackingButtonVisibility();
     });
+}
+
+// ✅ دالة مساعدة لعرض رسالة مناسبة حسب الحالة
+function getStatusMessage(status) {
+    const messages = {
+        'completed': 'تم إكمال طلبك بنجاح!',
+        'delivered': 'تم توصيل طلبك! 🎉',
+        'cancelled': 'تم إلغاء طلبك',
+        'rejected': 'عذراً، لم نتمكن من قبول طلبك'
+    };
+    return messages[status] || 'تم تحديث حالة طلبك';
 }
 
 // ============================================
@@ -2165,6 +2262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === document.getElementById('productModal')) closeProductModal();
     });
     
+    
     updateCartUI();
     initLocationIcon();
     initializeLocationSystem();
@@ -2201,6 +2299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     firebase.initializeApp(firebaseConfig);
                     console.log('✅ تم تهيئة Firebase بنجاح');
+                    
                     loadProcessingDuration();
                     loadBanDuration();
                     displayAds();
@@ -2208,6 +2307,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // بدء الاستماع لتحديثات الطلب النشط
                     startListeningToActiveOrder();
+                    
+                    // ✅ تحميل مناطق التوصيل وإعداد مستمع الوقت (بعد تأكد جاهزية Firebase)
+                    loadDeliveryAreas();
+                    setupDeliveryTimeListener();
                     
                 } catch (error) {
                     console.error('خطأ في تهيئة Firebase:', error);
@@ -2226,6 +2329,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+        // تحميل مناطق التوصيل وإعداد مستمع الوقت
+    loadDeliveryAreas();
+    setupDeliveryTimeListener();
+
     setTimeout(async () => {
         const currentPhone = getCurrentPhoneInput();
         if (currentPhone) await checkPhoneBanRealtime(currentPhone);
@@ -2352,6 +2459,277 @@ function closeBanModal() {
         banCountdownInterval = null;
     }
 }
+
+// ============================================
+// 🗺️ تحميل مناطق التوصيل ديناميكياً من Firebase
+// ============================================
+function loadDeliveryAreas() {
+    const select = document.getElementById('deliveryArea');
+    if (!select) return;
+
+    // 1. محاولة التحميل الفوري من الذاكرة المحلية لتجنب تأخير الشبكة
+    const cachedAreas = localStorage.getItem('taloola_delivery_areas');
+    if (cachedAreas) {
+        try {
+            renderAreasToSelect(JSON.parse(cachedAreas), select);
+        } catch (e) {
+            console.warn('⚠️ خطأ في قراءة المناطق من الذاكرة المحلية');
+        }
+    } else {
+        select.innerHTML = '<option value="">-- جاري تحميل المناطق...</option>';
+    }
+
+    // 2. التحقق من Firebase للحصول على أحدث البيانات
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        firebase.database().ref('delivery_areas').orderByChild('order').once('value')
+            .then((snapshot) => {
+                const areas = snapshot.val();
+                if (areas) {
+                    // حفظ البيانات المحدثة في الذاكرة المحلية
+                    localStorage.setItem('taloola_delivery_areas', JSON.stringify(areas));
+                    renderAreasToSelect(areas, select);
+                } else if (!cachedAreas) {
+                    select.innerHTML = '<option value="">-- لا توجد مناطق متاحة حالياً --</option>';
+                }
+            })
+            .catch((error) => {
+                console.error('❌ خطأ في جلب المناطق من Firebase:', error);
+                if (!cachedAreas) {
+                    select.innerHTML = '<option value="">-- فشل التحميل، يرجى تحديث الصفحة --</option>';
+                }
+            });
+    }
+}
+
+// دالة مساعدة لرسم الخيارات في القائمة المنسدلة
+function renderAreasToSelect(areasData, selectElement) {
+    selectElement.innerHTML = '<option value="">-- اختر المنطقة --</option>';
+    
+    // تجميع المناطق حسب التصنيف
+    const grouped = {};
+    Object.values(areasData).forEach(area => {
+        if (!grouped[area.category]) grouped[area.category] = [];
+        grouped[area.category].push(area);
+    });
+
+    // ترتيب التصنيفات لضمان ظهورها بشكل منطقي
+    const categoryOrder = ['التقاطعات', 'القطاعات', 'الأسواق', 'المناطق', 'الأحياء', 'معالم', 'الكوفيات'];
+    const categoryIcons = { 
+        'التقاطعات': '📍', 'القطاعات': '🏘️', 'الأسواق': '🛒', 
+        'المناطق': '🏡', 'الأحياء': '🏘️', 'معالم': '🏥', 'الكوفيات': '☕' 
+    };
+
+    categoryOrder.forEach(cat => {
+        if (grouped[cat]) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = `${categoryIcons[cat] || ''} ${cat}`;
+            
+            grouped[cat].forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.name;
+                option.dataset.time = area.estimatedTime || 20; // الوقت الافتراضي 20
+                option.textContent = area.name;
+                optgroup.appendChild(option);
+            });
+            
+            selectElement.appendChild(optgroup);
+        }
+    });
+
+    // استعادة المنطقة المحفوظة محلياً إن وجدت
+    loadSavedCustomerInfo();
+}
+
+
+
+// ============================================
+// ⏱️ عرض الوقت المتوقع عند تغيير المنطقة
+// ============================================
+function setupDeliveryTimeListener() {
+    const select = document.getElementById('deliveryArea');
+    const hint = document.getElementById('deliveryTimeHint');
+    const timeDisplay = document.getElementById('estimatedTimeDisplay');
+
+    if (select && hint && timeDisplay) {
+        select.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const estimatedTime = selectedOption.dataset.time || 20;
+            
+            if (this.value) {
+                timeDisplay.textContent = estimatedTime;
+                hint.style.display = 'flex';
+            } else {
+                hint.style.display = 'none';
+            }
+        });
+    }
+}
+
+// ============================================
+// 🗺️ إدارة مناطق التوصيل (إضافة جديدة)
+// ============================================
+let allDeliveryAreas = [];
+
+// دالة لزرع المناطق الأولية مرة واحدة إذا كانت قاعدة البيانات فارغة
+async function seedInitialDeliveryAreas() {
+    const snapshot = await db.ref('delivery_areas').once('value');
+    if (snapshot.exists()) return; // إذا كانت موجودة مسبقاً، لا تفعل شيئاً
+
+    const areasList = [
+        { name: "تقاطع العورة", category: "التقاطعات", estimatedTime: 20 },
+        { name: "تقاطع كسرة وعطش", category: "التقاطعات", estimatedTime: 20 },
+        { name: "تقاطع السفارة", category: "التقاطعات", estimatedTime: 20 },
+        { name: "قطاع 14", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 15", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 16", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 17", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 18", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 19", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 20", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 21", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 22", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 23", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 24", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 25", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 26", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 27", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 28", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 29", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 30", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 31", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 32", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 33", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 34", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 35", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 36", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 37", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 38", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 39", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 40", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 41", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 42", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 43", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 44", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 45", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 46", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 47", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 48", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 49", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 70", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 71", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 72", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 73", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 74", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 75", category: "القطاعات", estimatedTime: 20 },
+        { name: "قطاع 76", category: "القطاعات", estimatedTime: 20 }, { name: "قطاع 77", category: "القطاعات", estimatedTime: 20 },
+        { name: "سوق العورة", category: "الأسواق", estimatedTime: 20 }, { name: "سوق سويري", category: "الأسواق", estimatedTime: 20 },
+        { name: "سوق مريدي", category: "الأسواق", estimatedTime: 20 }, { name: "سوق الكيارة", category: "الأسواق", estimatedTime: 20 },
+        { name: "الاورزدي", category: "المناطق", estimatedTime: 20 }, { name: "الفلاح", category: "المناطق", estimatedTime: 20 },
+        { name: "كسرة وعطش", category: "المناطق", estimatedTime: 20 }, { name: "السدة", category: "المناطق", estimatedTime: 20 },
+        { name: "الحي الدسيم", category: "الأحياء", estimatedTime: 20 }, { name: "الحي ام الكبر", category: "الأحياء", estimatedTime: 20 },
+        { name: "الحي الكوفة", category: "الأحياء", estimatedTime: 20 }, { name: "الحي حميدية", category: "الأحياء", estimatedTime: 20 },
+        { name: "مستشفى الجوادر", category: "معالم", estimatedTime: 20 },
+        { name: "كوفي الشابندر", category: "الكوفيات", estimatedTime: 20 }, { name: "كوفي المضايف", category: "الكوفيات", estimatedTime: 20 },
+        { name: "كوفي شاشات", category: "الكوفيات", estimatedTime: 20 }, { name: "كوفي تعلولة", category: "الكوفيات", estimatedTime: 20 }
+    ];
+
+    const updates = {};
+    areasList.forEach((area, index) => {
+        const newKey = db.ref('delivery_areas').push().key;
+        updates[`delivery_areas/${newKey}`] = { ...area, order: index };
+    });
+
+    await db.ref().update(updates);
+    console.log('✅ تم زرع مناطق التوصيل الأولية بنجاح');
+}
+
+function loadDeliveryAreasAdmin() {
+    db.ref('delivery_areas').orderByChild('order').on('value', (snapshot) => {
+        const list = document.getElementById('deliveryAreasList');
+        if (!list) return;
+        
+        allDeliveryAreas = [];
+        const data = snapshot.val();
+        if (!data) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-map fa-3x"></i><h3>لا توجد مناطق</h3></div>';
+            return;
+        }
+
+        Object.keys(data).forEach(key => {
+            allDeliveryAreas.push({ id: key, ...data[key] });
+        });
+
+        list.innerHTML = allDeliveryAreas.map(area => `
+            <div class="menu-card">
+                <div class="menu-card-content">
+                    <div class="menu-card-header">
+                        <h4>${area.name}</h4>
+                        <span class="menu-card-category">${area.category}</span>
+                    </div>
+                    <p><i class="fas fa-clock" style="color: var(--primary);"></i> الوقت المتوقع: <strong>${area.estimatedTime} دقيقة</strong></p>
+                    <div class="menu-card-actions">
+                        <button class="btn-edit" onclick="editDeliveryArea('${area.id}')"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn-toggle-availability" style="background: var(--danger);" onclick="deleteDeliveryArea('${area.id}')"><i class="fas fa-trash"></i> حذف</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+window.editDeliveryArea = function(id) {
+    const area = allDeliveryAreas.find(a => a.id === id);
+    if (!area) return;
+    safeSetValue('areaId', area.id);
+    safeSetValue('areaName', area.name);
+    safeSetValue('areaCategory', area.category);
+    safeSetValue('areaTime', area.estimatedTime);
+    document.getElementById('saveAreaBtn').innerHTML = '<i class="fas fa-save"></i> تحديث المنطقة';
+    document.getElementById('cancelAreaEditBtn').style.display = 'inline-flex';
+    document.getElementById('deliveryAreaForm').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.deleteDeliveryArea = async function(id) {
+    if (!confirm('هل أنت متأكد من حذف هذه المنطقة؟')) return;
+    try {
+        await db.ref(`delivery_areas/${id}`).remove();
+        showToast('✅ تم حذف المنطقة بنجاح', 'success');
+    } catch (error) {
+        showToast('❌ فشل الحذف', 'error');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('deliveryAreaForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = safeGetValue('areaId');
+            const name = safeGetValue('areaName').trim();
+            const category = safeGetValue('areaCategory');
+            const estimatedTime = parseInt(safeGetValue('areaTime'));
+
+            if (!name || !category || !estimatedTime) return showToast('الرجاء ملء جميع الحقول', 'error');
+
+            const btn = document.getElementById('saveAreaBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            try {
+                const data = { name, category, estimatedTime };
+                if (id) {
+                    await db.ref(`delivery_areas/${id}`).update(data);
+                    showToast('✅ تم تحديث المنطقة', 'success');
+                } else {
+                    data.order = allDeliveryAreas.length;
+                    await db.ref('delivery_areas').push(data);
+                    showToast('✅ تمت إضافة المنطقة', 'success');
+                }
+                form.reset();
+                safeSetValue('areaId', '');
+                document.getElementById('saveAreaBtn').innerHTML = '<i class="fas fa-save"></i> حفظ المنطقة';
+                document.getElementById('cancelAreaEditBtn').style.display = 'none';
+            } catch (error) {
+                showToast('❌ حدث خطأ', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('cancelAreaEditBtn').addEventListener('click', () => {
+            form.reset();
+            safeSetValue('areaId', '');
+            document.getElementById('saveAreaBtn').innerHTML = '<i class="fas fa-save"></i> حفظ المنطقة';
+            document.getElementById('cancelAreaEditBtn').style.display = 'none';
+        });
+    }
+    
+    // استدعاء دالة الزرع الأولي عند فتح التبويب لأول مرة
+    document.querySelector('.nav-btn[data-tab="delivery-areas"]')?.addEventListener('click', () => {
+        seedInitialDeliveryAreas();
+        loadDeliveryAreasAdmin();
+    });
+});
+
 
 // ============================================
 // 📤 تصدير الدوال العامة
