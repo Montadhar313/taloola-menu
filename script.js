@@ -137,57 +137,53 @@ function clearActiveOrder() {
 function isOrderActive(activeOrder = null) {
     const order = activeOrder || getActiveOrder();
     if (!order || !order.orderId) return false;
-    
+
     const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
     if (finalStatuses.includes(order.status)) return false;
-    
+
     const activeStatuses = ['pending', 'preparing', 'ready', 'on_the_way'];
     return activeStatuses.includes(order.status);
 }
 
 async function refreshActiveOrderStatus() {
     const order = getActiveOrder();
-    if (!order || !order.phone || !order.orderNumber || typeof firebase === 'undefined' || !firebase.database) {
+    if (!order || !order.orderId || typeof firebase === 'undefined' || !firebase.database) {
         updateTrackingButtonVisibility();
         return false;
     }
-    
+
     try {
-        const snapshot = await firebase.database()
-            .ref(`users/${order.phone}/orders`)
-            .orderByChild('orderNumber')
-            .equalTo(parseInt(order.orderNumber))
-            .limitToLast(1)
-            .once('value');
-        
+        // ✅ المسار المباشر للطلب في orders/list
+        const ref = firebase.database().ref(`orders/list/${order.orderId}`);
+        const snapshot = await ref.once('value');
         const data = snapshot.val();
+
         if (!data) {
+            // تم حذف الطلب نهائياً
             clearActiveOrder();
             updateTrackingButtonVisibility();
             return false;
         }
-        
-        const orderId = Object.keys(data)[0];
-        const freshOrder = data[orderId];
-        
-        if (freshOrder.status !== order.status) {
-            order.status = freshOrder.status;
+
+        const newStatus = data.status || 'pending';
+        if (newStatus !== order.status) {
+            order.status = newStatus;
             order.lastChecked = Date.now();
             localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(order));
-            console.log(`🔄 تم تحديث حالة الطلب #${order.orderNumber} إلى: ${freshOrder.status}`);
+            console.log(`🔄 تحديث حالة الطلب #${order.orderNumber} إلى: ${newStatus}`);
         }
-        
+
         updateTrackingButtonVisibility();
-        
+
         const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
-        if (finalStatuses.includes(freshOrder.status)) {
+        if (finalStatuses.includes(newStatus)) {
             setTimeout(() => {
                 clearActiveOrder();
                 updateTrackingButtonVisibility();
                 showNotification('✅ تم تحديث حالة طلبك! يمكنك الآن تقديم طلب جديد.');
             }, 3000);
         }
-        
+
         return true;
     } catch (error) {
         console.warn('⚠️ فشل التحقق من حالة الطلب:', error);
@@ -1709,48 +1705,61 @@ function updateTrackingButtonVisibility() {
 
 function startListeningToActiveOrder() {
     const activeOrder = getActiveOrder();
-    if (!activeOrder || !activeOrder.phone || !activeOrder.orderNumber || typeof firebase === 'undefined' || !firebase.database) {
+    if (!activeOrder || !activeOrder.orderId || typeof firebase === 'undefined' || !firebase.database) {
         updateTrackingButtonVisibility();
         return;
     }
+
+    // إيقاف أي مستمع سابق
     if (activeOrderListener) {
         try {
-            firebase.database().ref(`users/${activeOrder.phone}/orders`).off('value');
+            activeOrderListener.off('value');
         } catch (e) {}
         activeOrderListener = null;
     }
-    const phone = activeOrder.phone;
-    const orderNumber = parseInt(activeOrder.orderNumber);
-    const ordersRef = firebase.database().ref(`users/${phone}/orders`);
-    activeOrderListener = ordersRef.orderByChild('orderNumber').equalTo(orderNumber);
+
+    // ✅ مراقبة المسار المباشر في orders/list
+    const orderRef = firebase.database().ref(`orders/list/${activeOrder.orderId}`);
+
+    activeOrderListener = orderRef;
     activeOrderListener.on('value', (snapshot) => {
         const data = snapshot.val();
+
         if (!data) {
+            // ✅ الطلب حُذف من Firebase
+            console.log(`🗑️ الطلب #${activeOrder.orderNumber} حُذف من النظام`);
             clearActiveOrder();
-            updateTrackingButtonVisibility();
+                    updateTrackingButtonVisibility();
+        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
             return;
         }
-        const orderId = Object.keys(data)[0];
-        const updatedOrder = data[orderId];
+
+        const updatedStatus = data.status || 'pending';
         const currentActive = getActiveOrder();
-        if (currentActive && updatedOrder.status !== currentActive.status) {
-            currentActive.status = updatedOrder.status;
+
+        if (currentActive && updatedStatus !== currentActive.status) {
+            currentActive.status = updatedStatus;
             currentActive.lastChecked = Date.now();
             localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(currentActive));
-            console.log(`🔄 حالة الطلب #${currentActive.orderNumber} تغيرت إلى: ${updatedOrder.status}`);
-            updateTrackingButtonVisibility();
-            const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
-            if (finalStatuses.includes(updatedOrder.status)) {
-                showNotification(`✅ ${getStatusMessage(updatedOrder.status)}`);
-                setTimeout(() => {
-                    clearActiveOrder();
-                    updateTrackingButtonVisibility();
-                }, 3000);
-            }
+            console.log(`🔄 حالة الطلب #${currentActive.orderNumber} تغيرت إلى: ${updatedStatus}`);
+        }
+
+        updateTrackingButtonVisibility();
+        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
+        
+        const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
+        if (finalStatuses.includes(updatedStatus)) {
+            showNotification(`✅ ${getStatusMessage(updatedStatus)}`);
+            setTimeout(() => {
+                clearActiveOrder();
+                        updateTrackingButtonVisibility();
+        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
+            }, 3000);
         }
     }, (error) => {
         console.warn('⚠️ خطأ في مراقبة حالة الطلب:', error);
         updateTrackingButtonVisibility();
+        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
     });
 }
 
