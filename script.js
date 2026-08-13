@@ -1903,36 +1903,45 @@ async function confirmAndSendOrder() {
         }
 
         const orderData = {
-            orderNumber: orderNumber,
-            customerName: isTableOrder ? `زبون طاولة ${tableId}` : 'زبون',
-            phone: isTableOrder ? '' : phone,
-            area: isTableOrder ? `طاولة ${tableId}` : area,
-            detailedAddress: isTableOrder ? '' : (detailed || ''),
-            notes: notes || '',
-            items: cart.map(item => ({
-                name: item.name,
-                category: item.category || 'غير مصنف',
-                price: parseInt(item.price) || 0,
-                quantity: parseInt(item.quantity) || 0,
-                total: (parseInt(item.price) || 0) * (parseInt(item.quantity) || 0)
-            })),
-            total: totalAmount,
-            status: 'pending',
-            timestamp: Date.now(),
-            date: new Date().toLocaleDateString('ar-EG'),
-            time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-            location: gpsLocation ? {
-                latitude: gpsLocation.latitude,
-                longitude: gpsLocation.longitude,
-                googleMapsUrl: gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
-            } : null,
-            notificationSent: false,
-            tableId: isTableOrder ? parseInt(tableId) : null,
-            tableNumber: isTableOrder ? `طاولة ${tableId}` : null,
-            numberOfPersons: personCount,
-            personCount: personCount,
-            orderSource: isTableOrder ? "Table" : "Web",
-            orderType: isTableOrder ? 2 : 3
+    orderNumber: orderNumber,
+    customerName: isTableOrder ? `زبون طاولة ${tableId}` : 'زبون',
+    phone: isTableOrder ? '' : phone,
+    
+    // ✅✅✅ الإصلاح الجذري: عدم خلط area مع رقم الطاولة
+    area: isTableOrder ? 'صالة' : area,  // ✅ المنطقة الحقيقية للدلفري، "صالة" للصالة
+    detailedAddress: isTableOrder ? '' : (detailed || ''),
+    notes: notes || '',  // ✅ ملاحظات الطلب العامة
+    
+    // ✅✅✅ إصلاح عناصر الطلب: إضافة حقل note لكل صنف
+    items: cart.map(item => ({
+        name: item.name,
+        category: item.category || 'غير مصنف',
+        price: parseInt(item.price) || 0,
+        quantity: parseInt(item.quantity) || 0,
+        total: (parseInt(item.price) || 0) * (parseInt(item.quantity) || 0),
+        note: item.note || '',  // ✅ إضافة ملاحظات الصنف
+        notes: item.notes || '' // ✅ حقل بديل للتوافق
+    })),
+    
+    total: totalAmount,
+    status: 'pending',
+    timestamp: Date.now(),
+    date: new Date().toLocaleDateString('ar-EG'),
+    time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    location: gpsLocation ? {
+        latitude: gpsLocation.latitude,
+        longitude: gpsLocation.longitude,
+        googleMapsUrl: gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
+    } : null,
+    notificationSent: false,
+    
+    // ✅✅✅ إصلاح حقول الطاولة: استخدام الأرقام فقط وليس النصوص الكاملة
+    tableId: isTableOrder ? parseInt(tableId) : null,
+    tableNumber: isTableOrder ? tableId : null,  // ✅ الرقم فقط مثل "5" وليس "طاولة 5"
+    numberOfPersons: isTableOrder ? personCount : null,
+    personCount: isTableOrder ? personCount : null,
+    orderSource: isTableOrder ? "Table" : "Web",
+    orderType: isTableOrder ? 2 : 3  // 2 = DineIn, 3 = Apps
         };
 
         console.log('📦 بيانات الطلب المُرسلة:', JSON.stringify(orderData, null, 2));
