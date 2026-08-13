@@ -1755,6 +1755,9 @@ function getStatusMessage(status) {
 // ═══════════════════════════════════════════════════════════
 // ✅✅✅ تأكيد وإرسال الطلب - مُحسَّن للسّلتين
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// ✅✅✅ تأكيد وإرسال الطلب - مُحسَّن مع تدقيق الملاحظات
+// ═══════════════════════════════════════════════════════════
 async function confirmAndSendOrder() {
     if (isOrderActive()) {
         showNotification('⚠️ لديك طلب قيد المعالجة حالياً، يرجى الانتظار حتى اكتماله');
@@ -1778,17 +1781,21 @@ async function confirmAndSendOrder() {
         return;
     }
 
+    // ✅ جلب جميع عناصر النموذج
     const phoneInput = document.getElementById('customerPhone');
     const areaSelect = document.getElementById('deliveryArea');
     const detailedInput = document.getElementById('detailedAddress');
     const notesInput = document.getElementById('orderNotes');
     const personCountInput = document.getElementById('personCount');
     
+    // ✅✅✅ استخراج الملاحظات بشكل آمن (لكلا النوعين)
+    const notes = notesInput ? notesInput.value.trim().substring(0, 80) : '';
+    
+    // ✅ استخراج باقي البيانات
     const personCount = isTableOrder ? (parseInt(personCountInput?.value) || 1) : null;
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const area = areaSelect ? areaSelect.value.trim() : '';
     const detailed = detailedInput ? detailedInput.value.trim() : '';
-    const notes = notesInput ? notesInput.value.trim() : '';
 
     let hasError = false;
     
@@ -1796,10 +1803,10 @@ async function confirmAndSendOrder() {
     // ✅✅✅ التحقق من البيانات حسب نوع الطلب
     // ═══════════════════════════════════════════════════════════
     if (isTableOrder) {
-        // 🍽️ طلب صالة: رقم الهاتف اختياري (يمكن تركه فارغ)
-        // رقم الطاولة وعدد الأشخاص مطلوبان (موجودان مسبقاً في tableId)
+        // 🍽️ طلب صالة: رقم الهاتف اختياري، عدد الأشخاص مطلوب
         if (!personCount || personCount < 1) {
             showNotification('⚠ الرجاء إدخال عدد الأشخاص');
+            if (personCountInput) personCountInput.focus();
             hasError = true;
         }
     } else {
@@ -1822,22 +1829,12 @@ async function confirmAndSendOrder() {
     
     if (hasError) return;
 
-    // ✅ فحص الحظر فقط لطلبات الدلفري (لأنها تعتمد على رقم الهاتف)
+    // ✅ فحص الحظر فقط لطلبات الدلفري
     if (!isTableOrder) {
         showNotification('⏳ جاري التحقق من الحساب...');
         const banned = await isPhoneBanned(phone);
         if (banned) {
             showNotification('⛔ رقم الهاتف محظور ولا يمكنه الطلب حالياً');
-            if (bannedPhonesRef) {
-                try {
-                    const snapshot = await bannedPhonesRef.child(phone).once('value');
-                    const banInfo = snapshot.val();
-                    if (banInfo) showBanWindowFromFirebase(banInfo);
-                    else showBanWindow(Date.now() + banDurationMs);
-                } catch (e) { showBanWindow(Date.now() + banDurationMs); }
-            } else {
-                showBanWindow(Date.now() + banDurationMs);
-            }
             disableOrdering();
             return;
         }
@@ -1862,6 +1859,10 @@ async function confirmAndSendOrder() {
     const gpsLocation = isTableOrder ? null : (userLocation || getLocationFromStorage());
     showNotification('⏳ جاري حفظ طلبك...');
 
+    // ✅✅✅ طباعة تشخيصية للملاحظات
+    console.log('📝 الملاحظات المدخلة:', notes ? `"${notes}"` : '(فارغة)');
+    console.log('🍽️ نوع الطلب:', isTableOrder ? 'صالة' : 'دلفري');
+
     try {
         let orderNumber = 0;
         const counterRef = firebase.database().ref('orders/counter');
@@ -1871,35 +1872,25 @@ async function confirmAndSendOrder() {
             const counterSnapshot = await counterRef.transaction((currentValue) => { return (currentValue || 0) + 1; });
             if (counterSnapshot && counterSnapshot.val() !== null) {
                 orderNumber = counterSnapshot.val();
-                console.log(`✅ رقم الطلب: ${orderNumber}`);
             } else { throw new Error('فشل الحصول على رقم الطلب'); }
         } catch (transactionError) {
-            console.warn('⚠️ فشل transaction، استخدام الطريقة البديلة:', transactionError.message);
-            try {
-                const lastOrderSnapshot = await ordersRef.orderByChild('timestamp').limitToLast(1).once('value');
-                const lastOrder = lastOrderSnapshot.val();
-                if (lastOrder) {
-                    const lastKey = Object.keys(lastOrder)[0];
-                    const lastNum = lastOrder[lastKey].orderNumber || 0;
-                    orderNumber = lastNum + 1;
-                } else { orderNumber = 1; }
-                try { await counterRef.set(orderNumber); } catch (e) { console.warn('⚠️ لا يمكن تحديث العداد:', e.message); }
-            } catch (fallbackError) {
-                console.error('❌ فشل الحصول على رقم الطلب:', fallbackError);
-                orderNumber = Math.floor(Date.now() / 1000) % 100000;
-            }
+            console.warn('⚠️ فشل transaction، استخدام الطريقة البديلة');
+            orderNumber = Math.floor(Date.now() / 1000) % 100000;
         }
 
         // ═══════════════════════════════════════════════════════════
-        // ✅✅✅ بناء كائن الطلب حسب النوع (صالة أو دلفري)
+        // ✅✅✅ بناء كائن الطلب - مع ضمان وجود الملاحظات دائماً
         // ═══════════════════════════════════════════════════════════
         const orderData = {
             orderNumber: orderNumber,
-            customerName: isTableOrder ? `زبون طاولة ${tableId}` : (phone || 'زبون'),
-            phone: isTableOrder ? '' : phone,  // ✅ طلب الصالة لا يحتاج رقم هاتف
+            customerName: isTableOrder ? `زبون طاولة ${tableId}` : 'زبون',
+            phone: isTableOrder ? '' : phone,
             area: isTableOrder ? `طاولة ${tableId}` : area,
             detailedAddress: isTableOrder ? '' : (detailed || ''),
-            notes: notes,
+            
+            // ✅✅✅ الملاحظات: تُرسل دائماً حتى لو كانت فارغة (نص فارغ بدلاً من null)
+            notes: notes || '',
+            
             items: cart.map(item => ({
                 name: item.name,
                 category: item.category || 'غير مصنف',
@@ -1918,31 +1909,35 @@ async function confirmAndSendOrder() {
                 googleMapsUrl: gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
             } : null,
             notificationSent: false,
+            
             // ✅ الحقول الخاصة بالطاولات
             tableId: isTableOrder ? parseInt(tableId) : null,
             tableNumber: isTableOrder ? `طاولة ${tableId}` : null,
             numberOfPersons: personCount,
             personCount: personCount,
             orderSource: isTableOrder ? "Table" : "Web",
-            orderType: isTableOrder ? 2 : 3  // 2 = DineIn (صالة)، 3 = Apps (دلفري/ويب)
+            orderType: isTableOrder ? 2 : 3  // 2 = DineIn، 3 = Apps
         };
 
-        console.log('📦 بيانات الطلب:', orderData);
+        console.log('📦 بيانات الطلب المُرسلة:', JSON.stringify(orderData, null, 2));
 
         const newOrderRef = await ordersRef.push(orderData);
         console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
 
+        // ✅ حفظ الطلب النشط
         saveActiveOrder({
             orderId: newOrderRef.key,
             orderNumber: orderNumber,
             phone: isTableOrder ? '' : phone,
-            status: 'pending'
+            status: 'pending',
+            isTableOrder: isTableOrder,
+            tableId: isTableOrder ? tableId : null
         });
 
         updateTrackingButtonVisibility();
-        startListeningToActiveOrder();
+        if (!isTableOrder) startListeningToActiveOrder();
 
-        // ✅ حفظ الطلب في حساب المستخدم فقط للدلفري (لأن الصالة لا تحتاج رقم هاتف)
+        // ✅ حفظ الطلب في حساب المستخدم فقط للدلفري
         if (!isTableOrder && phone) {
             const userOrdersRef = firebase.database().ref(`users/${phone}/orders`);
             const userOrderData = { ...orderData, orderId: newOrderRef.key };
@@ -1955,7 +1950,9 @@ async function confirmAndSendOrder() {
             localStorage.setItem('taloola_tracking_phone', phone);
         }
 
-        // بناء رسالة واتساب
+        // ═══════════════════════════════════════════════════════════
+        // ✅✅✅ بناء رسالة واتساب - مع الملاحظات لكلا النوعين
+        // ═══════════════════════════════════════════════════════════
         const whatsappNumber = '9647755666073';
         let message = `🛎️ طلب جديد #${orderNumber}\n━━━━━━━━━━━━━━━\n\n`;
         
@@ -1970,14 +1967,20 @@ async function confirmAndSendOrder() {
             if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
         }
         
-        if (notes) message += `📝 ملاحظات: ${notes}\n`;
+        // ✅✅✅ الملاحظات: تظهر دائماً إذا وُجدت (لكلا النوعين)
+        if (notes && notes.length > 0) {
+            message += `\n📝 ملاحظات الطلب:\n   ${notes}\n`;
+        }
+        
         message += `\n━━━━━━━━━━━━━━━\n🛒 تفاصيل الطلب:\n\n`;
 
         cart.forEach((item, index) => {
             const itemPrice = parseInt(item.price) || 0;
             const itemQty = parseInt(item.quantity) || 0;
             const itemTotal = itemPrice * itemQty;
-            message += `${index + 1}. ${item.name}\n   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n\n`;
+            message += `${index + 1}. ${item.name}\n`;
+            message += `   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n`;
+            message += `   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n\n`;
         });
 
         message += `━━━━━━━━━━━━━━━\n💰 المجموع النهائي: ${totalAmount.toLocaleString('ar-EG')} د.ع\n`;
@@ -1999,8 +2002,9 @@ async function confirmAndSendOrder() {
         saveCart();
         displayCartItems();
 
-        if (phoneInput) phoneInput.value = '';
-        if (areaSelect) areaSelect.value = '';
+        // ✅ مسح حقول النموذج
+        if (phoneInput) { phoneInput.value = ''; phoneInput.classList.remove('error'); }
+        if (areaSelect) { areaSelect.value = ''; areaSelect.classList.remove('error'); }
         if (detailedInput) detailedInput.value = '';
         if (notesInput) notesInput.value = '';
         if (personCountInput) personCountInput.value = '1';
@@ -2009,14 +2013,17 @@ async function confirmAndSendOrder() {
         
         updateTrackingButtonVisibility(); 
 
-        setTimeout(() => {
-            redirectToTrackingPage(orderNumber);
-        }, 1500);
+        // ✅ الانتقال إلى صفحة التتبع فقط للدلفري
+        if (!isTableOrder) {
+            setTimeout(() => {
+                redirectToTrackingPage(orderNumber);
+            }, 1500);
+        }
 
     } catch (error) {
         console.error('❌ خطأ في حفظ الطلب:', error);
         let errorMessage = '⚠ فشل حفظ الطلب';
-        if (error.code === 'PERMISSION_DENIED') errorMessage = '⚠ خطأ في الصلاحيات - تحقق من قواعد Firebase';
+        if (error.code === 'PERMISSION_DENIED') errorMessage = '⚠ خطأ في الصلاحيات';
         else if (error.code === 'NETWORK_ERROR') errorMessage = '⚠ خطأ في الاتصال بالإنترنت';
         else if (error.message) errorMessage = `⚠ ${error.message}`;
         showNotification(errorMessage);
@@ -2167,29 +2174,37 @@ function setupProductModalHandlers() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// ✅✅✅ فتح السلة مع تعديل الحقول ديناميكياً حسب نوع الطلب
+// ✅✅✅ فتح السلة مع تعديل الحقول ديناميكياً حسب نوع الطلب (نسخة محسّنة)
 // ═══════════════════════════════════════════════════════════
 function openCartModal() {
     const modal = document.getElementById('cartModal');
     if (!modal) return;
     
     // ✅ الوصول إلى عناصر النموذج
-    const phoneGroup = document.getElementById('customerPhone')?.closest('.form-group, .input-group, div');
-    const areaGroup = document.getElementById('deliveryArea')?.closest('.form-group, .input-group, div');
-    const detailedGroup = document.getElementById('detailedAddress')?.closest('.form-group, .input-group, div');
+    const phoneInput = document.getElementById('customerPhone');
+    const phoneGroup = phoneInput?.closest('.input-group-new');
+    
+    const areaSelect = document.getElementById('deliveryArea');
+    const areaGroup = areaSelect?.closest('.input-group-new');
+    
+    const detailedInput = document.getElementById('detailedAddress');
+    const detailedGroup = detailedInput?.closest('.input-group-new');
+    
     const personCountGroup = document.getElementById('personCountGroup');
-    const locationGroup = document.getElementById('locationStatusBadge')?.closest('.form-group, .input-group, div');
-    const cartTitleEl = document.getElementById('cartModalTitle');
-    const cartSubtitleEl = document.getElementById('cartModalSubtitle');
+    const notesGroup = document.getElementById('orderNotes')?.closest('.input-group-new');
+    
+    const cartTitleEl = document.querySelector('.cart-header-new h2');
     
     // ✅ تعديل حقول النموذج حسب نوع الطلب
     if (isTableOrder) {
-        // 🍽️ طلب صالة: إخفاء الحقول الدلفري وإظهار رقم الطاولة والأشخاص
+        // 🍽️ طلب صالة: إخفاء الحقول الدلفري وإظهار عدد الأشخاص
         if (phoneGroup) phoneGroup.style.display = 'none';
         if (areaGroup) areaGroup.style.display = 'none';
         if (detailedGroup) detailedGroup.style.display = 'none';
-        if (locationGroup) locationGroup.style.display = 'none';
         if (personCountGroup) personCountGroup.style.display = 'block';
+        
+        // ✅ إظهار حقل الملاحظات للصالة أيضاً
+        if (notesGroup) notesGroup.style.display = 'block';
         
         // إضافة/تحديث عنوان الطاولة
         let tableInfoBox = document.getElementById('tableInfoBox');
@@ -2198,8 +2213,12 @@ function openCartModal() {
             tableInfoBox.id = 'tableInfoBox';
             tableInfoBox.className = 'table-info-box';
             tableInfoBox.style.cssText = 'background: linear-gradient(135deg, #FFF8DC, #FFE4B5); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #D4AF37; text-align: center;';
-            const modalBody = modal.querySelector('.cart-modal-body, .modal-body, .cart-content');
-            if (modalBody) modalBody.insertBefore(tableInfoBox, modalBody.firstChild);
+            
+            // إدراج قبل قسم معلومات الزبون
+            const customerInfoSection = modal.querySelector('.customer-info-section');
+            if (customerInfoSection) {
+                customerInfoSection.insertBefore(tableInfoBox, customerInfoSection.firstChild);
+            }
         }
         tableInfoBox.innerHTML = `
             <div style="font-size: 24px; margin-bottom: 8px;">🍽️</div>
@@ -2210,24 +2229,36 @@ function openCartModal() {
         `;
         tableInfoBox.style.display = 'block';
         
-        if (cartTitleEl) cartTitleEl.innerHTML = '🍽️ سلة الصالة';
-        if (cartSubtitleEl) cartSubtitleEl.textContent = `طاولة رقم ${tableId}`;
+        // ✅ تعيين عدد الأشخاص الافتراضي
+        const personCountInput = document.getElementById('personCount');
+        if (personCountInput && !personCountInput.value) {
+            personCountInput.value = '1';
+        }
+        
+        if (cartTitleEl) cartTitleEl.innerHTML = '<i class="fas fa-utensils"></i> سلة الصالة';
+        
+        console.log('🍽️ تم فتح سلة الصالة - إخفاء الحقول غير المطلوبة');
     } else {
         // 🛵 طلب دلفري: إظهار الحقول العادية
         if (phoneGroup) phoneGroup.style.display = '';
         if (areaGroup) areaGroup.style.display = '';
         if (detailedGroup) detailedGroup.style.display = '';
-        if (locationGroup) locationGroup.style.display = '';
         if (personCountGroup) personCountGroup.style.display = 'none';
+        if (notesGroup) notesGroup.style.display = 'block'; // ✅ الملاحظات ظاهرة للدلفري أيضاً
         
         const tableInfoBox = document.getElementById('tableInfoBox');
         if (tableInfoBox) tableInfoBox.style.display = 'none';
         
-        if (cartTitleEl) cartTitleEl.innerHTML = '🛵 سلة الدلفري';
-        if (cartSubtitleEl) cartSubtitleEl.textContent = 'اطلب توصيل إلى منزلك';
+        if (cartTitleEl) cartTitleEl.innerHTML = '<i class="fas fa-shopping-cart"></i> إتمام الطلب';
+        
+        console.log('🛵 تم فتح سلة الدلفري - إظهار جميع الحقول');
     }
     
-    loadSavedCustomerInfo();
+    // ✅ تحميل البيانات المحفوظة (للدلفري فقط)
+    if (!isTableOrder) {
+        loadSavedCustomerInfo();
+    }
+    
     displayCartItems();
     updateNotesCounter();
     modal.style.display = 'flex';
