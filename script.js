@@ -1,25 +1,38 @@
 // ============================================
-// 🍽️ تحميل المنيو الديناميكي - النسخة النهائية المُحسَّنة والمصححة
+// 🍽️ تحميل المنيو الديناميكي - النسخة النهائية المُحسَّنة
 // ============================================
 
-// 🔑 الثوابت العامة
+// ✅ تصحيح: تعريف المتغيرات مرة واحدة فقط لمنع خطأ SyntaxError
+const urlParams = new URLSearchParams(window.location.search);
+const tableId = urlParams.get('tableId') || urlParams.get('table');
+const isTableOrder = !!tableId;
+
 const PROCESSING_KEY = 'taloola_processing_order';
 const BAN_KEY = 'taloola_ban_until';
 const BAN_DATA_KEY = 'taloola_ban_data';
 const ACTIVE_ORDER_KEY = 'taloola_active_order';
 
-// متغيرات ديناميكية تُحدث من Firebase
 let processingDurationMs = 5 * 60 * 1000;
 let banDurationMs = 5 * 60 * 60 * 1000;
 
 let cachedCategories = [];
 let cachedMenuItems = null;
 let isMenuInitialized = false;
-
-// متغير لتخزين مرجع الاستماع للطلب النشط
 let activeOrderListener = null;
 let processingInterval = null;
 let banCountdownInterval = null;
+
+if (tableId) {
+    window.currentTableId = tableId;
+    console.log('🍽️ طلب من الطاولة:', tableId);
+}
+
+// إظهار حقل عدد الأشخاص فقط إذا كان الطلب من طاولة
+if (isTableOrder) {
+    const personCountGroup = document.getElementById('personCountGroup');
+    if (personCountGroup) personCountGroup.style.display = 'block';
+    console.log(`تم فتح المنيو لـ: طاولة رقم ${tableId}`);
+}
 
 // ============================================
 // 🔄 إدارة الطلب النشط - دوال موحدة
@@ -1767,10 +1780,6 @@ function getStatusMessage(status) {
     };
     return messages[status] || 'تم تحديث حالة طلبك';
 }
-
-// ============================================
-// 📱 إرسال الطلب عبر واتساب + حفظ في Firebase
-// ============================================
 async function confirmAndSendOrder() {
     if (isOrderActive()) {
         showNotification('⚠️ لديك طلب قيد المعالجة حالياً، يرجى الانتظار حتى اكتماله');
@@ -1781,10 +1790,12 @@ async function confirmAndSendOrder() {
         showNotification('لديك طلب قيد التحضير بالفعل');
         return;
     }
+    
     if (!shoppingCart || shoppingCart.length === 0) {
         showNotification('السلة فارغة!');
         return;
     }
+    
     if (typeof firebase === 'undefined' || !firebase.database) {
         console.error('❌ Firebase غير متاح');
         showNotification('⚠ لا يمكن حفظ الطلب حالياً، يرجى إعادة تحميل الصفحة');
@@ -1795,13 +1806,17 @@ async function confirmAndSendOrder() {
     const areaSelect = document.getElementById('deliveryArea');
     const detailedInput = document.getElementById('detailedAddress');
     const notesInput = document.getElementById('orderNotes');
-
+    const personCountInput = document.getElementById('personCount');
+    
+    const personCount = isTableOrder ? (parseInt(personCountInput?.value) || 1) : null;
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const area = areaSelect ? areaSelect.value.trim() : '';
     const detailed = detailedInput ? detailedInput.value.trim() : '';
     const notes = notesInput ? notesInput.value.trim() : '';
 
     let hasError = false;
+    
+    // 1. التحقق من رقم الهاتف دائماً
     if (!phone) {
         if (phoneInput) { phoneInput.classList.add('error'); phoneInput.focus(); }
         showNotification('⚠ الرجاء إدخال رقم الهاتف');
@@ -1811,11 +1826,14 @@ async function confirmAndSendOrder() {
         showNotification('⚠ رقم الهاتف غير صحيح (يجب أن يبدأ بـ 07)');
         hasError = true;
     }
-    if (!area) {
-        if (areaSelect) { areaSelect.classList.add('error'); if (!hasError && phoneInput) areaSelect.focus(); }
+
+    // 2. التحقق من منطقة التوصيل فقط إذا لم يكن طلب طاولة (صالة)
+    if (!isTableOrder && !area) {
+        if (areaSelect) { areaSelect.classList.add('error'); if (!hasError) areaSelect.focus(); }
         showNotification('⚠ الرجاء اختيار منطقة التوصيل');
         hasError = true;
     }
+    
     if (hasError) return;
 
     showNotification('⏳ جاري التحقق من الحساب...');
@@ -1839,7 +1857,9 @@ async function confirmAndSendOrder() {
     saveLastOrderPhone(phone);
     try {
         safeLocalStorageSet('taloola_saved_phone', phone);
-        safeLocalStorageSet('taloola_saved_area', area);
+        if (!isTableOrder && area) {
+            safeLocalStorageSet('taloola_saved_area', area);
+        }
     } catch (e) { console.warn('⚠️ فشل حفظ بيانات الزبون:', e); }
 
     let totalAmount = 0;
@@ -1873,7 +1893,6 @@ async function confirmAndSendOrder() {
                     const lastNum = lastOrder[lastKey].orderNumber || 0;
                     orderNumber = lastNum + 1;
                 } else { orderNumber = 1; }
-                console.log(`✅ رقم الطلب (بديل): ${orderNumber}`);
                 try { await counterRef.set(orderNumber); } catch (e) { console.warn('⚠️ لا يمكن تحديث العداد:', e.message); }
             } catch (fallbackError) {
                 console.error('❌ فشل الحصول على رقم الطلب:', fallbackError);
@@ -1881,15 +1900,17 @@ async function confirmAndSendOrder() {
             }
         }
 
+        // ✅ بناء كائن الطلب بشكل صحيح (تم إصلاح خطأ orderData غير المعرف)
         const orderData = {
             orderNumber: orderNumber,
-            customerName: 'زبون',
+            customerName: isTableOrder ? `زبون طاولة ${tableId}` : (phone || 'زبون'),
             phone: phone,
-            area: area,
-            detailedAddress: detailed || '',
+            area: isTableOrder ? `طاولة ${tableId}` : area, // ✅ إذا كان طلب طاولة، نضع اسم الطاولة بدلاً من المنطقة
+            detailedAddress: isTableOrder ? '' : (detailed || ''),
             notes: notes,
             items: shoppingCart.map(item => ({
                 name: item.name,
+                category: item.category || 'غير مصنف',
                 price: parseInt(item.price) || 0,
                 quantity: parseInt(item.quantity) || 0,
                 total: (parseInt(item.price) || 0) * (parseInt(item.quantity) || 0)
@@ -1897,14 +1918,21 @@ async function confirmAndSendOrder() {
             total: totalAmount,
             status: 'pending',
             timestamp: Date.now(),
-            date: new Date().toLocaleString('ar-EG'),
+            date: new Date().toLocaleDateString('ar-EG'),
             time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-            location: gpsLocation ? {
+            location: (!isTableOrder && gpsLocation) ? {
                 latitude: gpsLocation.latitude,
                 longitude: gpsLocation.longitude,
                 googleMapsUrl: gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
             } : null,
-            notificationSent: false
+            notificationSent: false,
+            // ✅ الحقول الجديدة المخصصة للطاولات
+            tableId: isTableOrder ? parseInt(tableId) : null,
+            tableNumber: isTableOrder ? `طاولة ${tableId}` : null,
+            numberOfPersons: personCount,
+            personCount: personCount,
+            orderSource: isTableOrder ? "Table" : "Web",
+            orderType: isTableOrder ? 2 : 3 // 2 = DineIn (صالة)، 3 = Apps (تطبيق/ويب)
         };
 
         console.log('📦 بيانات الطلب:', orderData);
@@ -1912,7 +1940,6 @@ async function confirmAndSendOrder() {
         const newOrderRef = await ordersRef.push(orderData);
         console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
 
-        // ✅ حفظ الطلب النشط بشكل صحيح
         saveActiveOrder({
             orderId: newOrderRef.key,
             orderNumber: orderNumber,
@@ -1920,30 +1947,29 @@ async function confirmAndSendOrder() {
             status: 'pending'
         });
 
-        // ✅ تحديث أزرار الواجهة
         updateTrackingButtonVisibility();
-        
-        // ✅ بدء الاستماع لتحديثات الحالة
         startListeningToActiveOrder();
 
-        // ✅ حفظ الطلب في مسار المستخدم
         const userOrdersRef = firebase.database().ref(`users/${phone}/orders`);
-        const userOrderData = {
-            ...orderData,
-            orderId: newOrderRef.key
-        };
+        const userOrderData = { ...orderData, orderId: newOrderRef.key };
         await userOrdersRef.push(userOrderData);
-        console.log(`✅ تم حفظ الطلب في حساب المستخدم ${phone}`);
 
-        // ✅ حفظ معلومات للتتبع
         sessionStorage.setItem('lastOrderNumber', String(orderNumber));
         sessionStorage.setItem('lastOrderPhone', phone);
         localStorage.setItem('taloola_tracking_phone', phone);
 
         // بناء رسالة واتساب
         const whatsappNumber = '9647755666073';
-        let message = `🛎️ طلب جديد #${orderNumber}\n━━━━━━━━━━━━━━━\n\n📞 رقم الهاتف: ${phone}\n📍 منطقة التوصيل: ${area}\n`;
-        if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
+        let message = `🛎️ طلب جديد #${orderNumber}\n━━━━━━━━━━━━━━━\n\n`;
+        
+        if (isTableOrder) {
+            message += `🪑 نوع الطلب: صالة (طاولة ${tableId})\n`;
+            if (personCount) message += `👥 عدد الأشخاص: ${personCount}\n`;
+        } else {
+            message += `📞 رقم الهاتف: ${phone}\n📍 منطقة التوصيل: ${area}\n`;
+            if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
+        }
+        
         if (notes) message += `📝 ملاحظات: ${notes}\n`;
         message += `\n━━━━━━━━━━━━━━━\n🛒 تفاصيل الطلب:\n\n`;
 
@@ -1955,7 +1981,11 @@ async function confirmAndSendOrder() {
         });
 
         message += `━━━━━━━━━━━━━━━\n💰 المجموع النهائي: ${totalAmount.toLocaleString('ar-EG')} د.ع\n`;
-        if (gpsLocation) message += `\n📍 الموقع على الخريطة:\n${gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`}\n`;
+        
+        if (!isTableOrder && gpsLocation) {
+            message += `\n📍 الموقع على الخريطة:\n${gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`}\n`;
+        }
+        
         message += `\n━━━━━━━━━━━━━━━\n⏰ وقت الطلب: ${new Date().toLocaleTimeString('ar-EG')}\n📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}`;
 
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -1975,10 +2005,8 @@ async function confirmAndSendOrder() {
         updateNotesCounter();
         closeCartModal();
         
-        // ✅ تحديث الأزرار
         updateTrackingButtonVisibility(); 
 
-        // ✅ الانتقال إلى صفحة تتبع الطلب
         setTimeout(() => {
             redirectToTrackingPage(orderNumber);
         }, 1500);
