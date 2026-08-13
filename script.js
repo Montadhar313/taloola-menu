@@ -153,30 +153,29 @@ async function refreshActiveOrderStatus() {
     }
 
     try {
-        // ✅ المسار المباشر للطلب في orders/list
-        const ref = firebase.database().ref(`orders/list/${order.orderId}`);
-        const snapshot = await ref.once('value');
+        const snapshot = await firebase.database()
+            .ref(`orders/list/${order.orderId}`)
+            .once('value');
+
         const data = snapshot.val();
 
         if (!data) {
-            // تم حذف الطلب نهائياً
             clearActiveOrder();
             updateTrackingButtonVisibility();
             return false;
         }
 
-        const newStatus = data.status || 'pending';
-        if (newStatus !== order.status) {
-            order.status = newStatus;
+        if (data.status !== order.status) {
+            order.status = data.status;
             order.lastChecked = Date.now();
             localStorage.setItem(ACTIVE_ORDER_KEY, JSON.stringify(order));
-            console.log(`🔄 تحديث حالة الطلب #${order.orderNumber} إلى: ${newStatus}`);
+            console.log(`🔄 تم تحديث حالة الطلب #${order.orderNumber} إلى: ${data.status}`);
         }
 
         updateTrackingButtonVisibility();
 
         const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
-        if (finalStatuses.includes(newStatus)) {
+        if (finalStatuses.includes(data.status)) {
             setTimeout(() => {
                 clearActiveOrder();
                 updateTrackingButtonVisibility();
@@ -1675,20 +1674,17 @@ function updateTrackingButtonVisibility() {
             trackText.textContent = `تتبع #${activeOrder.orderNumber}`;
         }
 
-        // ✅ إصلاح التنقل بشكل صحيح
         trackBtn.onclick = function(e) {
             e.preventDefault();
             const orderNum = activeOrder.orderNumber;
             if (!orderNum) return;
 
-            // حساب المسار الصحيح من الصفحة الحالية
             const path = window.location.pathname;
             const basePath = (path.endsWith('/index.html') || path.endsWith('/') || path.includes('/tracking/'))
                 ? ''
                 : '../';
 
             const targetUrl = `${basePath}tracking/order-tracking.html?order=${encodeURIComponent(orderNum)}`;
-            console.log(`🔗 الانتقال إلى: ${targetUrl}`);
             window.location.href = targetUrl;
         };
     } else {
@@ -1725,12 +1721,11 @@ function startListeningToActiveOrder() {
     activeOrderListener.on('value', (snapshot) => {
         const data = snapshot.val();
 
+        // ✅ الطلب حُذف من Firebase
         if (!data) {
-            // ✅ الطلب حُذف من Firebase
             console.log(`🗑️ الطلب #${activeOrder.orderNumber} حُذف من النظام`);
             clearActiveOrder();
-                    updateTrackingButtonVisibility();
-        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
+            updateTrackingButtonVisibility();
             return;
         }
 
@@ -1745,21 +1740,18 @@ function startListeningToActiveOrder() {
         }
 
         updateTrackingButtonVisibility();
-        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
-        
+
         const finalStatuses = ['completed', 'delivered', 'cancelled', 'rejected'];
         if (finalStatuses.includes(updatedStatus)) {
             showNotification(`✅ ${getStatusMessage(updatedStatus)}`);
             setTimeout(() => {
                 clearActiveOrder();
-                        updateTrackingButtonVisibility();
-        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
+                updateTrackingButtonVisibility();
             }, 3000);
         }
     }, (error) => {
         console.warn('⚠️ خطأ في مراقبة حالة الطلب:', error);
         updateTrackingButtonVisibility();
-        startListeningToActiveOrder(); // ✅ لجميع الطلبات (دلفري وصالة)
     });
 }
 
@@ -1773,9 +1765,6 @@ function getStatusMessage(status) {
     return messages[status] || 'تم تحديث حالة طلبك';
 }
 
-// ═══════════════════════════════════════════════════════════
-// ✅✅✅ تأكيد وإرسال الطلب - مُحسَّن للسّلتين
-// ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
 // ✅✅✅ تأكيد وإرسال الطلب - مُحسَّن مع تدقيق الملاحظات
 // ═══════════════════════════════════════════════════════════
@@ -1881,18 +1870,15 @@ async function confirmAndSendOrder() {
     const gpsLocation = isTableOrder ? null : (userLocation || getLocationFromStorage());
     showNotification('⏳ جاري حفظ طلبك...');
 
-    // ✅✅✅ طباعة تشخيصية للملاحظات
     console.log('📝 الملاحظات المدخلة:', notes ? `"${notes}"` : '(فارغة)');
     console.log('🍽️ نوع الطلب:', isTableOrder ? 'صالة' : 'دلفري');
 
     try {
-                let orderNumber = 0;
+        let orderNumber = 0;
         const counterRef = firebase.database().ref('orders/counter');
         const ordersRef = firebase.database().ref('orders/list');
 
         try {
-            // ✅✅✅ الإصلاح الجذري: transaction في Firebase JS SDK يُرجع كائن { committed, snapshot }
-            // وليس الـ snapshot مباشرة. هذا كان سبب الدخول الدائم للـ catch واستخدام الرقم العشوائي!
             const transactionResult = await counterRef.transaction((currentValue) => { 
                 return (currentValue || 0) + 1; 
             });
@@ -1906,31 +1892,23 @@ async function confirmAndSendOrder() {
         } catch (transactionError) {
             console.warn('⚠️ فشل transaction، محاولة القراءة والكتابة المباشرة (Fallback):', transactionError);
             try {
-                // طريقة بديلة آمنة: قراءة القيمة الحالية، زيادتها، وحفظها
                 const snapshot = await counterRef.once('value');
                 orderNumber = (snapshot.val() || 0) + 1;
                 await counterRef.set(orderNumber);
                 console.log(`✅ تم توليد رقم الطلب بالطريقة البديلة: ${orderNumber}`);
             } catch (fallbackError) {
                 console.error('❌ فشلت جميع طرق الحصول على رقم الطلب:', fallbackError);
-                // ملاذ أخير جداً: استخدام الوقت (فقط في حال انقطاع الإنترنت تماماً)
                 orderNumber = Math.floor(Date.now() / 1000) % 100000;
             }
         }
 
-        // ═══════════════════════════════════════════════════════════
-        // ✅✅✅ بناء كائن الطلب - مع ضمان وجود الملاحظات دائماً
-        // ═══════════════════════════════════════════════════════════
         const orderData = {
             orderNumber: orderNumber,
             customerName: isTableOrder ? `زبون طاولة ${tableId}` : 'زبون',
             phone: isTableOrder ? '' : phone,
             area: isTableOrder ? `طاولة ${tableId}` : area,
             detailedAddress: isTableOrder ? '' : (detailed || ''),
-            
-            // ✅✅✅ الملاحظات: تُرسل دائماً حتى لو كانت فارغة (نص فارغ بدلاً من null)
             notes: notes || '',
-            
             items: cart.map(item => ({
                 name: item.name,
                 category: item.category || 'غير مصنف',
@@ -1949,14 +1927,12 @@ async function confirmAndSendOrder() {
                 googleMapsUrl: gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`
             } : null,
             notificationSent: false,
-            
-            // ✅ الحقول الخاصة بالطاولات
             tableId: isTableOrder ? parseInt(tableId) : null,
             tableNumber: isTableOrder ? `طاولة ${tableId}` : null,
             numberOfPersons: personCount,
             personCount: personCount,
             orderSource: isTableOrder ? "Table" : "Web",
-            orderType: isTableOrder ? 2 : 3  // 2 = DineIn، 3 = Apps
+            orderType: isTableOrder ? 2 : 3
         };
 
         console.log('📦 بيانات الطلب المُرسلة:', JSON.stringify(orderData, null, 2));
@@ -1964,7 +1940,6 @@ async function confirmAndSendOrder() {
         const newOrderRef = await ordersRef.push(orderData);
         console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
 
-        // ✅ حفظ الطلب النشط
         saveActiveOrder({
             orderId: newOrderRef.key,
             orderNumber: orderNumber,
@@ -1975,9 +1950,8 @@ async function confirmAndSendOrder() {
         });
 
         updateTrackingButtonVisibility();
-        if (!isTableOrder) startListeningToActiveOrder();
+        startListeningToActiveOrder(); // ✅ التعديل: مراقبة جميع الطلبات
 
-        // ✅ حفظ الطلب في حساب المستخدم فقط للدلفري
         if (!isTableOrder && phone) {
             const userOrdersRef = firebase.database().ref(`users/${phone}/orders`);
             const userOrderData = { ...orderData, orderId: newOrderRef.key };
@@ -1990,9 +1964,6 @@ async function confirmAndSendOrder() {
             localStorage.setItem('taloola_tracking_phone', phone);
         }
 
-        // ═══════════════════════════════════════════════════════════
-        // ✅✅✅ بناء رسالة واتساب - مع الملاحظات لكلا النوعين
-        // ═══════════════════════════════════════════════════════════
         const whatsappNumber = '9647755666073';
         let message = `🛎️ طلب جديد #${orderNumber}\n━━━━━━━━━━━━━━━\n\n`;
         
@@ -2007,7 +1978,6 @@ async function confirmAndSendOrder() {
             if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
         }
         
-        // ✅✅✅ الملاحظات: تظهر دائماً إذا وُجدت (لكلا النوعين)
         if (notes && notes.length > 0) {
             message += `\n📝 ملاحظات الطلب:\n   ${notes}\n`;
         }
@@ -2037,12 +2007,10 @@ async function confirmAndSendOrder() {
         const orderTypeName = isTableOrder ? 'طلب الصالة' : 'طلب الدلفري';
         showNotification(`✅ تم إرسال ${orderTypeName} بنجاح! رقم الطلب: #${orderNumber}`);
 
-        // ✅ تفريغ السلة المستخدمة فقط
         setActiveCart([]);
         saveCart();
         displayCartItems();
 
-        // ✅ مسح حقول النموذج
         if (phoneInput) { phoneInput.value = ''; phoneInput.classList.remove('error'); }
         if (areaSelect) { areaSelect.value = ''; areaSelect.classList.remove('error'); }
         if (detailedInput) detailedInput.value = '';
@@ -2053,7 +2021,6 @@ async function confirmAndSendOrder() {
         
         updateTrackingButtonVisibility(); 
 
-        // ✅ الانتقال إلى صفحة التتبع فقط للدلفري
         if (!isTableOrder) {
             setTimeout(() => {
                 redirectToTrackingPage(orderNumber);
