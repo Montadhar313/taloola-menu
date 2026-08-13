@@ -188,110 +188,85 @@
 <!-- ============================================ -->
 <div id="cartModal" class="modal">
     <div class="modal-content cart-modal-new">
-        <!-- داخل cartModal -->
-        <div class="cart-modal-header">
-            <h2 id="cartModalTitle">🛵 سلة الدلفري</h2>
-            <p id="cartModalSubtitle">اطلب توصيل إلى منزلك</p>
-        </div>
-
-        <!-- حقل عدد الأشخاص - مخفي افتراضياً -->
-        <div id="personCountGroup" style="display: none; margin-bottom: 15px;">
-            <label for="personCount" style="display: block; margin-bottom: 8px; font-weight: bold;">
-                👥 عدد الأشخاص
-            </label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <button type="button" onclick="
-                    const input = document.getElementById('personCount');
-                    const val = parseInt(input.value) || 1;
-                    if (val > 1) input.value = val - 1;
-                " style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #D4AF37; background: white; font-size: 18px; cursor: pointer;">−</button>
-                <input type="number" id="personCount" min="1" max="20" value="1" 
-                       style="flex: 1; text-align: center; font-size: 18px; font-weight: bold; padding: 8px; border: 2px solid #D4AF37; border-radius: 8px;">
-                <button type="button" onclick="
-                    const input = document.getElementById('personCount');
-                    const val = parseInt(input.value) || 1;
-                    if (val < 20) input.value = val + 1;
-                " style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #D4AF37; background: white; font-size: 18px; cursor: pointer;">+</button>
-            </div>
-        </div>
-        
         <div class="cart-header-new">
             <h2><i class="fas fa-shopping-cart"></i> إتمام الطلب</h2>
             <span class="close" onclick="closeCartModal()">&times;</span>
         </div>
-        
-        <div class="customer-info-section">
-            <!-- رقم الهاتف -->
-            <div class="input-group-new">
-                <label for="customerPhone">
-                    <i class="fas fa-phone"></i> رقم الهاتف
-                    <span class="required-star">*</span>
-                    <span id="phoneBanIndicator" class="ban-indicator" style="display: none;">
-                        <i class="fas fa-ban"></i> محظور
-                    </span>
-                </label>
-                <div class="input-wrapper-new">
-                    <input type="tel" id="customerPhone" class="input-field-new" placeholder="07XX XXX XXXX" maxlength="11" inputmode="numeric" autocomplete="tel">
-                    <span class="phone-prefix">+964</span>
+                <div id="cartModalBody">
+                    <div class="customer-info-section">
+                        <!-- رقم الهاتف -->
+                        <div class="input-group-new">
+                            <label for="customerPhone">
+                                <i class="fas fa-phone"></i> رقم الهاتف
+                                <span class="required-star">*</span>
+                                <span id="phoneBanIndicator" class="ban-indicator" style="display: none;">
+                                    <i class="fas fa-ban"></i> محظور
+                                </span>
+                            </label>
+                            <div class="input-wrapper-new">
+                                <input type="tel" id="customerPhone" class="input-field-new" placeholder="07XX XXX XXXX" maxlength="11" inputmode="numeric" autocomplete="tel">
+                                <span class="phone-prefix">+964</span>
+                            </div>
+                            <small class="form-hint" id="phoneStatusHint">
+                                <i class="fas fa-info-circle"></i> أدخل رقم هاتفك للتحقق من إمكانية الطلب
+                            </small>
+                        </div>
+
+                        <!-- منطقة التوصيل (تم إصلاح التكرار هنا) -->
+                        <div class="input-group-new">
+                            <label for="deliveryArea">
+                                <i class="fas fa-map-marker-alt"></i> منطقة التوصيل
+                                <span class="required-star">*</span>
+                            </label>
+                            <div class="select-wrapper-new">
+                                <select id="deliveryArea" class="select-field-new" required>
+                                    <option value="" disabled selected>-- جاري تحميل المناطق...</option>
+                                </select>
+                                <i class="fas fa-chevron-down select-icon"></i>
+                            </div>
+                            <small id="deliveryTimeHint" class="form-hint" style="color: var(--main-yellow); display: none; margin-top: 5px;">
+                                <i class="fas fa-clock"></i> الوقت المتوقع للوصول: <span id="estimatedTimeDisplay" style="font-weight: bold;">0</span> دقيقة
+                            </small>
+                        </div>
+
+                        <!-- عدد الأشخاص (يظهر فقط إذا كان هناك طلب من طاولة) -->
+                        <div class="input-group-new" id="personCountGroup" style="display: none;">
+                            <label for="personCount">
+                                <i class="fas fa-users"></i> عدد الأشخاص
+                            </label>
+                            <input type="number" id="personCount" class="input-field-new" placeholder="مثال: 2" min="1" max="20" inputmode="numeric">
+                        </div>
+
+                        <!-- العنوان التفصيلي -->
+                        <div class="input-group-new">
+                            <label for="detailedAddress">
+                                <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
+                            </label>
+                            <input type="text" id="detailedAddress" class="input-field-new" placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
+                        </div>
+
+                        <!-- ملاحظات الطلب -->
+                        <div class="input-group-new">
+                            <label for="orderNotes">
+                                <i class="fas fa-sticky-note"></i> ملاحظات الطلب
+                                <span class="char-counter" id="notesCharCount">0/80</span>
+                            </label>
+                            <textarea id="orderNotes" class="input-field-new textarea-field" placeholder="مثال: بدون بصل، تغليف إضافي..." maxlength="80" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- قسم المنتجات -->
+                    <div class="cart-items-section">
+                        <h3 class="cart-section-title">
+                            <i class="fas fa-box"></i> منتجاتك
+                            <span id="cartItemsCount" class="items-count-badge">0</span>
+                        </h3>
+                        <div id="cartItems" class="cart-items-new">
+                            <!-- سيتم ملء هذا القسم ديناميكياً عبر JavaScript -->
+                        </div>
+                    </div>
                 </div>
-                <small class="form-hint" id="phoneStatusHint">
-                    <i class="fas fa-info-circle"></i> أدخل رقم هاتفك للتحقق من إمكانية الطلب
-                </small>
-            </div>
 
-            <!-- منطقة التوصيل (تم إصلاح التكرار هنا) -->
-            <div class="input-group-new">
-                <label for="deliveryArea">
-                    <i class="fas fa-map-marker-alt"></i> منطقة التوصيل
-                    <span class="required-star">*</span>
-                </label>
-                <div class="select-wrapper-new">
-                    <select id="deliveryArea" class="select-field-new" required>
-                        <option value="" disabled selected>-- جاري تحميل المناطق...</option>
-                    </select>
-                    <i class="fas fa-chevron-down select-icon"></i>
-                </div>
-                <small id="deliveryTimeHint" class="form-hint" style="color: var(--main-yellow); display: none; margin-top: 5px;">
-                    <i class="fas fa-clock"></i> الوقت المتوقع للوصول: <span id="estimatedTimeDisplay" style="font-weight: bold;">0</span> دقيقة
-                </small>
-            </div>
-
-            <!-- عدد الأشخاص (يظهر فقط إذا كان هناك طلب من طاولة) -->
-            <div class="input-group-new" id="personCountGroup" style="display: none;">
-                <label for="personCount">
-                    <i class="fas fa-users"></i> عدد الأشخاص
-                </label>
-                <input type="number" id="personCount" class="input-field-new" placeholder="مثال: 2" min="1" max="20" inputmode="numeric">
-            </div>
-
-            <!-- العنوان التفصيلي -->
-            <div class="input-group-new">
-                <label for="detailedAddress">
-                    <i class="fas fa-home"></i> عنوان تفصيلي (اختياري)
-                </label>
-                <input type="text" id="detailedAddress" class="input-field-new" placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
-            </div>
-
-            <!-- ملاحظات الطلب -->
-            <div class="input-group-new">
-                <label for="orderNotes">
-                    <i class="fas fa-sticky-note"></i> ملاحظات الطلب
-                    <span class="char-counter" id="notesCharCount">0/80</span>
-                </label>
-                <textarea id="orderNotes" class="input-field-new textarea-field" placeholder="مثال: بدون بصل، تغليف إضافي..." maxlength="80" rows="2"></textarea>
-            </div>
-        </div>
-
-        <!-- قسم المنتجات -->
-        <div class="cart-items-section">
-            <h3 class="cart-section-title">
-                <i class="fas fa-box"></i> منتجاتك
-                <span id="cartItemsCount" class="items-count-badge">0</span>
-            </h3>
-            <div id="cartItems" class="cart-items-new">
-                <!-- سيتم ملء هذا القسم ديناميكياً عبر JavaScript -->
-            </div>
-        </div>
 
         <!-- تذييل السلة -->
         <div class="cart-footer-new">
