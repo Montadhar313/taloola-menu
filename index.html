@@ -188,6 +188,33 @@
 <!-- ============================================ -->
 <div id="cartModal" class="modal">
     <div class="modal-content cart-modal-new">
+        <!-- داخل cartModal -->
+        <div class="cart-modal-header">
+            <h2 id="cartModalTitle">🛵 سلة الدلفري</h2>
+            <p id="cartModalSubtitle">اطلب توصيل إلى منزلك</p>
+        </div>
+
+        <!-- حقل عدد الأشخاص - مخفي افتراضياً -->
+        <div id="personCountGroup" style="display: none; margin-bottom: 15px;">
+            <label for="personCount" style="display: block; margin-bottom: 8px; font-weight: bold;">
+                👥 عدد الأشخاص
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" onclick="
+                    const input = document.getElementById('personCount');
+                    const val = parseInt(input.value) || 1;
+                    if (val > 1) input.value = val - 1;
+                " style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #D4AF37; background: white; font-size: 18px; cursor: pointer;">−</button>
+                <input type="number" id="personCount" min="1" max="20" value="1" 
+                       style="flex: 1; text-align: center; font-size: 18px; font-weight: bold; padding: 8px; border: 2px solid #D4AF37; border-radius: 8px;">
+                <button type="button" onclick="
+                    const input = document.getElementById('personCount');
+                    const val = parseInt(input.value) || 1;
+                    if (val < 20) input.value = val + 1;
+                " style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #D4AF37; background: white; font-size: 18px; cursor: pointer;">+</button>
+            </div>
+        </div>
+        
         <div class="cart-header-new">
             <h2><i class="fas fa-shopping-cart"></i> إتمام الطلب</h2>
             <span class="close" onclick="closeCartModal()">&times;</span>
