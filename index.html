@@ -313,15 +313,7 @@
                     </label>
                     <input type="text" id="detailedAddress" class="input-field-new" placeholder="قرب... بجانب... رقم الدار..." maxlength="150">
                 </div>
-
-                <!-- ملاحظات الطلب -->
-                <div class="input-group-new" id="notesGroup">
-                    <label for="orderNotes">
-                        <i class="fas fa-sticky-note"></i> ملاحظات الطلب
-                        <span class="char-counter" id="notesCharCount">0/80</span>
-                    </label>
-                    <textarea id="orderNotes" class="input-field-new textarea-field" placeholder="مثال: بدون بصل، تغليف إضافي..." maxlength="80" rows="2"></textarea>
-                </div>
+               
             </div>
 
             <!-- قسم المنتجات -->
@@ -394,52 +386,75 @@
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- 📍 نافذة طلب إذن الموقع -->
-<!-- ============================================ -->
-<div id="locationPermissionModal" class="modal">
-    <div class="modal-content location-permission-modal">
-        <div class="location-icon-wrapper">
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 📍 نافذة تحديد الموقع - النسخة المُحسَّنة -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="modal" id="locationModal">
+    <div class="modal-content location-modal-content">
+        <!-- زر الإغلاق -->
+        <button class="modal-close-btn" onclick="closeLocationModal()" aria-label="إغلاق">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <!-- أيقونة الموقع -->
+        <div class="location-modal-icon">
             <i class="fas fa-map-marker-alt"></i>
         </div>
-        <h2>📍 تحديد الموقع للتوصيل</h2>
-        <p class="permission-text">لتحسين خدمة التوصيل وضمان وصول طلبك بسرعة ودقة، نحتاج إلى تحديد موقعك الحالي.</p>
-        <div class="permission-features">
-            <div class="feature-item"><i class="fas fa-check-circle"></i><span>توصيل أسرع وأدق</span></div>
-            <div class="feature-item"><i class="fas fa-check-circle"></i><span>حفظ الموقع للطلبات المستقبلية</span></div>
-            <div class="feature-item"><i class="fas fa-check-circle"></i><span>سهولة الوصول من قبل سائق التوصيل</span></div>
-        </div>
-        <div class="permission-actions">
-            <button type="button" id="allowLocationBtn" class="btn-allow"><i class="fas fa-map-marked-alt"></i> السماح بتحديد الموقع</button>
-            <button type="button" id="denyLocationBtn" class="btn-deny"><i class="fas fa-times"></i> ليس الآن</button>
-        </div>
-        <p class="privacy-note"><i class="fas fa-lock"></i> موقعك آمن ولن يُستخدم إلا لتوصيل طلبك</p>
-    </div>
-</div>
 
-<!-- ============================================ -->
-<!-- 🗺️ نافذة تحديد الموقع الفعلي -->
-<!-- ============================================ -->
-<div id="locationModal" class="modal">
-    <div class="modal-content location-modal-content">
-        <span class="close" onclick="closeLocationModal()">&times;</span>
-        <div class="location-modal-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <!-- العنوان -->
         <h2>📍 تحديد موقعك</h2>
-        <p class="location-modal-text">لتحسين خدمة التوصيل، نحتاج إلى تحديد موقعك الحالي</p>
-        <div id="locationModalStatus" class="location-modal-status">
-            <i class="fas fa-info-circle"></i>
-            <span id="locationModalText">اضغط على الزر لتحديد موقعك</span>
+        <p class="location-modal-text" id="locationModalText">
+            لتحسين خدمة التوصيل، نحتاج إلى تحديد موقعك الحالي
+        </p>
+
+        <!-- مميزات تحديد الموقع -->
+        <div class="location-features">
+            <div class="location-feature-item">
+                <i class="fas fa-bolt"></i>
+                <span>توصيل أسرع وأدق</span>
+            </div>
+            <div class="location-feature-item">
+                <i class="fas fa-save"></i>
+                <span>حفظ الموقع للطلبات المستقبلية</span>
+            </div>
+            <div class="location-feature-item">
+                <i class="fas fa-route"></i>
+                <span>سهولة الوصول من قبل سائق التوصيل</span>
+            </div>
         </div>
-        <div class="location-modal-actions">
-            <button type="button" id="getLocationBtn" class="btn-get-location"><i class="fas fa-crosshairs"></i> تحديد الموقع الآن</button>
-            <button type="button" onclick="closeLocationModal()" class="btn-close-location"><i class="fas fa-times"></i> إغلاق</button>
+
+        <!-- حالة الموقع -->
+        <div class="location-modal-status" id="locationModalStatus">
+            <i class="fas fa-location-crosshairs"></i>
+            <span id="locationStatusText">اضغط على الزر لتحديد موقعك</span>
         </div>
-        <div id="locationModalInfo" class="location-modal-info" style="display: none;">
+
+        <!-- معلومات الموقع (تظهر بعد التحديد) -->
+        <div class="location-modal-info" id="locationModalInfo" style="display: none;">
             <p><i class="fas fa-check-circle"></i> تم تحديد موقعك بنجاح</p>
             <p class="location-coords" id="locationCoords"></p>
         </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="location-modal-actions">
+            <button class="btn-location-primary" id="getLocationBtn" onclick="requestLocationAndUpdate()">
+                <i class="fas fa-crosshairs"></i>
+                <span>تحديد الموقع الآن</span>
+            </button>
+            <button class="btn-location-secondary" onclick="closeLocationModal()">
+                <i class="fas fa-times"></i>
+                <span>ليس الآن</span>
+            </button>
+        </div>
+
+        <!-- ملاحظة الخصوصية -->
+        <div class="location-privacy-note">
+            <i class="fas fa-lock"></i>
+            <span>موقعك آمن ولن يُستخدم إلا لتوصيل طلبك</span>
+        </div>
     </div>
 </div>
+
 
 <!-- ============================================ -->
 <!-- 🚫 نافذة الحظر -->
