@@ -1108,60 +1108,6 @@ function clearCart() {
     }
 }
 
-function displayCartItems() {
-    const cartItemsContainer = document.getElementById('cartItems');
-    const cartTotalElement = document.getElementById('cartTotal');
-    const cartItemsCount = document.getElementById('cartItemsCount');
-    const cart = getActiveCart();
-    
-    if (!cartItemsContainer) return;
-    
-    if (cart.length === 0) {
-        const emptyIcon = isTableOrder ? '🍽️' : '🛒';
-        cartItemsContainer.innerHTML = `
-            <div class="empty-cart-new">
-                <i class="fas fa-${isTableOrder ? 'utensils' : 'shopping-cart'}"></i>
-                <h3>${getActiveCartName()} فارغة</h3>
-                <p>لم تضف أي منتجات بعد</p>
-                ${isTableOrder ? `<p style="color: #666; margin-top: 8px;">🪑 طاولة رقم: ${tableId}</p>` : ''}
-            </div>`;
-        if (cartTotalElement) cartTotalElement.textContent = '0 د.ع';
-        if (cartItemsCount) cartItemsCount.textContent = '0';
-        return;
-    }
-    
-    cartItemsContainer.innerHTML = '';
-    let total = 0;
-    let totalQuantity = 0;
-    
-    cart.forEach((item, index) => {
-        const itemPrice = parseInt(item.price) || 0;
-        const itemQty = parseInt(item.quantity) || 0;
-        const itemTotal = itemPrice * itemQty;
-        total += itemTotal;
-        totalQuantity += itemQty;
-        
-        const itemElement = document.createElement('div');
-        itemElement.className = 'cart-item-new';
-        itemElement.innerHTML = `
-            <div class="cart-item-info-new">
-                <div class="cart-item-name-new">${item.name}</div>
-                <div class="cart-item-price-new">${itemPrice.toLocaleString('ar-EG')} د.ع × ${itemQty}</div>
-                <div class="cart-item-total-new">${itemTotal.toLocaleString('ar-EG')} د.ع</div>
-            </div>
-            <div class="cart-item-controls-new">
-                <button class="cart-item-remove-new" onclick="removeFromCart(${index})" title="حذف"><i class="fas fa-trash"></i></button>
-                <button class="qty-btn-new" onclick="changeQuantity(${index}, -1)"><i class="fas fa-minus"></i></button>
-                <span class="qty-display-new">${itemQty}</span>
-                <button class="qty-btn-new" onclick="changeQuantity(${index}, 1)"><i class="fas fa-plus"></i></button>
-            </div>
-        `;
-        cartItemsContainer.appendChild(itemElement);
-    });
-    
-    if (cartTotalElement) cartTotalElement.textContent = `${total.toLocaleString('ar-EG')} د.ع`;
-    if (cartItemsCount) cartItemsCount.textContent = totalQuantity;
-}
 
 function updateNotesCounter() {
     const textarea = document.getElementById('orderNotes');
@@ -1779,6 +1725,7 @@ async function confirmAndSendOrder() {
         return;
     }
     
+    
     // ✅ استخدام السلة الصحيحة
     const cart = getActiveCart();
     if (!cart || cart.length === 0) {
@@ -1798,7 +1745,11 @@ async function confirmAndSendOrder() {
     const detailedInput = document.getElementById('detailedAddress');
     const notesInput = document.getElementById('orderNotes');
     const personCountInput = document.getElementById('personCount');
-    
+        // ✅ تأكد من أن القيمة تعكس العداد
+        if (personCountInput && isTableOrder) {
+            updatePersonCountDisplay();
+        }
+    const personCount = isTableOrder ? (parseInt(personCountInput?.value) || 1) : null;
     // ✅✅✅ استخراج الملاحظات بشكل آمن (لكلا النوعين)
     const notes = notesInput ? notesInput.value.trim().substring(0, 80) : '';
     
@@ -2236,7 +2187,11 @@ function openCartModal() {
         if (phoneGroup) phoneGroup.style.display = '';
         if (areaGroup) areaGroup.style.display = '';
         if (detailedGroup) detailedGroup.style.display = '';
-        if (personCountGroup) personCountGroup.style.display = 'none';
+        if (personCountGroup) {
+                personCountGroup.style.display = 'block';
+                // ✅ أضف هذا السطر
+                updatePersonCountDisplay();
+            }
         if (tableInfoBox) tableInfoBox.style.display = 'none';
 
         // تحديث العنوان والشعار
@@ -2257,6 +2212,51 @@ function openCartModal() {
     if (!isTableOrder) {
         updateLocationInCart();
     }
+}
+// ═══════════════════════════════════════════
+// 👥 عداد عدد الأشخاص الاحترافي
+// ═══════════════════════════════════════════
+
+/**
+ * تغيير عدد الأشخاص بمقدار delta مع حدود 1-20
+ */
+function changePersonCount(delta) {
+    const input = document.getElementById('personCount');
+    if (!input) return;
+
+    let current = parseInt(input.value) || 1;
+    current = Math.max(1, Math.min(20, current + delta));
+
+    input.value = current;
+
+    const display = document.getElementById('personCountDisplay');
+    if (display) {
+        display.textContent = current;
+        // تأثير تكبير لطيف
+        display.style.transform = 'scale(1.3)';
+        setTimeout(() => {
+            display.style.transform = 'scale(1)';
+        }, 200);
+    }
+
+    // اهتزاز خفيف عند التغيير
+    if (navigator.vibrate) navigator.vibrate(10);
+}
+
+/**
+ * مزامنة عرض العدد مع الحقل المخفي
+ */
+function updatePersonCountDisplay() {
+    const input = document.getElementById('personCount');
+    const display = document.getElementById('personCountDisplay');
+    if (!input || !display) return;
+
+    let val = parseInt(input.value) || 1;
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > 20) val = 20;
+
+    input.value = val;
+    display.textContent = val;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2612,6 +2612,697 @@ function setupDeliveryTimeListener() {
     }
 }
 
+// ============================================
+// 🍽️ نظام ملاحظات الأصناف الاحترافي
+// ============================================
+
+// ═══════════════════════════════════════════════════════════
+// 📝 اقتراحات الملاحظات السريعة (حسب الفئة)
+// ═══════════════════════════════════════════════════════════
+const NOTE_SUGGESTIONS = {
+    'بركر': ['بدون بصل', 'بدون طماطم', 'زيادة جبنة', 'بدون خس', 'حار جداً', 'متوسط الحرارة', 'بدون مايونيز', 'بدون كاتشب'],
+    'زنكر': ['بدون بصل', 'زيادة صوص', 'حار جداً', 'بدون خس', 'بدون مايونيز'],
+    'ريزو': ['بدون بصل', 'زيادة لحم', 'بدون فلفل', 'حار', 'بدون جبنة'],
+    'صاج': ['زيادة خبز', 'بدون بصل', 'زيادة لحم', 'حار', 'بدون طماطم'],
+    'كنتاكي': ['حار', 'عادي', 'زيادة صوص', 'بدون جلد'],
+    'ستربس': ['حار', 'عادي', 'زيادة صوص', 'بدون جلد'],
+    'سندويتشات': ['بدون بصل', 'بدون طماطم', 'زيادة جبنة', 'حار', 'بدون مايونيز'],
+    'اطباق': ['بدون بصل', 'حار', 'زيادة أرز', 'بدون بهارات'],
+    'دايت': ['بدون سكر', 'قليل الملح', 'بدون زيت'],
+    'الجكن فرايز': ['زيادة جبنة', 'بدون ملح', 'حار', 'مع صوص إضافي'],
+    'الصوصات': ['صوص حار', 'صوص ثوم', 'صوص باربكيو'],
+    'مشروبات غازية': ['مثلج جداً', 'بدون ثلج', 'عادي'],
+    'مقبلات': ['حار', 'بدون بصل', 'زيادة كمية'],
+    'default': ['بدون بصل', 'حار', 'بدون ملح', 'زيادة كمية', 'بدون بهارات']
+};
+
+// ═══════════════════════════════════════════════════════════
+// 📝 فتح نافذة ملاحظات الصنف
+// ═══════════════════════════════════════════════════════════
+function openItemNotesModal(itemIndex) {
+    const cart = getActiveCart();
+    if (itemIndex < 0 || itemIndex >= cart.length) {
+        showNotification('⚠️ الصنف غير موجود');
+        return;
+    }
+    
+    const item = cart[itemIndex];
+    const currentNote = item.note || item.notes || '';
+    
+    // إنشاء النافذة المنبثقة
+    const modal = document.createElement('div');
+    modal.id = 'itemNotesModal';
+    modal.className = 'item-notes-modal-overlay';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const suggestions = NOTE_SUGGESTIONS[item.category] || NOTE_SUGGESTIONS['default'];
+    
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #c70301; font-size: 20px;">
+                    📝 ملاحظات: ${item.name}
+                </h3>
+                <button onclick="closeItemNotesModal()" style="
+                    background: none;
+                    border: none;
+                    font-size: 28px;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 0;
+                    width: 35px;
+                    height: 35px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    transition: background 0.2s;
+                " onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
+                    ×
+                </button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">
+                    💡 اقتراحات سريعة:
+                </label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${suggestions.map(suggestion => `
+                        <button onclick="addQuickNote('${suggestion}')" style="
+                            background: linear-gradient(135deg, #fedb17, #ffc107);
+                            border: none;
+                            padding: 8px 14px;
+                            border-radius: 20px;
+                            font-size: 13px;
+                            cursor: pointer;
+                            color: #1a1a1a;
+                            font-weight: 500;
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'"
+                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                            ${suggestion}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">
+                    ✏️ ملاحظات مخصصة:
+                </label>
+                <textarea 
+                    id="itemNoteTextarea"
+                    placeholder="اكتب ملاحظاتك هنا... (مثال: بدون بصل، حار جداً)"
+                    maxlength="150"
+                    style="
+                        width: 100%;
+                        min-height: 120px;
+                        padding: 12px;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 12px;
+                        font-size: 15px;
+                        font-family: inherit;
+                        resize: vertical;
+                        transition: border-color 0.2s;
+                        box-sizing: border-box;
+                    "
+                    onfocus="this.style.borderColor='#c70301'"
+                    onblur="this.style.borderColor='#e0e0e0'"
+                >${currentNote}</textarea>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #666;">
+                    <span>💡 يمكنك إضافة عدة ملاحظات</span>
+                    <span id="noteCharCount">${currentNote.length}/150</span>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveItemNote(${itemIndex})" style="
+                    flex: 1;
+                    background: linear-gradient(135deg, #c70301, #8b0000);
+                    color: white;
+                    border: none;
+                    padding: 14px;
+                    border-radius: 12px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(199, 3, 1, 0.4)'"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    ✅ حفظ الملاحظات
+                </button>
+                ${currentNote ? `
+                    <button onclick="clearItemNote(${itemIndex})" style="
+                        flex: 1;
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 14px;
+                        border-radius: 12px;
+                        font-size: 16px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                    " onmouseover="this.style.transform='translateY(-2px)'"
+                       onmouseout="this.style.transform='translateY(0)'">
+                        🗑️ مسح الملاحظات
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // تحديث عداد الأحرف
+    const textarea = document.getElementById('itemNoteTextarea');
+    const charCount = document.getElementById('noteCharCount');
+    textarea.addEventListener('input', () => {
+        charCount.textContent = `${textarea.value.length}/150`;
+        charCount.style.color = textarea.value.length > 140 ? '#dc3545' : '#666';
+    });
+    
+    // إغلاق عند النقر خارج النافذة
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeItemNotesModal();
+    });
+    
+    textarea.focus();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 📝 إضافة اقتراح سريع للملاحظات
+// ═══════════════════════════════════════════════════════════
+function addQuickNote(suggestion) {
+    const textarea = document.getElementById('itemNoteTextarea');
+    if (!textarea) return;
+    
+    const currentText = textarea.value.trim();
+    
+    // التحقق من عدم تكرار نفس الاقتراح
+    if (currentText.includes(suggestion)) {
+        showNotification('⚠️ هذه الملاحظة موجودة بالفعل');
+        return;
+    }
+    
+    // إضافة الاقتراح مع فاصلة
+    if (currentText) {
+        textarea.value = currentText + '، ' + suggestion;
+    } else {
+        textarea.value = suggestion;
+    }
+    
+    // تحديث العداد
+    const charCount = document.getElementById('noteCharCount');
+    if (charCount) {
+        charCount.textContent = `${textarea.value.length}/150`;
+        charCount.style.color = textarea.value.length > 140 ? '#dc3545' : '#666';
+    }
+    
+    // تأثير بصري
+    textarea.style.transform = 'scale(1.02)';
+    setTimeout(() => textarea.style.transform = 'scale(1)', 200);
+    
+    showNotification(`✅ تمت إضافة: ${suggestion}`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// 💾 حفظ ملاحظات الصنف
+// ═══════════════════════════════════════════════════════════
+function saveItemNote(itemIndex) {
+    const textarea = document.getElementById('itemNoteTextarea');
+    if (!textarea) return;
+    
+    const noteText = textarea.value.trim();
+    const cart = getActiveCart();
+    
+    if (itemIndex < 0 || itemIndex >= cart.length) {
+        showNotification('⚠️ الصنف غير موجود');
+        return;
+    }
+    
+    // حفظ الملاحظة في حقل note
+    cart[itemIndex].note = noteText;
+    cart[itemIndex].notes = noteText; // للتوافق مع الحقول البديلة
+    
+    saveCart();
+    displayCartItems();
+    closeItemNotesModal();
+    
+    if (noteText) {
+        showNotification(`✅ تم حفظ ملاحظات: ${cart[itemIndex].name}`);
+    } else {
+        showNotification(`✅ تم مسح الملاحظات`);
+    }
+    
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🗑️ مسح ملاحظات الصنف
+// ═══════════════════════════════════════════════════════════
+function clearItemNote(itemIndex) {
+    const cart = getActiveCart();
+    if (itemIndex < 0 || itemIndex >= cart.length) return;
+    
+    cart[itemIndex].note = '';
+    cart[itemIndex].notes = '';
+    
+    saveCart();
+    displayCartItems();
+    closeItemNotesModal();
+    showNotification('🗑️ تم مسح الملاحظات');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ❌ إغلاق نافذة الملاحظات
+// ═══════════════════════════════════════════════════════════
+function closeItemNotesModal() {
+    const modal = document.getElementById('itemNotesModal');
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => modal.remove(), 300);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 عرض الملاحظات في عناصر السلة
+// ═══════════════════════════════════════════════════════════
+function displayCartItems() {
+    const cartItemsContainer = document.getElementById('cartItems');
+    const cartTotalElement = document.getElementById('cartTotal');
+    const cartItemsCount = document.getElementById('cartItemsCount');
+    const cart = getActiveCart();
+
+    if (!cartItemsContainer) return;
+
+    if (cart.length === 0) {
+        const emptyIcon = isTableOrder ? '🍽️' : '🛒';
+        cartItemsContainer.innerHTML = `
+            <div class="empty-cart-new">
+                <div class="empty-icon">${isTableOrder ? '🍽️' : '🛒'}</div>
+                <h3>${getActiveCartName()} فارغة</h3>
+                <p>لم تضف أي منتجات بعد</p>
+                ${isTableOrder ? `<p style="color: #666; margin-top: 8px;">🪑 طاولة رقم: ${tableId}</p>` : ''}
+                <div class="empty-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    تصفح المنيو واختر منتجاتك المفضلة
+                </div>
+            </div>`;
+        if (cartTotalElement) cartTotalElement.textContent = '0 د.ع';
+        if (cartItemsCount) cartItemsCount.textContent = '0';
+        return;
+    }
+
+    cartItemsContainer.innerHTML = '';
+    let total = 0;
+    let totalQuantity = 0;
+
+    cart.forEach((item, index) => {
+        const itemPrice = parseInt(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 0;
+        const itemTotal = itemPrice * itemQty;
+        total += itemTotal;
+        totalQuantity += itemQty;
+
+        const itemNotes = item.notes || '';
+        const hasNotes = itemNotes.trim().length > 0;
+
+        const itemElement = document.createElement('div');
+        itemElement.className = 'cart-item-v2';
+        itemElement.setAttribute('data-index', index);
+        
+        itemElement.innerHTML = `
+            <!-- الشريط الجانبي الملون -->
+            <div class="item-accent-bar"></div>
+            
+            <!-- محتوى العنصر -->
+            <div class="item-content-v2">
+                <!-- الصف الأول: الاسم وزر الحذف -->
+                <div class="item-header-v2">
+                    <div class="item-name-wrapper">
+                        <span class="item-emoji">🍔</span>
+                        <h4 class="item-name-v2">${item.name}</h4>
+                    </div>
+                    <button class="item-remove-btn-v2" onclick="removeCartItemWithAnimation(${index}, this)" title="حذف الصنف">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- الصف الثاني: السعر والكمية -->
+                <div class="item-details-v2">
+                    <div class="item-price-section">
+                        <div class="unit-price-v2">
+                            <span class="price-label">السعر:</span>
+                            <span class="price-value">${itemPrice.toLocaleString('ar-EG')} د.ع</span>
+                        </div>
+                        <div class="total-price-v2">
+                            <span class="total-label">الإجمالي:</span>
+                            <span class="total-value">${itemTotal.toLocaleString('ar-EG')}</span>
+                            <span class="currency-small">د.ع</span>
+                        </div>
+                    </div>
+
+                    <!-- أزرار التحكم بالكمية -->
+                    <div class="qty-control-v2">
+                        <button class="qty-btn-v2 qty-minus" onclick="changeQuantity(${index}, -1)" ${itemQty <= 1 ? 'disabled' : ''}>
+                            <i class="fas ${itemQty <= 1 ? 'fa-trash-alt' : 'fa-minus'}"></i>
+                        </button>
+                        <div class="qty-display-v2">
+                            <span class="qty-number">${itemQty}</span>
+                        </div>
+                        <button class="qty-btn-v2 qty-plus" onclick="changeQuantity(${index}, 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- الصف الثالث: الملاحظات -->
+                <div class="item-notes-section-v2">
+                    <button class="notes-toggle-btn-v2 ${hasNotes ? 'has-notes' : ''}" onclick="toggleItemNotes(${index}, this)">
+                        <i class="fas ${hasNotes ? 'fa-sticky-note' : 'fa-comment-dots'}"></i>
+                        <span class="notes-btn-text">${hasNotes ? 'عرض الملاحظات' : 'إضافة ملاحظة'}</span>
+                        ${hasNotes ? '<span class="notes-indicator"></span>' : ''}
+                    </button>
+                    
+                    <!-- حاوية الملاحظات القابلة للطي -->
+                    <div class="notes-panel-v2 ${hasNotes ? 'expanded' : ''}" id="notes-panel-${index}">
+                        <div class="notes-input-wrapper">
+                            <textarea 
+                                class="item-notes-textarea-v2" 
+                                id="notes-textarea-${index}"
+                                placeholder="مثال: بدون بصل، زيادة جبنة، حار جداً..."
+                                maxlength="120"
+                                oninput="updateItemNotes(${index}, this)"
+                            >${itemNotes}</textarea>
+                            <div class="notes-char-counter" id="notes-counter-${index}">
+                                <span class="char-count">${itemNotes.length}</span>/120
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        cartItemsContainer.appendChild(itemElement);
+    });
+
+    if (cartTotalElement) cartTotalElement.textContent = `${total.toLocaleString('ar-EG')} د.ع`;
+    if (cartItemsCount) cartItemsCount.textContent = totalQuantity;
+}
+
+// ═══════════════════════════════════════════════
+// 🆕 دوال مساعدة جديدة لعناصر السلة المطوّرة
+// ═══════════════════════════════════════════════
+
+/**
+ * تبديل عرض/إخفاء لوحة الملاحظات لصنف معين
+ */
+function toggleItemNotes(index, btn) {
+    const panel = document.getElementById(`notes-panel-${index}`);
+    if (!panel) return;
+
+    const isExpanded = panel.classList.contains('expanded');
+    
+    if (isExpanded) {
+        panel.classList.remove('expanded');
+        btn.classList.remove('active');
+    } else {
+        panel.classList.add('expanded');
+        btn.classList.add('active');
+        // التركيز على حقل الإدخال
+        setTimeout(() => {
+            const textarea = document.getElementById(`notes-textarea-${index}`);
+            if (textarea) textarea.focus();
+        }, 300);
+    }
+}
+
+/**
+ * حفظ ملاحظات الصنف وتحديث الواجهة
+ */
+function updateItemNotes(index, textarea) {
+    const cart = getActiveCart();
+    if (index < 0 || index >= cart.length) return;
+
+    const notes = textarea.value.trim();
+    cart[index].notes = notes;
+
+    // تحديث عداد الأحرف
+    const counter = document.getElementById(`notes-counter-${index}`);
+    if (counter) {
+        const charCount = counter.querySelector('.char-count');
+        if (charCount) charCount.textContent = notes.length;
+        
+        // تغيير اللون عند الاقتراب من الحد
+        if (notes.length > 100) {
+            counter.classList.add('near-limit');
+        } else {
+            counter.classList.remove('near-limit');
+        }
+    }
+
+    // تحديث زر الملاحظات
+    const itemElement = textarea.closest('.cart-item-v2');
+    if (itemElement) {
+        const toggleBtn = itemElement.querySelector('.notes-toggle-btn-v2');
+        const indicator = toggleBtn?.querySelector('.notes-indicator');
+        const btnText = toggleBtn?.querySelector('.notes-btn-text');
+        const icon = toggleBtn?.querySelector('i');
+
+        if (notes.length > 0) {
+            toggleBtn?.classList.add('has-notes');
+            if (indicator && !toggleBtn.querySelector('.notes-indicator')) {
+                const newIndicator = document.createElement('span');
+                newIndicator.className = 'notes-indicator';
+                toggleBtn.appendChild(newIndicator);
+            }
+            if (btnText) btnText.textContent = 'عرض الملاحظات';
+            if (icon) icon.className = 'fas fa-sticky-note';
+        } else {
+            toggleBtn?.classList.remove('has-notes');
+            if (indicator) indicator.remove();
+            if (btnText) btnText.textContent = 'إضافة ملاحظة';
+            if (icon) icon.className = 'fas fa-comment-dots';
+        }
+    }
+
+    saveCart();
+}
+
+/**
+ * حذف عنصر مع تأثير حركي
+ */
+function removeCartItemWithAnimation(index, btn) {
+    const itemElement = btn.closest('.cart-item-v2');
+    if (itemElement) {
+        itemElement.classList.add('removing-v2');
+        setTimeout(() => {
+            removeFromCart(index);
+        }, 400);
+    } else {
+        removeFromCart(index);
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 📋 تحديث عرض المراجعة لعرض الملاحظات
+// ═══════════════════════════════════════════════════════════
+function displayOrderReview() {
+    const reviewItemsContainer = document.getElementById('orderReviewItems');
+    const reviewItemCount = document.getElementById('reviewItemCount');
+    const reviewTotalQuantity = document.getElementById('reviewTotalQuantity');
+    const reviewTotalAmount = document.getElementById('reviewTotalAmount');
+    const locationInput = document.getElementById('locationDescription');
+    const cart = getActiveCart();
+    
+    if (!reviewItemsContainer) return;
+    
+    const reviewHeader = document.getElementById('reviewHeader');
+    if (reviewHeader) {
+        if (isTableOrder) {
+            reviewHeader.innerHTML = `
+                <h3>🍽️ مراجعة طلب الصالة</h3>
+                <p style="color: #666;">🪑 طاولة رقم: <strong>${tableId}</strong></p>
+            `;
+        } else {
+            reviewHeader.innerHTML = `<h3>🛵 مراجعة طلب الدلفري</h3>`;
+        }
+    }
+    
+    const btn = document.getElementById('useSavedAddressBtn');
+    const preview = document.getElementById('savedAddressPreview');
+    
+    if (btn && preview && savedAddressText) {
+        btn.style.display = isTableOrder ? 'none' : 'flex';
+        preview.textContent = savedAddressText.substring(0, 50) + (savedAddressText.length > 50 ? '...' : '');
+        btn.onclick = function() { if (locationInput) locationInput.value = savedAddressText; };
+    }
+    
+    const currentOrderAddress = sessionStorage.getItem('current_order_address');
+    if (locationInput && currentOrderAddress) locationInput.value = currentOrderAddress;
+    
+    reviewItemsContainer.innerHTML = '';
+    let totalQuantity = 0, totalAmount = 0;
+    
+    cart.forEach((item) => {
+        const itemPrice = parseInt(item.price) || 0;
+        const itemQty = parseInt(item.quantity) || 0;
+        const itemTotal = itemPrice * itemQty;
+        totalQuantity += itemQty;
+        totalAmount += itemTotal;
+        
+        const itemNote = item.note || item.notes || '';
+        const hasNote = itemNote && itemNote.trim().length > 0;
+        
+        const reviewItem = document.createElement('div');
+        reviewItem.className = 'review-item';
+        reviewItem.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        `;
+        
+        reviewItem.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <div style="font-size: 16px; font-weight: bold; color: #1a1a1a; margin-bottom: 5px;">
+                        ${item.name}
+                    </div>
+                    <div style="font-size: 13px; color: #666; display: flex; gap: 15px;">
+                        <span><i class="fas fa-box"></i> الكمية: ${itemQty}</span>
+                        <span><i class="fas fa-tag"></i> السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع</span>
+                    </div>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #c70301;">
+                    ${itemTotal.toLocaleString('ar-EG')} د.ع
+                </div>
+            </div>
+            ${hasNote ? `
+                <div style="
+                    background: linear-gradient(135deg, #fff9e6, #fff3cd);
+                    border-right: 4px solid #ffc107;
+                    padding: 10px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: #856404;
+                ">
+                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                        <i class="fas fa-sticky-note"></i>
+                        <strong>ملاحظات:</strong>
+                    </div>
+                    <div style="line-height: 1.5;">${itemNote}</div>
+                </div>
+            ` : ''}
+        `;
+        
+        reviewItemsContainer.appendChild(reviewItem);
+    });
+    
+    if (reviewItemCount) reviewItemCount.textContent = `${cart.length} منتج`;
+    if (reviewTotalQuantity) reviewTotalQuantity.textContent = `${totalQuantity} قطعة`;
+    if (reviewTotalAmount) reviewTotalAmount.textContent = `${totalAmount.toLocaleString('ar-EG')} د.ع`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 📤 تحديث رسالة واتساب لعرض ملاحظات الأصناف
+// ═══════════════════════════════════════════════════════════
+// استبدل الجزء الخاص ببناء رسالة واتساب في دالة confirmAndSendOrder بـ:
+
+cart.forEach((item, index) => {
+    const itemPrice = parseInt(item.price) || 0;
+    const itemQty = parseInt(item.quantity) || 0;
+    const itemTotal = itemPrice * itemQty;
+    const itemNote = item.note || item.notes || '';
+    
+    message += `${index + 1}. ${item.name}\n`;
+    message += `   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n`;
+    message += `   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n`;
+    
+    if (itemNote && itemNote.trim().length > 0) {
+        message += `   📝 ملاحظات: ${itemNote}\n`;
+    }
+    
+    message += `\n`;
+});
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 إضافة CSS للأنيميشن
+// ═══════════════════════════════════════════════════════════
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    
+    @keyframes slideUp {
+        from { 
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// ═══════════════════════════════════════════════════════════
+// 📤 تصدير الدوال الجديدة
+// ═══════════════════════════════════════════════════════════
+// تصدير الدوال الجديدة
+window.toggleItemNotes = toggleItemNotes;
+window.updateItemNotes = updateItemNotes;
+window.removeCartItemWithAnimation = removeCartItemWithAnimation;
+
+window.openItemNotesModal = openItemNotesModal;
+window.closeItemNotesModal = closeItemNotesModal;
+window.addQuickNote = addQuickNote;
+window.saveItemNote = saveItemNote;
+window.clearItemNote = clearItemNote;
 // ═══════════════════════════════════════════════════════════
 // 📤 تصدير الدوال العامة
 // ═══════════════════════════════════════════════════════════
@@ -2653,3 +3344,6 @@ window.getActiveCart = getActiveCart;
 window.setActiveCart = setActiveCart;
 window.getActiveCartKey = getActiveCartKey;
 window.getActiveCartName = getActiveCartName;
+
+window.changePersonCount = changePersonCount;
+window.updatePersonCountDisplay = updatePersonCountDisplay;
