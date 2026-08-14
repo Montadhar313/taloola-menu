@@ -4817,100 +4817,194 @@ body.gray-mode nav.sections-nav {
         padding: 8px 0 !important;
     }
 }
-/* ═══════════════════════════════════════════ */
-/* 👥 عداد عدد الأشخاص                        */
-/* ═══════════════════════════════════════════ */
-.person-count-stepper {
+
+/* ═══════════════════════════════════════════════════════════ */
+/* 🍽️ محدد عدد الأشخاص الاحترافي */
+/* ═══════════════════════════════════════════════════════════ */
+
+.person-count-group {
+    background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
+    border: 2px solid #D4AF37;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+.person-count-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #5C4B2E;
+    margin-bottom: 15px;
+}
+
+.person-count-label i {
+    color: #D4AF37;
+    font-size: 18px;
+}
+
+.person-counter-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    background: #ffffff;
-    border: 2px solid #D4AF37;
+    gap: 20px;
+    background: white;
     border-radius: 50px;
-    padding: 6px 14px;
-    width: fit-content;
-    margin: 8px auto 0;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
-    transition: all 0.3s ease;
-}
-
-.person-count-stepper:hover {
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
-    border-color: #c29b2a;
+    padding: 8px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .person-btn {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    background: #D4AF37;
-    color: #5C4B2E;
-    font-size: 1.2rem;
-    font-weight: 700;
     border: none;
+    font-size: 20px;
+    font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    flex-shrink: 0;
-}
-
-.person-btn:hover {
-    background: #c29b2a;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(194, 155, 42, 0.4);
-}
-
-.person-btn:active {
-    transform: scale(0.9);
-}
-
-.person-btn.minus:hover {
-    background: #e74c3c;
-    color: white;
-}
-
-.person-btn.plus:hover {
-    background: #27ae60;
-    color: white;
-}
-
-.person-count-display-wrapper {
-    min-width: 50px;
-    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    overflow: hidden;
+}
+
+.person-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+.person-btn:active::before {
+    width: 100px;
+    height: 100px;
+}
+
+.person-btn-minus {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+    color: white;
+    box-shadow: 0 4px 12px rgba(238, 90, 90, 0.4);
+}
+
+.person-btn-minus:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff5252, #e04545);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(238, 90, 90, 0.5);
+}
+
+.person-btn-minus:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.person-btn-minus:disabled {
+    background: #ccc;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.person-btn-plus {
+    background: linear-gradient(135deg, #c70301, #8b0000);
+    color: white;
+    box-shadow: 0 4px 12px rgba(199, 3, 1, 0.4);
+}
+
+.person-btn-plus:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a50201, #6d0000);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.5);
+}
+
+.person-btn-plus:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.person-btn-plus:disabled {
+    background: #ccc;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .person-count-display {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #3E2723;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 30px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.person-count-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #c70301;
     line-height: 1;
     transition: transform 0.2s ease;
-    display: inline-block;
 }
 
-/* ─── إخفاء الحقل المخفي ─── */
-#personCount {
-    display: none;
+.person-count-number.animate {
+    animation: countBounce 0.3s ease;
 }
 
-/* ─── تنسيق الجوال ─── */
+.person-count-label-small {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+/* أنيميشن العدد */
+@keyframes countBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* تأثير عند الضغط على الزر */
+@keyframes buttonPulse {
+    0% { box-shadow: 0 0 0 0 rgba(199, 3, 1, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(199, 3, 1, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(199, 3, 1, 0); }
+}
+
+.person-btn:active {
+    animation: buttonPulse 0.4s ease;
+}
+
+/* وضع الموبايل */
 @media (max-width: 480px) {
-    .person-count-stepper {
-        gap: 10px;
-        padding: 5px 10px;
+    .person-counter-wrapper {
+        gap: 12px;
+        padding: 6px;
     }
+    
     .person-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
     }
+    
     .person-count-display {
-        font-size: 1.4rem;
+        min-width: 70px;
+        padding: 6px 16px;
+    }
+    
+    .person-count-number {
+        font-size: 28px;
     }
 }
-
