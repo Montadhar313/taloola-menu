@@ -7,6 +7,74 @@
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="tracking.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* أنماط إضافية لطلبات الصالة */
+        .dine-in-header {
+            background: linear-gradient(135deg, #d4af37, #f4e5a1);
+            color: #3e2723;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+        .dine-in-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .dine-in-header .table-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #5d4037;
+            display: block;
+            margin-top: 5px;
+        }
+        .dine-in-banner {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: pulse-green 2s infinite;
+        }
+        .dine-in-banner i {
+            font-size: 2rem;
+            color: #2e7d32;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .dine-in-banner p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+        .dine-in-details {
+            background: #fff9c4;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #fbc02d;
+        }
+        .dine-in-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .dine-in-details .detail-row:last-child { margin-bottom: 0; }
+        .dine-in-details i { color: #f57f17; width: 25px; }
+        
+        /* إخفاء عناصر الدلفري في وضع الصالة */
+        .hide-in-dinein { display: none !important; }
+    </style>
 </head>
 <body>
     <!-- شريط علوي احترافي -->
@@ -14,11 +82,10 @@
         <a href="../index.html" class="back-btn" title="العودة للمنيو" aria-label="العودة للصفحة الرئيسية">
             <i class="fas fa-arrow-right"></i>
         </a>
-        <h1>📦 تتبع طلبك</h1>
+        <h1 id="pageTitle">📦 تتبع طلبك</h1>
         <div class="order-id-display" id="displayOrderNumber" aria-live="polite">#000</div>
     </header>
 
-    <!-- محتوى تتبع الطلب -->
     <main class="tracking-container">
         
         <!-- 🔄 قسم التحميل -->
@@ -41,9 +108,22 @@
             </div>
         </div>
 
-        <!-- ✅ قسم نتيجة التتبع (يحتوي على جميع تفاصيل الطلب) -->
+        <!-- ✅ قسم نتيجة التتبع -->
         <div id="trackResultSection" class="tracking-section" style="display: none;">
             
+            <!-- 🍽️ بانر طلب الصالة (يظهر فقط للصالة) -->
+            <div id="dineInBanner" class="dine-in-banner" style="display: none;">
+                <i class="fas fa-utensils"></i>
+                <p>تم إرسال طلبك للمطبخ بنجاح! 🧑‍🍳</p>
+                <small style="color: #388e3c; display: block; margin-top: 5px;">جاري التحضير... يرجى الانتظار قليلاً</small>
+            </div>
+
+            <!-- 🍽️ معلومات الطاولة (تظهر فقط للصالة) -->
+            <div id="dineInHeader" class="dine-in-header" style="display: none;">
+                <h2>🍽️ طلب طاولة</h2>
+                <span class="table-number" id="displayTableNumber">-</span>
+            </div>
+
             <!-- قسم حالة الطلب -->
             <section class="order-status-section" aria-labelledby="status-heading">
                 <h2 id="status-heading" class="visually-hidden">حالة الطلب</h2>
@@ -52,8 +132,8 @@
                     <span>قيد المعالجة</span>
                 </div>
                 
-                <!-- شريط التقدم المحسّن -->
-                <div class="progress-tracker" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="تقدم حالة الطلب">
+                <!-- شريط التقدم -->
+                <div class="progress-tracker" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-step" data-step="1" data-status="received">
                         <div class="step-icon"><i class="fas fa-check" aria-hidden="true"></i></div>
                         <div class="step-label">تم الاستلام</div>
@@ -76,21 +156,37 @@
             <!-- معلومات الطلب -->
             <section class="order-details-section" aria-labelledby="details-heading">
                 <h3 id="details-heading" class="visually-hidden">تفاصيل الطلب</h3>
-                <div class="detail-row">
-                    <i class="fas fa-user" aria-hidden="true"></i>
-                    <span id="customerName">زبون</span>
+                
+                <!-- صفوف الصالة (مخفية افتراضياً) -->
+                <div id="dineInDetails" class="dine-in-details" style="display: none;">
+                    <div class="detail-row">
+                        <span><i class="fas fa-users"></i> عدد الأشخاص</span>
+                        <strong id="displayPersons">-</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span><i class="fas fa-clock"></i> وقت الطلب</span>
+                        <strong id="displayTimeDineIn">--:--</strong>
+                    </div>
                 </div>
-                <div class="detail-row">
-                    <i class="fas fa-phone" aria-hidden="true"></i>
-                    <a href="tel:" id="customerPhone" class="phone-link">07XXXXXXXXX</a>
-                </div>
-                <div class="detail-row">
-                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                    <span id="deliveryAddress">غير محدد</span>
-                </div>
-                <div class="detail-row">
-                    <i class="fas fa-clock" aria-hidden="true"></i>
-                    <span id="orderTime">--:--</span>
+
+                <!-- صفوف الدلفري (ظاهرة افتراضياً) -->
+                <div id="deliveryDetails">
+                    <div class="detail-row" id="detailRowName">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <span id="customerName">زبون</span>
+                    </div>
+                    <div class="detail-row" id="detailRowPhone">
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <a href="tel:" id="customerPhone" class="phone-link">07XXXXXXXXX</a>
+                    </div>
+                    <div class="detail-row" id="detailRowAddress">
+                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                        <span id="deliveryAddress">غير محدد</span>
+                    </div>
+                    <div class="detail-row" id="detailRowTime">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span id="orderTime">--:--</span>
+                    </div>
                 </div>
             </section>
 
@@ -106,7 +202,7 @@
                 </div>
             </section>
 
-            <!-- عداد الوقت المتبقي -->
+            <!-- عداد الوقت المتبقي (للدلفري فقط) -->
             <section class="countdown-section" id="countdownContainer" style="display: none;" aria-labelledby="countdown-heading">
                 <h4 id="countdown-heading">⏱️ الوقت المتوقع للتوصيل</h4>
                 <div class="countdown-timer" role="timer" aria-live="polite">
@@ -114,9 +210,6 @@
                     <span id="countdownMinutes">00</span>:
                     <span id="countdownSeconds">00</span>
                 </div>
-                <small style="display: block; text-align: center; margin-top: 8px; opacity: 0.7;">
-                    (ساعات : دقائق : ثواني)
-                </small>
             </section>
 
             <!-- رسالة حالة الإلغاء -->
@@ -149,11 +242,10 @@
                 </a>
             </section>
 
-        </div> <!-- نهاية trackResultSection -->
+        </div>
 
     </main>
 
-    <!-- إشعارات النظام -->
     <div id="trackingNotification" class="tracking-notification" role="alert" aria-live="assertive"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
