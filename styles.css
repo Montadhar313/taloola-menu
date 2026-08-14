@@ -3372,8 +3372,12 @@ div.menu-item p.price {
 
 .floating-btn:active { transform: scale(0.9); }
 
-.location-floating-btn { right: clamp(15px, 3vw, 20px); }
-
+.location-floating-btn {
+    position: fixed;
+    bottom: clamp(20px, 4vw, 25px);
+    right: clamp(15px, 3vw, 20px);
+    /* باقي الخصائص */
+}
 .scroll-floating-btn {
     left: clamp(15px, 3vw, 20px);
     opacity: 0;
@@ -5408,7 +5412,6 @@ body.gray-mode nav.sections-nav {
     }
     
     .location-floating-btn {
-        bottom: 85px;
         right: 16px;
         width: 48px;
         height: 48px;
@@ -5418,7 +5421,7 @@ body.gray-mode nav.sections-nav {
 
 @media (max-width: 360px) {
     .location-floating-btn {
-        bottom: 80px;
+        
         right: 14px;
         width: 44px;
         height: 44px;
