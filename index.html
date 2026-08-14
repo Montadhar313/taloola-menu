@@ -284,12 +284,21 @@
                     </small>
                 </div>
 
-                <!-- عدد الأشخاص -->
+                <!-- عدد الأشخاص (عداد احترافي) -->
                 <div class="input-group-new" id="personCountGroup" style="display: none;">
                     <label for="personCount">
                         <i class="fas fa-users"></i> عدد الأشخاص
                     </label>
-                    <input type="number" id="personCount" class="input-field-new" placeholder="مثال: 2" min="1" max="20" inputmode="numeric">
+                    <div class="person-stepper">
+                        <button type="button" class="stepper-btn minus" onclick="changePersonCount(-1)" aria-label="إنقاص">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span id="personCountDisplay" class="stepper-display">1</span>
+                        <button type="button" class="stepper-btn plus" onclick="changePersonCount(1)" aria-label="زيادة">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" id="personCount" value="1" min="1" max="20">
                 </div>
 
                 <!-- العنوان التفصيلي -->
