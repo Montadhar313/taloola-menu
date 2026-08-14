@@ -8,72 +8,398 @@
     <link rel="stylesheet" href="tracking.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* أنماط إضافية لطلبات الصالة */
-        .dine-in-header {
-            background: linear-gradient(135deg, #d4af37, #f4e5a1);
-            color: #3e2723;
-            padding: 15px;
-            border-radius: 15px;
+        /* ═══════════════════════════════════════════════ */
+        /* 🍽️ أنماط طلبات الصالة */
+        /* ═══════════════════════════════════════════════ */
+        
+        .dinein-hero {
+            background: linear-gradient(135deg, #FFF8DC 0%, #FFE4B5 50%, #FFD700 100%);
+            border-radius: 20px;
+            padding: 25px 20px;
             text-align: center;
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+            border: 2px solid #D4AF37;
+            animation: heroGlow 2s ease-in-out infinite alternate;
         }
-        .dine-in-header h2 {
-            margin: 0;
+        
+        @keyframes heroGlow {
+            from { box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3); }
+            to { box-shadow: 0 8px 35px rgba(212, 175, 55, 0.5); }
+        }
+        
+        .dinein-hero-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            animation: bounce 1.5s ease infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .dinein-hero h2 {
+            color: #5C4B2E;
             font-size: 1.5rem;
+            margin: 0 0 8px 0;
             font-weight: bold;
         }
-        .dine-in-header .table-number {
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: #5d4037;
-            display: block;
-            margin-top: 5px;
+        
+        .dinein-hero p {
+            color: #7C6A4F;
+            font-size: 1rem;
+            margin: 0;
         }
-        .dine-in-banner {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border: 2px solid #4caf50;
+        
+        .dinein-hero .table-highlight {
+            display: inline-block;
+            background: #D4AF37;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+        
+        /* بطاقة معلومات الطاولة */
+        .table-info-card {
+            background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F0 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #F5E6D3;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        
+        .table-info-card h3 {
+            color: #5C4B2E;
+            font-size: 1.1rem;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .table-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .table-info-item {
+            background: #FFF;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #F0E0D0;
+        }
+        
+        .table-info-item .label {
+            font-size: 0.8rem;
+            color: #8B7355;
+            margin-bottom: 4px;
+        }
+        
+        .table-info-item .value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #5C4B2E;
+        }
+        
+        .table-info-item .icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        /* شريط تقدم الصالة */
+        .dinein-progress {
+            background: #FFF;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #F5E6D3;
+        }
+        
+        .dinein-progress h3 {
+            color: #5C4B2E;
+            font-size: 1.1rem;
+            margin: 0 0 20px 0;
+            text-align: center;
+        }
+        
+        .dinein-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding: 0 10px;
+        }
+        
+        .dinein-steps::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 15%;
+            right: 15%;
+            height: 4px;
+            background: #E0E0E0;
+            border-radius: 2px;
+            z-index: 1;
+        }
+        
+        .dinein-steps .progress-line {
+            position: absolute;
+            top: 25px;
+            left: 15%;
+            height: 4px;
+            background: linear-gradient(90deg, #D4AF37, #FFD700);
+            border-radius: 2px;
+            z-index: 2;
+            transition: width 0.8s ease;
+        }
+        
+        .dinein-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 3;
+            flex: 1;
+        }
+        
+        .dinein-step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #E0E0E0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #999;
+            transition: all 0.5s ease;
+            border: 3px solid #FFF;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .dinein-step.active .dinein-step-circle {
+            background: linear-gradient(135deg, #D4AF37, #FFD700);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            animation: pulse 1.5s ease infinite;
+        }
+        
+        .dinein-step.completed .dinein-step-circle {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(212, 175, 55, 0.7); }
+        }
+        
+        .dinein-step-label {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .dinein-step.active .dinein-step-label {
+            color: #D4AF37;
+            font-weight: bold;
+        }
+        
+        .dinein-step.completed .dinein-step-label {
+            color: #4CAF50;
+        }
+        
+        /* إشعار جاهز للتقديم */
+        .ready-notification {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: readyPulse 2s ease infinite;
+        }
+        
+        @keyframes readyPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .ready-notification .ready-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .ready-notification h3 {
+            font-size: 1.3rem;
+            margin: 0 0 8px 0;
+        }
+        
+        .ready-notification p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        /* رسالة الترحيب عند التقديم */
+        .served-message {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #5C4B2E;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .served-message .served-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .served-message h3 {
+            font-size: 1.4rem;
+            margin: 0 0 8px 0;
+            font-weight: bold;
+        }
+        
+        .served-message p {
+            font-size: 1rem;
+            margin: 0;
+        }
+        
+        /* حالة الطلب للصالة */
+        .dinein-status-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .dinein-status-badge.pending {
+            background: linear-gradient(135deg, #FFF3CD, #FFE69C);
+            color: #856404;
+            border: 2px solid #FFD700;
+        }
+        
+        .dinein-status-badge.preparing {
+            background: linear-gradient(135deg, #D1ECF1, #B8E0E8);
+            color: #0C5460;
+            border: 2px solid #17A2B8;
+        }
+        
+        .dinein-status-badge.ready {
+            background: linear-gradient(135deg, #D4EDDA, #C3E6CB);
+            color: #155724;
+            border: 2px solid #28A745;
+            animation: readyPulse 1.5s ease infinite;
+        }
+        
+        .dinein-status-badge.served {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #5C4B2E;
+            border: 2px solid #D4AF37;
+        }
+        
+        .dinein-status-badge.cancelled {
+            background: linear-gradient(135deg, #F8D7DA, #F5C6CB);
+            color: #721C24;
+            border: 2px solid #DC3545;
+        }
+        
+        /* إخفاء العناصر حسب نوع الطلب */
+        .hide-for-dinein { display: none !important; }
+        .hide-for-delivery { display: none !important; }
+        
+        /* أنيميشن الدخول */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: slideInUp 0.5s ease forwards;
+        }
+        
+        /* رسالة الانتظار */
+        .waiting-message {
+            background: #F8F9FA;
             border-radius: 12px;
             padding: 20px;
             text-align: center;
             margin-bottom: 20px;
-            animation: pulse-green 2s infinite;
+            border: 1px dashed #DEE2E6;
         }
-        .dine-in-banner i {
-            font-size: 2rem;
-            color: #2e7d32;
-            margin-bottom: 10px;
-            display: block;
-        }
-        .dine-in-banner p {
-            margin: 0;
-            font-size: 1.1rem;
-            color: #1b5e20;
-            font-weight: bold;
-        }
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-        }
-        .dine-in-details {
-            background: #fff9c4;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #fbc02d;
-        }
-        .dine-in-details .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-        .dine-in-details .detail-row:last-child { margin-bottom: 0; }
-        .dine-in-details i { color: #f57f17; width: 25px; }
         
-        /* إخفاء عناصر الدلفري في وضع الصالة */
-        .hide-in-dinein { display: none !important; }
+        .waiting-message .wait-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            animation: spin 3s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .waiting-message h4 {
+            color: #495057;
+            margin: 0 0 5px 0;
+        }
+        
+        .waiting-message p {
+            color: #6C757D;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        /* زر منادلة النادل */
+        .call-waiter-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #c70301, #8b0000);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .call-waiter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+        }
+        
+        .call-waiter-btn:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -86,6 +412,7 @@
         <div class="order-id-display" id="displayOrderNumber" aria-live="polite">#000</div>
     </header>
 
+    <!-- محتوى تتبع الطلب -->
     <main class="tracking-container">
         
         <!-- 🔄 قسم التحميل -->
@@ -111,142 +438,248 @@
         <!-- ✅ قسم نتيجة التتبع -->
         <div id="trackResultSection" class="tracking-section" style="display: none;">
             
-            <!-- 🍽️ بانر طلب الصالة (يظهر فقط للصالة) -->
-            <div id="dineInBanner" class="dine-in-banner" style="display: none;">
-                <i class="fas fa-utensils"></i>
-                <p>تم إرسال طلبك للمطبخ بنجاح! 🧑‍🍳</p>
-                <small style="color: #388e3c; display: block; margin-top: 5px;">جاري التحضير... يرجى الانتظار قليلاً</small>
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- 🍽️ قسم طلبات الصالة (يظهر فقط للصالة) -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="dineinSection" style="display: none;">
+                
+                <!-- رسالة الترحيب والنجاح -->
+                <div class="dinein-hero animate-in" id="dineinHero">
+                    <div class="dinein-hero-icon" id="dineinHeroIcon">✅</div>
+                    <h2 id="dineinHeroTitle">تم إرسال طلبك بنجاح!</h2>
+                    <p id="dineinHeroSubtitle">جاري تحضير طلبك في المطبخ</p>
+                    <div class="table-highlight" id="dineinTableHighlight">
+                        🪑 طاولة رقم: <span id="dineinTableNumber">-</span>
+                    </div>
+                </div>
+
+                <!-- بطاقة معلومات الطاولة -->
+                <div class="table-info-card animate-in">
+                    <h3><i class="fas fa-info-circle"></i> معلومات طلبك</h3>
+                    <div class="table-info-grid">
+                        <div class="table-info-item">
+                            <div class="icon">🪑</div>
+                            <div class="label">رقم الطاولة</div>
+                            <div class="value" id="dineinTableInfo">-</div>
+                        </div>
+                        <div class="table-info-item">
+                            <div class="icon">👥</div>
+                            <div class="label">عدد الأشخاص</div>
+                            <div class="value" id="dineinPersonsInfo">-</div>
+                        </div>
+                        <div class="table-info-item">
+                            <div class="icon">🕐</div>
+                            <div class="label">وقت الطلب</div>
+                            <div class="value" id="dineinTimeInfo">--:--</div>
+                        </div>
+                        <div class="table-info-item">
+                            <div class="icon">🛒</div>
+                            <div class="label">عدد الأصناف</div>
+                            <div class="value" id="dineinItemsCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شارة حالة الطلب للصالة -->
+                <div class="dinein-status-badge pending" id="dineinStatusBadge">
+                    <i class="fas fa-clock"></i>
+                    <span id="dineinStatusText">قيد المعالجة</span>
+                </div>
+
+                <!-- شريط تقدم الصالة -->
+                <div class="dinein-progress animate-in">
+                    <h3>🍳 مراحل تحضير طلبك</h3>
+                    <div class="dinein-steps">
+                        <div class="progress-line" id="dineinProgressLine" style="width: 0%;"></div>
+                        <div class="dinein-step active" data-step="1" id="dineinStep1">
+                            <div class="dinein-step-circle"><i class="fas fa-check"></i></div>
+                            <div class="dinein-step-label">تم الاستلام</div>
+                        </div>
+                        <div class="dinein-step" data-step="2" id="dineinStep2">
+                            <div class="dinein-step-circle"><i class="fas fa-utensils"></i></div>
+                            <div class="dinein-step-label">قيد التحضير</div>
+                        </div>
+                        <div class="dinein-step" data-step="3" id="dineinStep3">
+                            <div class="dinein-step-circle"><i class="fas fa-bell-concierge"></i></div>
+                            <div class="dinein-step-label">جاهز للتقديم</div>
+                        </div>
+                        <div class="dinein-step" data-step="4" id="dineinStep4">
+                            <div class="dinein-step-circle"><i class="fas fa-heart"></i></div>
+                            <div class="dinein-step-label">تم التقديم</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- رسالة الانتظار -->
+                <div class="waiting-message" id="dineinWaitingMessage">
+                    <div class="wait-icon">👨‍🍳</div>
+                    <h4>جاري تحضير طلبك...</h4>
+                    <p>سيتم تقديم طلبك طازجاً على طاولتك قريباً</p>
+                </div>
+
+                <!-- إشعار جاهز للتقديم (يظهر عند تغيير الحالة) -->
+                <div class="ready-notification" id="dineinReadyNotification" style="display: none;">
+                    <div class="ready-icon">🔔</div>
+                    <h3>طلبك جاهز للتقديم!</h3>
+                    <p>سيصلك النادل بطلبك خلال لحظات</p>
+                </div>
+
+                <!-- رسالة التقديم -->
+                <div class="served-message" id="dineinServedMessage" style="display: none;">
+                    <div class="served-icon">🎉</div>
+                    <h3>بالهناء والشفاء!</h3>
+                    <p>نتمنى أن تستمتع بوجبتك</p>
+                </div>
+
+                <!-- قائمة الأصناف للصالة -->
+                <section class="order-items-section" aria-labelledby="dinein-items-heading">
+                    <h3 id="dinein-items-heading">🛒 أصناف طلبك</h3>
+                    <ul id="dineinItemsList" class="items-list" aria-live="polite"></ul>
+                    <div class="order-total">
+                        <strong>المجموع:</strong>
+                        <span id="dineinTotalAmount" aria-live="polite">0 د.ع</span>
+                    </div>
+                </section>
+
+                <!-- أزرار الإجراءات للصالة -->
+                <section class="action-buttons" aria-label="إجراءات الطلب">
+                    <button class="call-waiter-btn" id="callWaiterBtn">
+                        <i class="fas fa-bell"></i>
+                        <span>مناداة النادل</span>
+                    </button>
+                    
+                    <a href="#" id="dineinWhatsappBtn" class="action-btn whatsapp" target="_blank" rel="noopener">
+                        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                        تواصل عبر واتساب
+                    </a>
+                    
+                    <button class="action-btn secondary" id="dineinRefreshBtn" aria-label="تحديث حالة الطلب">
+                        <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                        تحديث الحالة
+                    </button>
+                </section>
             </div>
 
-            <!-- 🍽️ معلومات الطاولة (تظهر فقط للصالة) -->
-            <div id="dineInHeader" class="dine-in-header" style="display: none;">
-                <h2>🍽️ طلب طاولة</h2>
-                <span class="table-number" id="displayTableNumber">-</span>
-            </div>
-
-            <!-- قسم حالة الطلب -->
-            <section class="order-status-section" aria-labelledby="status-heading">
-                <h2 id="status-heading" class="visually-hidden">حالة الطلب</h2>
-                <div class="status-badge" id="orderStatusBadge" role="status" aria-live="polite">
-                    <i class="fas fa-clock" aria-hidden="true"></i>
-                    <span>قيد المعالجة</span>
-                </div>
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- 🚚 قسم طلبات الدلفري (يظهر فقط للدلفري) -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="deliverySection" style="display: none;">
                 
-                <!-- شريط التقدم -->
-                <div class="progress-tracker" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-step" data-step="1" data-status="received">
-                        <div class="step-icon"><i class="fas fa-check" aria-hidden="true"></i></div>
-                        <div class="step-label">تم الاستلام</div>
+                <!-- قسم حالة الطلب -->
+                <section class="order-status-section" aria-labelledby="status-heading">
+                    <h2 id="status-heading" class="visually-hidden">حالة الطلب</h2>
+                    <div class="status-badge" id="orderStatusBadge" role="status" aria-live="polite">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>قيد المعالجة</span>
                     </div>
-                    <div class="progress-step" data-step="2" data-status="preparing">
-                        <div class="step-icon"><i class="fas fa-utensils" aria-hidden="true"></i></div>
-                        <div class="step-label">قيد التحضير</div>
+                    
+                    <!-- شريط التقدم -->
+                    <div class="progress-tracker" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-step" data-step="1" data-status="received">
+                            <div class="step-icon"><i class="fas fa-check"></i></div>
+                            <div class="step-label">تم الاستلام</div>
+                        </div>
+                        <div class="progress-step" data-step="2" data-status="preparing">
+                            <div class="step-icon"><i class="fas fa-utensils"></i></div>
+                            <div class="step-label">قيد التحضير</div>
+                        </div>
+                        <div class="progress-step" data-step="3" data-status="ready">
+                            <div class="step-icon"><i class="fas fa-motorcycle"></i></div>
+                            <div class="step-label">في الطريق</div>
+                        </div>
+                        <div class="progress-step" data-step="4" data-status="delivered">
+                            <div class="step-icon"><i class="fas fa-home"></i></div>
+                            <div class="step-label">تم التوصيل</div>
+                        </div>
                     </div>
-                    <div class="progress-step" data-step="3" data-status="ready">
-                        <div class="step-icon"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
-                        <div class="step-label">في الطريق</div>
-                    </div>
-                    <div class="progress-step" data-step="4" data-status="delivered">
-                        <div class="step-icon"><i class="fas fa-home" aria-hidden="true"></i></div>
-                        <div class="step-label">تم التوصيل</div>
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- معلومات الطلب -->
-            <section class="order-details-section" aria-labelledby="details-heading">
-                <h3 id="details-heading" class="visually-hidden">تفاصيل الطلب</h3>
-                
-                <!-- صفوف الصالة (مخفية افتراضياً) -->
-                <div id="dineInDetails" class="dine-in-details" style="display: none;">
+                <!-- معلومات الطلب -->
+                <section class="order-details-section" aria-labelledby="details-heading">
+                    <h3 id="details-heading" class="visually-hidden">تفاصيل الطلب</h3>
                     <div class="detail-row">
-                        <span><i class="fas fa-users"></i> عدد الأشخاص</span>
-                        <strong id="displayPersons">-</strong>
-                    </div>
-                    <div class="detail-row">
-                        <span><i class="fas fa-clock"></i> وقت الطلب</span>
-                        <strong id="displayTimeDineIn">--:--</strong>
-                    </div>
-                </div>
-
-                <!-- صفوف الدلفري (ظاهرة افتراضياً) -->
-                <div id="deliveryDetails">
-                    <div class="detail-row" id="detailRowName">
-                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <i class="fas fa-user"></i>
                         <span id="customerName">زبون</span>
                     </div>
-                    <div class="detail-row" id="detailRowPhone">
-                        <i class="fas fa-phone" aria-hidden="true"></i>
+                    <div class="detail-row">
+                        <i class="fas fa-phone"></i>
                         <a href="tel:" id="customerPhone" class="phone-link">07XXXXXXXXX</a>
                     </div>
-                    <div class="detail-row" id="detailRowAddress">
-                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                    <div class="detail-row">
+                        <i class="fas fa-map-marker-alt"></i>
                         <span id="deliveryAddress">غير محدد</span>
                     </div>
-                    <div class="detail-row" id="detailRowTime">
-                        <i class="fas fa-clock" aria-hidden="true"></i>
+                    <div class="detail-row">
+                        <i class="fas fa-clock"></i>
                         <span id="orderTime">--:--</span>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- قائمة الأصناف -->
-            <section class="order-items-section" aria-labelledby="items-heading">
-                <h3 id="items-heading">🛒 الأصناف المطلوبة</h3>
-                <ul id="orderItemsList" class="items-list" aria-live="polite">
-                    <!-- سيتم ملؤها ديناميكياً -->
-                </ul>
-                <div class="order-total">
-                    <strong>المجموع النهائي:</strong>
-                    <span id="orderTotalAmount" aria-live="polite">0 د.ع</span>
-                </div>
-            </section>
+                <!-- قائمة الأصناف -->
+                <section class="order-items-section" aria-labelledby="items-heading">
+                    <h3 id="items-heading">🛒 الأصناف المطلوبة</h3>
+                    <ul id="orderItemsList" class="items-list" aria-live="polite"></ul>
+                    <div class="order-total">
+                        <strong>المجموع النهائي:</strong>
+                        <span id="orderTotalAmount" aria-live="polite">0 د.ع</span>
+                    </div>
+                </section>
 
-            <!-- عداد الوقت المتبقي (للدلفري فقط) -->
-            <section class="countdown-section" id="countdownContainer" style="display: none;" aria-labelledby="countdown-heading">
-                <h4 id="countdown-heading">⏱️ الوقت المتوقع للتوصيل</h4>
-                <div class="countdown-timer" role="timer" aria-live="polite">
-                    <span id="countdownHours">00</span>:
-                    <span id="countdownMinutes">00</span>:
-                    <span id="countdownSeconds">00</span>
-                </div>
-            </section>
+                <!-- عداد الوقت المتبقي -->
+                <section class="countdown-section" id="countdownContainer" style="display: none;">
+                    <h4>⏱️ الوقت المتوقع للتوصيل</h4>
+                    <div class="countdown-timer" role="timer" aria-live="polite">
+                        <span id="countdownHours">00</span>:
+                        <span id="countdownMinutes">00</span>:
+                        <span id="countdownSeconds">00</span>
+                    </div>
+                    <small style="display: block; text-align: center; margin-top: 8px; opacity: 0.7;">
+                        (ساعات : دقائق : ثواني)
+                    </small>
+                </section>
 
-            <!-- رسالة حالة الإلغاء -->
-            <section class="cancelled-info-section" id="cancelledInfo" style="display: none;">
-                <div class="cancelled-badge">
-                    <i class="fas fa-times-circle"></i>
-                    <span>تم إلغاء هذا الطلب</span>
-                </div>
-                <p class="cancelled-message">عذراً، تم إلغاء طلبك. يرجى التواصل مع الدعم للمزيد من التفاصيل.</p>
-                <a href="https://wa.me/9647755666073" class="action-btn whatsapp" target="_blank">
-                    <i class="fab fa-whatsapp"></i> تواصل مع الدعم
-                </a>
-            </section>
+                <!-- رسالة حالة الإلغاء -->
+                <section class="cancelled-info-section" id="cancelledInfo" style="display: none;">
+                    <div class="cancelled-badge">
+                        <i class="fas fa-times-circle"></i>
+                        <span>تم إلغاء هذا الطلب</span>
+                    </div>
+                    <p class="cancelled-message">عذراً، تم إلغاء طلبك. يرجى التواصل مع الدعم للمزيد من التفاصيل.</p>
+                    <a href="https://wa.me/9647755666073" class="action-btn whatsapp" target="_blank">
+                        <i class="fab fa-whatsapp"></i> تواصل مع الدعم
+                    </a>
+                </section>
 
-            <!-- أزرار الإجراءات -->
-            <section class="action-buttons" aria-label="إجراءات الطلب">
-                <a href="#" id="whatsappContactBtn" class="action-btn whatsapp" target="_blank" rel="noopener">
-                    <i class="fab fa-whatsapp" aria-hidden="true"></i>
-                    تواصل عبر واتساب
-                </a>
-                
-                <button class="action-btn secondary" id="refreshTrackingBtn" aria-label="تحديث حالة الطلب">
-                    <i class="fas fa-sync-alt" aria-hidden="true"></i>
-                    تحديث الحالة
-                </button>
-                
-                <a href="#" id="reviewBtn" class="action-btn review" style="display: none;" aria-label="تقييم الخدمة">
-                    <i class="fas fa-star" aria-hidden="true"></i>
-                    قيّم تجربتك
-                </a>
-            </section>
+                <!-- أزرار الإجراءات -->
+                <section class="action-buttons" aria-label="إجراءات الطلب">
+                    <a href="#" id="whatsappContactBtn" class="action-btn whatsapp" target="_blank" rel="noopener">
+                        <i class="fab fa-whatsapp"></i>
+                        تواصل عبر واتساب
+                    </a>
+                    
+                    <button class="action-btn secondary" id="refreshTrackingBtn" aria-label="تحديث حالة الطلب">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث الحالة
+                    </button>
+                    
+                    <a href="#" id="reviewBtn" class="action-btn review" style="display: none;" aria-label="تقييم الخدمة">
+                        <i class="fas fa-star"></i>
+                        قيّم تجربتك
+                    </a>
+                </section>
+            </div>
 
-        </div>
+        </div> <!-- نهاية trackResultSection -->
 
     </main>
 
+    <!-- إشعارات النظام -->
     <div id="trackingNotification" class="tracking-notification" role="alert" aria-live="assertive"></div>
+
+    <!-- صوت التنبيه -->
+    <audio id="notificationSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkY2Ff3V1goqOjIZ+dXV+io6MhX51dX6KjoyFfnV1foqOjIV+dXV+io6MhA==" type="audio/wav">
+    </audio>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
