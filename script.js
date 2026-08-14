@@ -1725,7 +1725,6 @@ async function confirmAndSendOrder() {
         return;
     }
     
-    
     // ✅ استخدام السلة الصحيحة
     const cart = getActiveCart();
     if (!cart || cart.length === 0) {
@@ -1745,11 +1744,7 @@ async function confirmAndSendOrder() {
     const detailedInput = document.getElementById('detailedAddress');
     const notesInput = document.getElementById('orderNotes');
     const personCountInput = document.getElementById('personCount');
-        // ✅ تأكد من أن القيمة تعكس العداد
-        if (personCountInput && isTableOrder) {
-            updatePersonCountDisplay();
-        }
-    const personCount = isTableOrder ? (parseInt(personCountInput?.value) || 1) : null;
+    
     // ✅✅✅ استخراج الملاحظات بشكل آمن (لكلا النوعين)
     const notes = notesInput ? notesInput.value.trim().substring(0, 80) : '';
     
@@ -2187,11 +2182,7 @@ function openCartModal() {
         if (phoneGroup) phoneGroup.style.display = '';
         if (areaGroup) areaGroup.style.display = '';
         if (detailedGroup) detailedGroup.style.display = '';
-        if (personCountGroup) {
-                personCountGroup.style.display = 'block';
-                // ✅ أضف هذا السطر
-                updatePersonCountDisplay();
-            }
+        if (personCountGroup) personCountGroup.style.display = 'none';
         if (tableInfoBox) tableInfoBox.style.display = 'none';
 
         // تحديث العنوان والشعار
@@ -2212,51 +2203,6 @@ function openCartModal() {
     if (!isTableOrder) {
         updateLocationInCart();
     }
-}
-// ═══════════════════════════════════════════
-// 👥 عداد عدد الأشخاص الاحترافي
-// ═══════════════════════════════════════════
-
-/**
- * تغيير عدد الأشخاص بمقدار delta مع حدود 1-20
- */
-function changePersonCount(delta) {
-    const input = document.getElementById('personCount');
-    if (!input) return;
-
-    let current = parseInt(input.value) || 1;
-    current = Math.max(1, Math.min(20, current + delta));
-
-    input.value = current;
-
-    const display = document.getElementById('personCountDisplay');
-    if (display) {
-        display.textContent = current;
-        // تأثير تكبير لطيف
-        display.style.transform = 'scale(1.3)';
-        setTimeout(() => {
-            display.style.transform = 'scale(1)';
-        }, 200);
-    }
-
-    // اهتزاز خفيف عند التغيير
-    if (navigator.vibrate) navigator.vibrate(10);
-}
-
-/**
- * مزامنة عرض العدد مع الحقل المخفي
- */
-function updatePersonCountDisplay() {
-    const input = document.getElementById('personCount');
-    const display = document.getElementById('personCountDisplay');
-    if (!input || !display) return;
-
-    let val = parseInt(input.value) || 1;
-    if (isNaN(val) || val < 1) val = 1;
-    if (val > 20) val = 20;
-
-    input.value = val;
-    display.textContent = val;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3291,6 +3237,95 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ═══════════════════════════════════════════════════════════
+// 🍽️ محدد عدد الأشخاص الاحترافي
+// ═══════════════════════════════════════════════════════════
+
+const MIN_PERSONS = 1;
+const MAX_PERSONS = 20;
+
+/**
+ * تغيير عدد الأشخاص
+ * @param {number} change - القيمة للتغيير (+1 أو -1)
+ */
+function changePersonCount(change) {
+    const display = document.getElementById('personCountDisplay');
+    const hiddenInput = document.getElementById('personCount');
+    const minusBtn = document.getElementById('personMinusBtn');
+    const plusBtn = document.getElementById('personPlusBtn');
+    
+    if (!display || !hiddenInput) return;
+    
+    let currentCount = parseInt(hiddenInput.value) || 1;
+    let newCount = currentCount + change;
+    
+    // التحقق من الحدود
+    if (newCount < MIN_PERSONS) newCount = MIN_PERSONS;
+    if (newCount > MAX_PERSONS) {
+        newCount = MAX_PERSONS;
+        showNotification(`⚠️ الحد الأقصى ${MAX_PERSONS} شخص`);
+    }
+    
+    // تحديث القيمة
+    hiddenInput.value = newCount;
+    display.textContent = newCount;
+    
+    // تأثير حركي
+    display.classList.remove('animate');
+    void display.offsetWidth; // إعادة تشغيل الأنيميشن
+    display.classList.add('animate');
+    
+    // تحديث حالة الأزرار
+    updatePersonButtonsState(newCount);
+    
+    // اهتزاز خفيف
+    if (navigator.vibrate) {
+        navigator.vibrate(change > 0 ? [5, 10, 5] : [10]);
+    }
+    
+    console.log(`👥 عدد الأشخاص: ${newCount}`);
+}
+
+/**
+ * تحديث حالة أزرار الأشخاص (تعطيل/تفعيل)
+ */
+function updatePersonButtonsState(count) {
+    const minusBtn = document.getElementById('personMinusBtn');
+    const plusBtn = document.getElementById('personPlusBtn');
+    
+    if (minusBtn) {
+        minusBtn.disabled = count <= MIN_PERSONS;
+    }
+    if (plusBtn) {
+        plusBtn.disabled = count >= MAX_PERSONS;
+    }
+}
+
+/**
+ * تهيئة محدد الأشخاص عند فتح السلة
+ */
+function initPersonCounter() {
+    const hiddenInput = document.getElementById('personCount');
+    const display = document.getElementById('personCountDisplay');
+    
+    if (!hiddenInput || !display) return;
+    
+    // تعيين القيمة الافتراضية
+    let count = parseInt(hiddenInput.value) || 1;
+    if (count < MIN_PERSONS) count = MIN_PERSONS;
+    if (count > MAX_PERSONS) count = MAX_PERSONS;
+    
+    hiddenInput.value = count;
+    display.textContent = count;
+    
+    updatePersonButtonsState(count);
+}
+
+// تصدير الدوال
+window.changePersonCount = changePersonCount;
+window.initPersonCounter = initPersonCounter;
+
+
+// ═══════════════════════════════════════════════════════════
 // 📤 تصدير الدوال الجديدة
 // ═══════════════════════════════════════════════════════════
 // تصدير الدوال الجديدة
@@ -3344,6 +3379,3 @@ window.getActiveCart = getActiveCart;
 window.setActiveCart = setActiveCart;
 window.getActiveCartKey = getActiveCartKey;
 window.getActiveCartName = getActiveCartName;
-
-window.changePersonCount = changePersonCount;
-window.updatePersonCountDisplay = updatePersonCountDisplay;
