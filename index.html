@@ -284,22 +284,27 @@
                     </small>
                 </div>
 
-                <!-- عدد الأشخاص (عداد احترافي) -->
-                <div class="input-group-new" id="personCountGroup" style="display: none;">
-                    <label for="personCount">
-                        <i class="fas fa-users"></i> عدد الأشخاص
-                    </label>
-                    <div class="person-stepper">
-                        <button type="button" class="stepper-btn minus" onclick="changePersonCount(-1)" aria-label="إنقاص">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <span id="personCountDisplay" class="stepper-display">1</span>
-                        <button type="button" class="stepper-btn plus" onclick="changePersonCount(1)" aria-label="زيادة">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                <!-- محدد عدد الأشخاص الاحترافي -->
+            <div class="person-count-group" id="personCountGroup" style="display: none;">
+                <label class="person-count-label">
+                    <i class="fas fa-users"></i>
+                    عدد الأشخاص
+                </label>
+                <div class="person-counter-wrapper">
+                    <button type="button" class="person-btn person-btn-minus" id="personMinusBtn" onclick="changePersonCount(-1)">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <div class="person-count-display">
+                        <span class="person-count-number" id="personCountDisplay">1</span>
+                        <span class="person-count-label-small">شخص</span>
                     </div>
-                    <input type="hidden" id="personCount" value="1" min="1" max="20">
+                    <button type="button" class="person-btn person-btn-plus" id="personPlusBtn" onclick="changePersonCount(1)">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
+                <!-- حقل مخفي لحفظ القيمة -->
+                <input type="hidden" id="personCount" value="1">
+            </div>
 
                 <!-- العنوان التفصيلي -->
                 <div class="input-group-new" id="detailedAddressGroup">
