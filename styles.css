@@ -4907,13 +4907,6 @@ body.gray-mode nav.sections-nav {
     transform: scale(0.95);
 }
 
-.person-btn-minus:disabled {
-    background: #ccc;
-    box-shadow: none;
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
 .person-btn-plus {
     background: linear-gradient(135deg, #c70301, #8b0000);
     color: white;
@@ -4926,16 +4919,6 @@ body.gray-mode nav.sections-nav {
     box-shadow: 0 6px 20px rgba(199, 3, 1, 0.5);
 }
 
-.person-btn-plus:active:not(:disabled) {
-    transform: scale(0.95);
-}
-
-.person-btn-plus:disabled {
-    background: #ccc;
-    box-shadow: none;
-    cursor: not-allowed;
-    opacity: 0.5;
-}
 
 .person-count-display {
     display: flex;
@@ -4957,22 +4940,51 @@ body.gray-mode nav.sections-nav {
     transition: transform 0.2s ease;
 }
 
-.person-count-number.animate {
-    animation: countBounce 0.3s ease;
-}
-
 .person-count-label-small {
     font-size: 11px;
     color: #666;
     margin-top: 2px;
     font-weight: 500;
 }
+ */
+.person-btn:active:not(:disabled) {
+    transform: scale(0.9);
+}
 
-/* أنيميشن العدد */
+/* تأثير عند الوصول للحد الأقصى */
+.person-btn-plus:disabled {
+    background: linear-gradient(135deg, #ccc, #aaa);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.person-btn-minus:disabled {
+    background: linear-gradient(135deg, #ccc, #aaa);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* تأثير حركي للعدد */
+.person-count-number.animate {
+    animation: countBounce 0.3s ease;
+}
+
 @keyframes countBounce {
     0% { transform: scale(1); }
-    50% { transform: scale(1.3); }
+    50% { transform: scale(1.3); color: #c70301; }
     100% { transform: scale(1); }
+}
+
+
+/* تحسين إمكانية الوصول */
+.person-btn:focus-visible {
+    outline: 3px solid #c70301;
+    outline-offset: 2px;
+}
+
+.person-count-display:focus-visible {
+    outline: 3px solid #D4AF37;
+    outline-offset: 2px;
 }
 
 /* تأثير عند الضغط على الزر */
@@ -5006,5 +5018,410 @@ body.gray-mode nav.sections-nav {
     
     .person-count-number {
         font-size: 28px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* 📍 نافذة تحديد الموقع - الأنماط المحسنة */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* النافذة */
+.location-modal-content {
+    max-width: 420px;
+    width: 92%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* زر الإغلاق */
+.location-modal-content .modal-close-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.location-modal-content .modal-close-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+    transform: rotate(90deg);
+}
+
+/* أيقونة الموقع */
+.location-modal-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c70301, #8b0000);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2rem;
+    color: #fedb17;
+    animation: locationPulse 2s ease-in-out infinite;
+}
+
+@keyframes locationPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(199, 3, 1, 0.4);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(199, 3, 1, 0);
+    }
+}
+
+/* عنوان النافذة */
+.location-modal-content h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+}
+
+.location-modal-text {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+/* مميزات تحديد الموقع */
+.location-features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.location-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.location-feature-item:hover {
+    background: #f0f0f0;
+    transform: translateX(-3px);
+}
+
+.location-feature-item i {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(199, 3, 1, 0.1);
+    color: #c70301;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.location-feature-item span {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 500;
+}
+
+/* حالة الموقع */
+.location-modal-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.location-modal-status i {
+    font-size: 1.2rem;
+    color: #6b7280;
+}
+
+.location-modal-status span {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* حالات الحالة */
+.location-modal-status.loading {
+    background: #fffbeb;
+    border-color: #f59e0b;
+}
+
+.location-modal-status.loading i {
+    color: #f59e0b;
+    animation: spin 1s linear infinite;
+}
+
+.location-modal-status.loading span {
+    color: #92400e;
+}
+
+.location-modal-status.success {
+    background: #ecfdf5;
+    border-color: #10b981;
+}
+
+.location-modal-status.success i {
+    color: #10b981;
+}
+
+.location-modal-status.success span {
+    color: #065f46;
+}
+
+.location-modal-status.error {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.location-modal-status.error i {
+    color: #ef4444;
+}
+
+.location-modal-status.error span {
+    color: #991b1b;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* معلومات الموقع */
+.location-modal-info {
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.location-modal-info p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #065f46;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.location-modal-info p:last-child {
+    margin-bottom: 0;
+}
+
+.location-coords {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    direction: ltr;
+    text-align: center;
+    color: #065f46 !important;
+}
+
+/* أزرار الإجراءات */
+.location-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.btn-location-primary {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #c70301, #8b0000);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-location-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 3, 1, 0.4);
+}
+
+.btn-location-primary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-location-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-location-secondary {
+    flex: 1;
+    padding: 14px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    color: #374151;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-location-secondary:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+/* ملاحظة الخصوصية */
+.location-privacy-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.location-privacy-note i {
+    color: #10b981;
+}
+
+.location-floating-btn {
+    position: fixed;
+    bottom: clamp(20px, 4vw, 25px);      /* ✅ نفس ارتفاع الأزرار العائمة الأخرى */
+    right: clamp(15px, 3vw, 20px);       /* ✅ نفس الهامش الأيمن */
+    z-index: 998;
+    width: clamp(48px, 8vw, 55px);
+    height: clamp(48px, 8vw, 55px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c70301, #8b0000);
+    border: 3px solid #fedb17;
+    color: white;
+    font-size: clamp(1.1rem, 3vw, 1.4rem);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(199, 3, 1, 0.4);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.location-floating-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(199, 3, 1, 0.5);
+}
+
+.location-floating-btn.located {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.location-floating-btn.located:hover {
+    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5);
+}
+
+/* أنيميشن النافذة */
+.modal.active .location-modal-content {
+    animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(40px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* 📱 التجاوب - الهاتف */
+/* ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+    .location-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        padding: 24px 18px;
+    }
+    
+    .location-modal-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 1.6rem;
+    }
+    
+    .location-modal-content h2 {
+        font-size: 1.3rem;
+    }
+    
+    .location-modal-actions {
+        flex-direction: column;
+    }
+    
+    .location-floating-btn {
+        bottom: 85px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .location-floating-btn {
+        bottom: 80px;
+        right: 14px;
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
     }
 }
