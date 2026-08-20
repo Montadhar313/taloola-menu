@@ -7,6 +7,15 @@ const urlParams = new URLSearchParams(window.location.search);
 const tableId = urlParams.get('tableId') || urlParams.get('table');
 let isTableOrder = !!tableId;
 
+// ═══════════════════════════════════════════════════════════════
+// 🔒 نظام قفل الطاولات المُحسَّن - Firebase Realtime
+// ═══════════════════════════════════════════════════════════════
+const TABLE_LOCK_KEY = 'taloola_table_lock';
+const DEVICE_LOCK_KEY = 'taloola_device_lock';
+let tableLockListener = null;
+let isTableCurrentlyLocked = false;
+let tableLockData = null;
+
 const PROCESSING_KEY = 'taloola_processing_order';
 const BAN_KEY = 'taloola_ban_until';
 const BAN_DATA_KEY = 'taloola_ban_data';
@@ -68,6 +77,146 @@ if (isTableOrder) {
     const personCountGroup = document.getElementById('personCountGroup');
     if (personCountGroup) personCountGroup.style.display = 'block';
     console.log(`تم فتح المنيو لـ: طاولة رقم ${tableId}`);
+}
+
+
+
+function getDeviceId() {
+    let deviceId = localStorage.getItem('taloola_device_id');
+    if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('taloola_device_id', deviceId);
+    }
+    return deviceId;
+}
+
+function lockDeviceLocally() {
+    const lockData = { lockedAt: Date.now() };
+    localStorage.setItem(DEVICE_LOCK_KEY, JSON.stringify(lockData));
+}
+
+function unlockDeviceLocally() {
+    localStorage.removeItem(DEVICE_LOCK_KEY);
+}
+
+function isDeviceLocked() {
+    const lockData = localStorage.getItem(DEVICE_LOCK_KEY);
+    if (!lockData) return false;
+    try {
+        const data = JSON.parse(lockData);
+        // القفل صالح لمدة 15 دقيقة كحماية من الإغلاق المفاجئ
+        if (Date.now() - data.lockedAt > 15 * 60 * 1000) {
+            localStorage.removeItem(DEVICE_LOCK_KEY);
+            return false;
+        }
+        return true;
+    } catch (e) { return false; }
+}
+
+async function checkTableAvailability() {
+    if (!isTableOrder || !tableId || typeof firebase === 'undefined' || !firebase.database) {
+        return true;
+    }
+    try {
+        const snapshot = await firebase.database().ref(`tables/${tableId}`).once('value');
+        const tableData = snapshot.val();
+
+        // ✅ إذا كانت الطاولة غير موجودة → نسمح بالطلب
+        if (!tableData) {
+            isTableCurrentlyLocked = false;
+            tableLockData = null;
+            return true;
+        }
+
+        // ✅ التحقق من الحالة: إذا كانت "Occupied" → ممنوع الطلب
+        if (tableData.status && tableData.status.toLowerCase() === 'occupied') {
+            isTableCurrentlyLocked = true;
+            tableLockData = tableData;
+            return false;
+        }
+
+        // ✅ إذا كانت الحالة "Available" أو غير محددة → نسمح بالطلب
+        isTableCurrentlyLocked = false;
+        tableLockData = null;
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في التحقق من الطاولة:', error);
+        // في حال فشل الاتصال، نسمح بالطلب (لتجنب تعطيل الزبون)
+        return true;
+    }
+}
+
+
+async function lockTableForOrder() {
+    if (!isTableOrder || !tableId || typeof firebase === 'undefined' || !firebase.database) return true;
+    try {
+        const tableRef = firebase.database().ref(`tables/${tableId}`);
+        // ✅ تحديث الحالة فقط (لا نمسح البيانات الأخرى)
+        await tableRef.update({
+            status: 'Occupied',
+            lockedAt: Date.now(),
+            lockedBy: getDeviceId(),
+            lockedAtFormatted: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+        });
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في قفل الطاولة:', error);
+        return false;
+    }
+}
+
+async function unlockTable() {
+    if (!isTableOrder || !tableId || typeof firebase === 'undefined' || !firebase.database) return;
+    try {
+        // ✅ نعيد الحالة إلى "Available" عند الإلغاء أو الفشل
+        await firebase.database().ref(`tables/${tableId}`).update({
+            status: 'Available',
+            lockedBy: null,
+            lockedAt: null,
+            lockedAtFormatted: null
+        });
+        isTableCurrentlyLocked = false;
+        tableLockData = null;
+        console.log(`✅ تم فتح قفل الطاولة ${tableId}`);
+    } catch (error) {
+        console.error('❌ خطأ في فتح قفل الطاولة:', error);
+    }
+}
+
+function showTableLockedOverlay(data) {
+    let overlay = document.getElementById('tableLockedOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'tableLockedOverlay';
+        overlay.style.cssText = `position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 20px;`;
+        document.body.appendChild(overlay);
+    }
+
+    // ✅ استخراج البيانات من الطاولة
+    const lockTime = data?.lockedAtFormatted || data?.freedAt || '--:--';
+    const orderNum = data?.orderNumber || '—';
+
+    overlay.innerHTML = `
+        <div style="background: #fff; border-radius: 24px; padding: 36px 28px; max-width: 420px; width: 95%; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4);">
+            <div style="font-size: 64px; margin-bottom: 16px;">🔒</div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #1a1a1a; margin-bottom: 12px;">الطاولة مشغولة حالياً</h2>
+            <p style="font-size: 15px; color: #666; line-height: 1.7; margin-bottom: 20px;">هذه الطاولة لديها طلب نشط حالياً.<br>يرجى إكمال الطلب السابق أو مناداة النادل.</p>
+            <div style="background: #f8f9fa; border-radius: 14px; padding: 16px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between; padding: 8px 0;"><span style="color: #888;">🕐 وقت البدء</span><span style="font-weight: 700; color: #c70301;">${lockTime}</span></div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0;"><span style="color: #888;">📋 رقم الطلب</span><span style="font-weight: 700; color: #c70301;">#${orderNum}</span></div>
+            </div>
+            <button onclick="dismissTableLockedOverlay()" style="width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #c70301, #8b0000); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;">✖ إغلاق</button>
+        </div>`;
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function dismissTableLockedOverlay() {
+    const overlay = document.getElementById('tableLockedOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1426,11 +1575,47 @@ function getStatusMessage(status) {
     };
     return messages[status] || 'تم تحديث حالة طلبك';
 }
-
+async function checkTableStatusNow() {
+    if (!isTableOrder || !tableId) {
+        showNotification('⚠ هذا ليس طلب صالة');
+        return;
+    }
+    showNotification('⏳ جاري التحقق من حالة الطاولة...');
+    const isAvailable = await checkTableAvailability();
+    if (isAvailable) {
+        showNotification('✅ الطاولة متاحة حالياً');
+        dismissTableLockedOverlay();
+    } else {
+        showNotification('🔒 الطاولة مشغولة');
+        showTableLockedOverlay(tableLockData);
+    }
+}
+async function refreshTableStatusNow() {
+    if (!isTableOrder || !tableId) return;
+    try {
+        const snapshot = await firebase.database().ref(`tables/${tableId}`).once('value');
+        const data = snapshot.val();
+        if (data) {
+            console.log('🔄 حالة الطاولة الحالية:', data);
+            if (data.status && data.status.toLowerCase() === 'occupied') {
+                isTableCurrentlyLocked = true;
+                tableLockData = data;
+                showTableLockedOverlay(data);
+            } else {
+                isTableCurrentlyLocked = false;
+                tableLockData = null;
+                dismissTableLockedOverlay();
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ فشل تحديث حالة الطاولة:', e);
+    }
+}
 // ═══════════════════════════════════════════════════════════
 // ✅✅✅ تأكيد وإرسال الطلب - النسخة المُصححة والمُحسَّنة
 // ═══════════════════════════════════════════════════════════
 async function confirmAndSendOrder() {
+    // 1. التحقق من الطلبات النشطة والمعالجة
     if (isOrderActive()) {
         showNotification('⚠️ لديك طلب قيد المعالجة حالياً، يرجى الانتظار حتى اكتماله');
         return;
@@ -1439,31 +1624,50 @@ async function confirmAndSendOrder() {
         showNotification('لديك طلب قيد التحضير بالفعل');
         return;
     }
-    
-    // ✅ استخدام السلة الصحيحة
+
     const cart = getActiveCart();
     if (!cart || cart.length === 0) {
         showNotification(`${getActiveCartName()} فارغة!`);
         return;
     }
-    
+
     if (typeof firebase === 'undefined' || !firebase.database) {
         console.error('❌ Firebase غير متاح');
         showNotification('⚠ لا يمكن حفظ الطلب حالياً، يرجى إعادة تحميل الصفحة');
         return;
     }
 
-    // ✅ جلب جميع عناصر النموذج
+    // 2. التحقق من قفل الطاولة والجهاز (للصالة فقط)
+    if (isTableOrder) {
+        if (isDeviceLocked()) {
+            showNotification('🔒 هذا الجهاز مقفل حالياً بطلب آخر. يرجى الانتظار.');
+            return;
+        }
+
+        showNotification('⏳ جاري التحقق من حالة الطاولة...');
+        const isAvailable = await checkTableAvailability();
+        if (!isAvailable) {
+            showNotification('🔒 الطاولة مشغولة! يرجى إكمال الطلب السابق أو مناداة النادل');
+            showTableLockedOverlay(tableLockData);
+            return;
+        }
+
+        const lockSuccess = await lockTableForOrder();
+        if (!lockSuccess) {
+            showNotification('🔒 تعذر قفل الطاولة. الطاولة مشغولة.');
+            return;
+        }
+        lockDeviceLocally();
+    }
+
+    // 3. جلب عناصر النموذج والتحقق من البيانات
     const phoneInput = document.getElementById('customerPhone');
     const areaSelect = document.getElementById('deliveryArea');
     const detailedInput = document.getElementById('detailedAddress');
     const notesInput = document.getElementById('orderNotes');
     const personCountInput = document.getElementById('personCount');
     
-    // ✅✅✅ استخراج الملاحظات بشكل آمن (لكلا النوعين)
     const notes = notesInput ? notesInput.value.trim().substring(0, 80) : '';
-    
-    // ✅ استخراج باقي البيانات
     const personCount = isTableOrder ? (parseInt(personCountInput?.value) || 1) : null;
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const area = areaSelect ? areaSelect.value.trim() : '';
@@ -1471,18 +1675,13 @@ async function confirmAndSendOrder() {
 
     let hasError = false;
     
-    // ═══════════════════════════════════════════════════════════
-    // ✅✅✅ التحقق من البيانات حسب نوع الطلب
-    // ═══════════════════════════════════════════════════════════
     if (isTableOrder) {
-        // 🍽️ طلب صالة: رقم الهاتف اختياري، عدد الأشخاص مطلوب
         if (!personCount || personCount < 1) {
             showNotification('⚠ الرجاء إدخال عدد الأشخاص');
             if (personCountInput) personCountInput.focus();
             hasError = true;
         }
     } else {
-        // 🛵 طلب دلفري: رقم الهاتف والعنوان مطلوبان
         if (!phone) {
             if (phoneInput) { phoneInput.classList.add('error'); phoneInput.focus(); }
             showNotification('⚠ الرجاء إدخال رقم الهاتف');
@@ -1499,9 +1698,12 @@ async function confirmAndSendOrder() {
         }
     }
     
-    if (hasError) return;
+    if (hasError) {
+        if (isTableOrder) { await unlockTable(); unlockDeviceLocally(); }
+        return;
+    }
 
-    // ✅ فحص الحظر فقط لطلبات الدلفري
+    // 4. فحص الحظر (للدلفري فقط)
     if (!isTableOrder) {
         showNotification('⏳ جاري التحقق من الحساب...');
         const banned = await isPhoneBanned(phone);
@@ -1510,10 +1712,6 @@ async function confirmAndSendOrder() {
             disableOrdering();
             return;
         }
-    }
-
-    // حفظ البيانات للدلفري فقط
-    if (!isTableOrder) {
         saveLastOrderPhone(phone);
         try {
             safeLocalStorageSet('taloola_saved_phone', phone);
@@ -1521,8 +1719,8 @@ async function confirmAndSendOrder() {
         } catch (e) { console.warn('⚠️ فشل حفظ بيانات الزبون:', e); }
     }
 
+    // 5. حساب الإجمالي
     let totalAmount = 0;
-
     cart.forEach((item) => {
         const itemPrice = parseInt(item.price) || 0;
         const itemQty = parseInt(item.quantity) || 0;
@@ -1532,39 +1730,27 @@ async function confirmAndSendOrder() {
     const gpsLocation = isTableOrder ? null : (userLocation || getLocationFromStorage());
     showNotification('⏳ جاري حفظ طلبك...');
 
-    console.log('📝 الملاحظات المدخلة:', notes ? `"${notes}"` : '(فارغة)');
-    console.log('🍽️ نوع الطلب:', isTableOrder ? 'صالة' : 'دلفري');
-
     try {
+        // 6. توليد رقم الطلب
         let orderNumber = 0;
         const counterRef = firebase.database().ref('orders/counter');
         const ordersRef = firebase.database().ref('orders/list');
 
         try {
-            const transactionResult = await counterRef.transaction((currentValue) => { 
-                return (currentValue || 0) + 1; 
-            });
-            
+            const transactionResult = await counterRef.transaction((currentValue) => (currentValue || 0) + 1);
             if (transactionResult && transactionResult.committed && transactionResult.snapshot) {
                 orderNumber = transactionResult.snapshot.val();
-                console.log(`✅ تم توليد رقم الطلب تسلسلياً من Firebase: ${orderNumber}`);
             } else { 
-                throw new Error('فشل الالتزام بالمعاملة (committed = false)'); 
+                throw new Error('فشل الالتزام بالمعاملة'); 
             }
         } catch (transactionError) {
-            console.warn('⚠️ فشل transaction، محاولة القراءة والكتابة المباشرة (Fallback):', transactionError);
-            try {
-                const snapshot = await counterRef.once('value');
-                orderNumber = (snapshot.val() || 0) + 1;
-                await counterRef.set(orderNumber);
-                console.log(`✅ تم توليد رقم الطلب بالطريقة البديلة: ${orderNumber}`);
-            } catch (fallbackError) {
-                console.error('❌ فشلت جميع طرق الحصول على رقم الطلب:', fallbackError);
-                orderNumber = Math.floor(Date.now() / 1000) % 100000;
-            }
+            console.warn('⚠️ فشل transaction، استخدام الطريقة البديلة:', transactionError);
+            const snapshot = await counterRef.once('value');
+            orderNumber = (snapshot.val() || 0) + 1;
+            await counterRef.set(orderNumber);
         }
 
-        // ✅✅✅ بناء بيانات الطلب
+        // 7. بناء بيانات الطلب
         const orderData = {
             orderNumber: orderNumber,
             customerName: isTableOrder ? `زبون طاولة ${tableId}` : 'زبون',
@@ -1600,11 +1786,8 @@ async function confirmAndSendOrder() {
             orderType: isTableOrder ? 2 : 3
         };
 
-        console.log('📦 بيانات الطلب المُرسلة:', JSON.stringify(orderData, null, 2));
-
         const newOrderRef = await ordersRef.push(orderData);
-        console.log('✅ تم حفظ الطلب في Firebase - Key:', newOrderRef.key);
-
+        
         saveActiveOrder({
             orderId: newOrderRef.key,
             orderNumber: orderNumber,
@@ -1619,8 +1802,7 @@ async function confirmAndSendOrder() {
 
         if (!isTableOrder && phone) {
             const userOrdersRef = firebase.database().ref(`users/${phone}/orders`);
-            const userOrderData = { ...orderData, orderId: newOrderRef.key };
-            await userOrdersRef.push(userOrderData);
+            await userOrdersRef.push({ ...orderData, orderId: newOrderRef.key });
         }
 
         sessionStorage.setItem('lastOrderNumber', String(orderNumber));
@@ -1629,66 +1811,59 @@ async function confirmAndSendOrder() {
             localStorage.setItem('taloola_tracking_phone', phone);
         }
 
-        // ═══════════════════════════════════════════════════════════
-        // 📱 بناء وإرسال رسالة واتساب (قبل تغيير وضع الطاولة)
-        // ═══════════════════════════════════════════════════════════
+        // 8. تحديث حالة الطاولة برقم الطلب (تبقى مشغولة حتى يفرغها النادل من POS)
+        if (isTableOrder) {
+            try {
+                const tableRef = firebase.database().ref(`tables/${tableId}`);
+                await tableRef.update({
+                    status: 'Occupied',
+                    orderNumber: orderNumber,
+                    lockedBy: getDeviceId(),
+                    lockedAt: Date.now(),
+                    lockedAtFormatted: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                });
+                console.log(`✅ تم تحديث حالة الطاولة ${tableId} إلى مشغولة برقم طلب #${orderNumber}`);
+            } catch (e) {
+                console.warn('⚠️ تعذر تحديث حالة الطاولة:', e);
+            }
+            unlockDeviceLocally(); // فتح قفل الجهاز المحلي
+        }
+
+        // 9. إرسال واتساب
         const whatsappNumber = '9647755666073';
         let message = `🛎️ طلب جديد #${orderNumber}\n━━━━━━━━━━━━━━━\n\n`;
-        
         if (isTableOrder) {
-            message += `🍽️ نوع الطلب: صالة\n`;
-            message += `🪑 رقم الطاولة: ${tableId}\n`;
-            message += `👥 عدد الأشخاص: ${personCount}\n`;
+            message += `🍽️ نوع الطلب: صالة\n🪑 رقم الطاولة: ${tableId}\n👥 عدد الأشخاص: ${personCount}\n`;
         } else {
-            message += `🛵 نوع الطلب: دلفري\n`;
-            message += `📞 رقم الهاتف: ${phone}\n`;
-            message += `📍 منطقة التوصيل: ${area}\n`;
+            message += `🛵 نوع الطلب: دلفري\n📞 رقم الهاتف: ${phone}\n📍 منطقة التوصيل: ${area}\n`;
             if (detailed) message += `🏠 العنوان التفصيلي: ${detailed}\n`;
         }
+        if (notes && notes.length > 0) message += `\n📝 ملاحظات الطلب:\n   ${notes}\n`;
         
-        if (notes && notes.length > 0) {
-            message += `\n📝 ملاحظات الطلب:\n   ${notes}\n`;
-        }
-        
-        // ✅ الكود الجديد (مع دعم الملاحظات)
         message += `\n━━━━━━━━━━━━━━━\n🛒 تفاصيل الطلب:\n\n`;
         cart.forEach((item, index) => {
             const itemPrice = parseInt(item.price) || 0;
             const itemQty = parseInt(item.quantity) || 0;
             const itemTotal = itemPrice * itemQty;
             const itemNote = item.note || item.notes || '';
-            
-            message += `${index + 1}. ${item.name}\n`;
-            message += `   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n`;
-            message += `   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n`;
-            
-            // ✅ إضافة ملاحظات الصنف إن وُجدت
-            if (itemNote && itemNote.trim().length > 0) {
-                message += `   📝 ملاحظات: ${itemNote}\n`;
-            }
-            
+            message += `${index + 1}. ${item.name}\n   الكمية: ${itemQty} | السعر: ${itemPrice.toLocaleString('ar-EG')} د.ع\n   الإجمالي: ${itemTotal.toLocaleString('ar-EG')} د.ع\n`;
+            if (itemNote && itemNote.trim().length > 0) message += `   📝 ملاحظات: ${itemNote}\n`;
             message += `\n`;
         });
 
         message += `━━━━━━━━━━━━━━━\n💰 المجموع النهائي: ${totalAmount.toLocaleString('ar-EG')} د.ع\n`;
-        
-        if (!isTableOrder && gpsLocation) {
-            message += `\n📍 الموقع على الخريطة:\n${gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`}\n`;
-        }
-        
+        if (!isTableOrder && gpsLocation) message += `\n📍 الموقع على الخريطة:\n${gpsLocation.googleMapsUrl || `https://www.google.com/maps?q=${gpsLocation.latitude},${gpsLocation.longitude}`}\n`;
         message += `\n━━━━━━━━━━━━━━━\n⏰ وقت الطلب: ${new Date().toLocaleTimeString('ar-EG')}\n📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}`;
 
-        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
 
         const orderTypeName = isTableOrder ? 'طلب الصالة' : 'طلب الدلفري';
         showNotification(`✅ تم إرسال ${orderTypeName} بنجاح! رقم الطلب: #${orderNumber}`);
 
-        // ✅ تفريغ السلة والنموذج
+        // 10. تفريغ السلة والنموذج
         setActiveCart([]);
         saveCart();
         displayCartItems();
-
         if (phoneInput) { phoneInput.value = ''; phoneInput.classList.remove('error'); }
         if (areaSelect) { areaSelect.value = ''; areaSelect.classList.remove('error'); }
         if (detailedInput) detailedInput.value = '';
@@ -1696,28 +1871,25 @@ async function confirmAndSendOrder() {
         if (personCountInput) personCountInput.value = '1';
         updateNotesCounter();
         closeCartModal();
-        
         updateTrackingButtonVisibility(); 
 
         if (!isTableOrder) {
-            setTimeout(() => {
-                redirectToTrackingPage(orderNumber);
-            }, 1500);
-        }
-
-        // ✅✅✅ الإصلاح الجذري: تحويل الواجهة إلى وضع الدلفري في النهاية فقط
-        // حتى لا تتأثر رسالة واتساب والإشعارات بمتغير isTableOrder
-        if (isTableOrder) {
-            switchToDeliveryMode();
+            setTimeout(() => redirectToTrackingPage(orderNumber), 1500);
         }
 
     } catch (error) {
         console.error('❌ خطأ في حفظ الطلب:', error);
         let errorMessage = '⚠ فشل حفظ الطلب';
-        if (error.code === 'PERMISSION_DENIED') errorMessage = '⚠ خطأ في الصلاحيات';
+        if (error.code === 'PERMISSION_DENIED') errorMessage = '⚠ خطأ في الصلاحيات (تحقق من قواعد Firebase)';
         else if (error.code === 'NETWORK_ERROR') errorMessage = '⚠ خطأ في الاتصال بالإنترنت';
         else if (error.message) errorMessage = `⚠ ${error.message}`;
         showNotification(errorMessage);
+        
+        // فتح الأقفال في حالة الفشل
+        if (isTableOrder) {
+            await unlockTable();
+            unlockDeviceLocally();
+        }
     }
 }
 
@@ -3597,3 +3769,12 @@ window.getActiveCart = getActiveCart;
 window.setActiveCart = setActiveCart;
 window.getActiveCartKey = getActiveCartKey;
 window.getActiveCartName = getActiveCartName;
+
+// تصدير الدوال الجديدة
+window.checkTableStatusNow = checkTableStatusNow;
+window.closeTableLockedOverlay = closeTableLockedOverlay;
+
+// تصدير الدوال
+window.refreshTableStatusNow = refreshTableStatusNow;
+window.dismissTableLockOverlay = dismissTableLockOverlay;
+window.hideTableLockedOverlay = hideTableLockedOverlay;
