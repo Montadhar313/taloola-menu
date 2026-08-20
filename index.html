@@ -526,5 +526,54 @@
     })();
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 🔒 واجهة الطاولة المشغولة -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="table-locked-overlay" id="tableLockedOverlay" style="display: none;">
+    <div class="table-locked-content">
+        <div class="table-locked-icon">🔒</div>
+        <h2>الطاولة مشغولة</h2>
+        <p class="table-locked-message">
+            هذه الطاولة مشغولة حالياً بطلب آخر.<br>
+            يرجى الانتظار حتى يتم إتمام الطلب الحالي.
+        </p>
+        <div class="table-locked-details">
+            <div class="table-locked-detail">
+                <i class="fas fa-clock"></i>
+                <span>وقت القفل: <strong id="lockTimeDisplay">--:--</strong></span>
+            </div>
+            <div class="table-locked-detail">
+                <i class="fas fa-receipt"></i>
+                <span>رقم الطلب: <strong id="lockOrderDisplay">--</strong></span>
+            </div>
+        </div>
+        <div class="table-locked-actions">
+            <button class="btn-table-wait" onclick="checkTableStatusNow()">
+                <i class="fas fa-sync-alt"></i> تحديث الحالة
+            </button>
+            <button class="btn-table-cancel" onclick="closeTableLockedOverlay()">
+                <i class="fas fa-times"></i> إغلاق
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 🪑 شريط حالة الطاولة (يظهر فقط لطلبات الصالة) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="table-status-bar" id="tableStatusBar" style="display: none;">
+    <div class="table-status-content">
+        <div class="table-status-icon" id="tableStatusIcon">🪑</div>
+        <div class="table-status-text">
+            <span class="table-status-label">طاولة رقم</span>
+            <span class="table-status-number" id="tableStatusNumber">-</span>
+        </div>
+        <div class="table-status-indicator" id="tableStatusIndicator">
+            <span class="status-dot"></span>
+            <span class="status-text" id="tableStatusText">متاحة</span>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
