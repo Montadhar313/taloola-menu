@@ -162,14 +162,31 @@
         </div>
     </section>
 
-</main>
 
 <!-- Firebase Scripts -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+<!-- تحميل نظام التخزين المؤقت -->
+<script src="../cache-manager.js"></script>
+
 <!-- كود التقييم -->
 <script src="review.js"></script>
+
+<!-- PWA Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('../sw.js')
+            .then((registration) => {
+                console.log('[Review PWA] Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('[Review PWA] Registration failed:', error);
+            });
+    });
+}
+</script>
 
 </body>
 </html>

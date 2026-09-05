@@ -8,10 +8,21 @@
     <meta name="application-name" content="تعلولة">
     <meta name="description" content="مطعم تعلولة - أفضل الوجبات السريعة في بغداد، مدينة الصدر. اطلب الآن عبر المنيو الإلكتروني">
     <meta name="theme-color" content="#c70301">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-title" content="تعلولة">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/images/Logo.gif">
+    
     <title>تعلولة - مطعم الوجبات السريعة</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- تحميل نظام التخزين المؤقت -->
+    <script src="cache-manager.js" defer></script>
     
     <!-- تحميل الثيم من Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -574,6 +585,58 @@
         </div>
     </div>
 </div>
+
+<!-- PWA Service Worker Registration -->
+<script>
+// تسجيل Service Worker لتفعيل ميزات PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('[PWA] Service Worker registered successfully:', registration.scope);
+                
+                // التحقق من وجود تحديثات
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // هناك تحديث جديد متاح
+                            if (confirm('يتوفر تحديث جديد للتطبيق. هل تريد إعادة التحميل؟')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            })
+            .catch((error) => {
+                console.log('[PWA] Service Worker registration failed:', error);
+            });
+        
+        // الاستماع لتحديثات Service Worker
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    });
+}
+
+// تحسين أداء الصور - Lazy Loading متقدم
+document.addEventListener('DOMContentLoaded', () => {
+    // إضافة loading="lazy" لجميع الصور غير الحرجة
+    const images = document.querySelectorAll('img:not([fetchpriority="high"])');
+    images.forEach(img => {
+        if (!img.loading) {
+            img.loading = 'lazy';
+        }
+        if (!img.decoding) {
+            img.decoding = 'async';
+        }
+    });
+});
+</script>
 
 </body>
 </html>

@@ -1,0 +1,62 @@
+{
+  "name": "تعلولة - مطعم الوجبات السريعة",
+  "short_name": "تعلولة",
+  "description": "أفضل الوجبات السريعة في بغداد، مدينة الصدر. اطلب الآن عبر المنيو الإلكتروني",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#c70301",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/images/Logo.gif",
+      "sizes": "192x192",
+      "type": "image/gif",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/Logo.gif",
+      "sizes": "512x512",
+      "type": "image/gif",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "restaurant", "ordering"],
+  "lang": "ar",
+  "dir": "rtl",
+  "prefer_related_applications": false,
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "الطلب السريع",
+      "short_name": "اطلب الآن",
+      "description": "انتقل مباشرة إلى قائمة الطلب",
+      "url": "/index.html?quickorder=true",
+      "icons": [{ "src": "assets/images/Logo.gif", "sizes": "96x96" }]
+    },
+    {
+      "name": "تتبع الطلب",
+      "short_name": "التتبع",
+      "description": "تتبع حالة طلبك الحالي",
+      "url": "/tracking/order-tracking.html",
+      "icons": [{ "src": "assets/images/Logo.gif", "sizes": "96x96" }]
+    },
+    {
+      "name": "العروض",
+      "short_name": "العروض",
+      "description": "عرض العروض الخاصة الحالية",
+      "url": "/index.html#ads",
+      "icons": [{ "src": "assets/images/Logo.gif", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "url": "link"
+    }
+  }
+}
