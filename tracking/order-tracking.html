@@ -225,15 +225,31 @@
                 </a>
             </section>
 
-        </div> <!-- نهاية trackResultSection -->
+<!-- إشعارات النظام -->
+<div id="trackingNotification" class="tracking-notification" role="alert" aria-live="assertive"></div>
 
-    </main>
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    <!-- إشعارات النظام -->
-    <div id="trackingNotification" class="tracking-notification" role="alert" aria-live="assertive"></div>
+<!-- تحميل نظام التخزين المؤقت -->
+<script src="../cache-manager.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="tracking.js"></script>
+<script src="tracking.js"></script>
+
+<!-- PWA Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('../sw.js')
+            .then((registration) => {
+                console.log('[Tracking PWA] Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('[Tracking PWA] Registration failed:', error);
+            });
+    });
+}
+</script>
 </body>
 </html>
