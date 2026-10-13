@@ -4,188 +4,792 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="theme-color" content="#c70301">
-    <meta name="description" content="قيّم تجربتك مع مطعم تعلولة">
     <title>تعلولة - قيّم تجربتك</title>
     
-    <!-- خطوط وأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- الأنماط -->
     <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="review.css">
+    
+    <!-- أنماط مخصصة -->
+    <style>
+        :root {
+            --review-primary: #c70301;
+            --review-secondary: #fedb17;
+            --review-bg: #1a1a2e;
+            --review-card-bg: rgba(255,255,255,0.05);
+            --review-text: #ffffff;
+            --review-gray: #888;
+            --review-success: #28a745;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        .review-page {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cairo', sans-serif;
+            padding: 20px;
+        }
+
+        .review-card {
+            background: var(--review-card-bg);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(254, 219, 23, 0.3);
+            border-radius: 25px;
+            padding: 40px 30px;
+            max-width: 550px;
+            width: 100%;
+            color: var(--review-text);
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.5s ease;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .review-card .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--review-secondary);
+            margin-bottom: 20px;
+            object-fit: cover;
+            background: #fff;
+        }
+
+        .review-card .back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .review-card .back-btn:hover {
+            background: var(--review-secondary);
+            color: var(--review-primary);
+            transform: scale(1.1);
+        }
+
+        .review-card h1 {
+            color: var(--review-secondary);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .review-card .subtitle {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .review-card .order-ref {
+            display: inline-block;
+            background: rgba(199, 3, 1, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--review-secondary);
+            margin-bottom: 20px;
+            border: 1px solid var(--review-secondary);
+        }
+
+        .review-type-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .review-type-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .review-type-label:hover {
+            background: rgba(254, 219, 23, 0.2);
+        }
+
+        .review-type-label input:checked + span {
+            color: var(--review-secondary);
+        }
+
+        .review-type-label input {
+            accent-color: var(--review-secondary);
+            width: 16px;
+            height: 16px;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0 15px;
+            direction: ltr;
+        }
+
+        .star-btn {
+            background: transparent;
+            border: none;
+            font-size: 2.8rem;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.2s ease;
+            padding: 0 2px;
+            line-height: 1;
+        }
+
+        .star-btn.active {
+            color: var(--review-secondary);
+            transform: scale(1.1);
+        }
+
+        .star-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .star-btn i {
+            pointer-events: none;
+        }
+
+        .rating-feedback {
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-height: 30px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 15px;
+        }
+
+        .review-card textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: 0.3s;
+            direction: rtl;
+        }
+
+        .review-card textarea:focus {
+            border-color: var(--review-secondary);
+            outline: none;
+            background: rgba(255,255,255,0.12);
+        }
+
+        .review-card textarea::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .char-counter {
+            text-align: left;
+            font-size: 0.85rem;
+            color: var(--review-gray);
+            margin-top: 5px;
+        }
+
+        .char-counter.warning {
+            color: #ffc107;
+        }
+
+        .char-counter.danger {
+            color: #dc3545;
+        }
+
+        /* رفع الصورة */
+        .image-upload-area {
+            margin: 15px 0;
+            padding: 20px;
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .image-upload-area:hover {
+            border-color: var(--review-secondary);
+            background: rgba(254, 219, 23, 0.05);
+        }
+
+        .image-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .image-upload-area .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: var(--review-gray);
+            pointer-events: none;
+        }
+
+        .image-upload-area .upload-placeholder i {
+            font-size: 2rem;
+            color: var(--review-secondary);
+        }
+
+        .image-preview {
+            display: none;
+            margin-top: 10px;
+            border-radius: 12px;
+            overflow: hidden;
+            max-height: 200px;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--review-primary), #8b0000);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(199, 3, 1, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .back-link:hover {
+            color: var(--review-secondary);
+            background: rgba(254, 219, 23, 0.1);
+        }
+
+        /* شاشة النجاح */
+        .success-screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success-screen.active {
+            display: block;
+        }
+
+        .success-screen .success-icon {
+            font-size: 5rem;
+            color: var(--review-success);
+            margin-bottom: 20px;
+            animation: bounceIn 0.8s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        .success-screen h2 {
+            color: var(--review-success);
+            margin-bottom: 10px;
+        }
+
+        .success-screen p {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 25px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .review-card { padding: 30px 20px; }
+            .review-card h1 { font-size: 1.6rem; }
+            .star-btn { font-size: 2.2rem; }
+            .review-type-label { padding: 6px 12px; font-size: 0.9rem; }
+        }
+    </style>
 </head>
-<body>
+<body class="review-page">
 
-<!-- خلفية الصفحة -->
-<div class="review-bg">
-    <div class="review-bg-pattern"></div>
-</div>
-
-<!-- الهيدر -->
-<header class="review-header">
-    <button class="back-btn" id="backBtn" title="العودة للمنيو">
+<div class="review-card" id="reviewCard">
+    <!-- زر الرجوع -->
+    <button class="back-btn" id="backBtn" title="رجوع">
         <i class="fas fa-arrow-right"></i>
     </button>
-    <div class="review-logo">
-        <img src="../assets/images/Logo.gif" alt="تعلولة" onerror="this.src='https://via.placeholder.com/40?text=🍔'">
-        <span>تعلولة</span>
-    </div>
-    <div class="header-spacer"></div>
-</header>
 
-<!-- المحتوى الرئيسي -->
-<main class="review-container">
+    <!-- الشعار -->
+    <img src="../assets/images/Logo.gif" alt="تعلولة" class="logo" onerror="this.src='https://via.placeholder.com/80?text=🍔'">
+
+    <h1>⭐ قيّم تجربتك</h1>
+    <p class="subtitle">رأيك يهمنا ويساعدنا في التحسين!</p>
     
-    <!-- قسم نموذج التقييم -->
-    <section id="reviewFormSection" class="review-section active">
-        <div class="review-card">
-            <div class="review-header-icon">
-                <i class="fas fa-star-half-alt"></i>
-            </div>
-            <h2>⭐ قيّم تجربتك</h2>
-            <p class="review-subtitle">رأيك يهمنا ويساعدنا في التحسين!</p>
-            
-            <!-- رقم الطلب -->
-            <div class="order-badge" id="orderBadge" style="display: none;">
-                <i class="fas fa-receipt"></i>
-                <span>طلب رقم #<span id="orderNumberDisplay">000</span></span>
-            </div>
+    <!-- رقم الطلب (إن وجد) -->
+    <div class="order-ref" id="orderRef" style="display: none;">
+        <i class="fas fa-receipt"></i> طلب #<span id="orderNumberDisplay">000</span>
+    </div>
 
-            <!-- اختيار نوع التقييم -->
-            <div class="review-type-selector">
-                <label class="review-type-option">
-                    <input type="radio" name="reviewType" value="restaurant" checked hidden>
-                    <div class="option-card">
-                        <i class="fas fa-utensils"></i>
-                        <span>جودة المطعم</span>
-                    </div>
-                </label>
-                <label class="review-type-option">
-                    <input type="radio" name="reviewType" value="delivery" hidden>
-                    <div class="option-card">
-                        <i class="fas fa-motorcycle"></i>
-                        <span>خدمة التوصيل</span>
-                    </div>
-                </label>
-                <label class="review-type-option">
-                    <input type="radio" name="reviewType" value="speed" hidden>
-                    <div class="option-card">
-                        <i class="fas fa-bolt"></i>
-                        <span>سرعة الاستجابة</span>
-                    </div>
-                </label>
-            </div>
-
-            <!-- نظام النجوم -->
-            <div class="rating-section">
-                <p class="rating-label">ما هو تقييمك؟</p>
-                <div class="star-rating-container" id="starRating">
-                    <button class="star-btn" data-value="5" type="button" aria-label="5 نجوم">
-                        <i class="far fa-star"></i>
-                    </button>
-                    <button class="star-btn" data-value="4" type="button" aria-label="4 نجوم">
-                        <i class="far fa-star"></i>
-                    </button>
-                    <button class="star-btn" data-value="3" type="button" aria-label="3 نجوم">
-                        <i class="far fa-star"></i>
-                    </button>
-                    <button class="star-btn" data-value="2" type="button" aria-label="نجمتين">
-                        <i class="far fa-star"></i>
-                    </button>
-                    <button class="star-btn" data-value="1" type="button" aria-label="نجمة واحدة">
-                        <i class="far fa-star"></i>
-                    </button>
-                </div>
-                <p class="rating-feedback" id="ratingFeedback">اختر تقييمك</p>
-            </div>
-
-            <!-- حقل الملاحظات -->
-            <div class="feedback-section">
-                <label for="reviewMessage">ملاحظاتك (اختياري)</label>
-                <textarea id="reviewMessage" placeholder="شاركنا تجربتك لنتمكن من تحسين خدماتنا..." maxlength="300"></textarea>
-                <div class="char-counter">
-                    <span id="charCount">0</span> / 300
-                </div>
-            </div>
-
-            <!-- إرفاق صورة -->
-            <div class="attachment-section">
-                <label class="attachment-label" for="reviewImage">
-                    <div class="attachment-box">
-                        <i class="fas fa-camera"></i>
-                        <span>أضف صورة لتجربتك (اختياري)</span>
-                    </div>
-                    <input type="file" id="reviewImage" accept="image/*" hidden>
-                </label>
-                <div class="image-preview" id="imagePreview">
-                    <img src="" alt="معاينة الصورة">
-                    <button class="remove-image-btn" id="removeImageBtn" title="إزالة الصورة">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- زر الإرسال -->
-            <button class="submit-btn" id="submitReviewBtn" disabled>
-                <i class="fas fa-paper-plane"></i>
-                <span>إرسال التقييم</span>
-            </button>
-
-            <!-- ملاحظة الخصوصية -->
-            <p class="privacy-note">
-                <i class="fas fa-shield-alt"></i>
-                تقييمك سري ولن يُنشر إلا بموافقتك
-            </p>
+    <!-- نموذج التقييم -->
+    <div id="reviewForm">
+        <!-- نوع التقييم -->
+        <div class="review-type-selector">
+            <label class="review-type-label">
+                <input type="radio" name="reviewType" value="restaurant" checked>
+                <span>جودة المطعم</span>
+            </label>
+            <label class="review-type-label">
+                <input type="radio" name="reviewType" value="delivery">
+                <span>خدمة التوصيل</span>
+            </label>
+            <label class="review-type-label">
+                <input type="radio" name="reviewType" value="speed">
+                <span>سرعة الاستجابة</span>
+            </label>
         </div>
-    </section>
 
-    <!-- قسم النجاح -->
-    <section id="successSection" class="review-section">
-        <div class="review-card success-card">
-            <div class="success-animation">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <h2>شكراً لك! 🎉</h2>
-            <p class="success-message">تم إرسال تقييمك بنجاح، رأيك يساعدنا في تقديم خدمة أفضل للجميع</p>
-            
-            <div class="success-actions">
-                <a href="../index.html" class="action-btn primary" id="goToMenuBtn">
-                    <i class="fas fa-utensils"></i>
-                    العودة للمنيو الإلكتروني
-                </a>
-                <a href="order-tracking.html" class="action-btn secondary" id="goToTrackingBtn" style="display: none;">
-                    <i class="fas fa-truck"></i>
-                    تتبع طلبي
-                </a>
+        <!-- النجوم -->
+        <div class="star-rating" id="starRating">
+            <button class="star-btn" data-value="5" type="button"><i class="fas fa-star"></i></button>
+            <button class="star-btn" data-value="4" type="button"><i class="fas fa-star"></i></button>
+            <button class="star-btn" data-value="3" type="button"><i class="fas fa-star"></i></button>
+            <button class="star-btn" data-value="2" type="button"><i class="fas fa-star"></i></button>
+            <button class="star-btn" data-value="1" type="button"><i class="fas fa-star"></i></button>
+        </div>
+        <div class="rating-feedback" id="ratingFeedback">اختر تقييمك</div>
+
+        <!-- رسالة -->
+        <textarea id="reviewMessage" placeholder="اكتب رسالتك أو ملاحظاتك هنا (اختياري)..." maxlength="300"></textarea>
+        <div class="char-counter">
+            <span id="charCount">0</span> / 300
+        </div>
+
+        <!-- رفع صورة (اختياري) -->
+        <div class="image-upload-area" id="imageUploadArea">
+            <input type="file" id="reviewImage" accept="image/*">
+            <div class="upload-placeholder">
+                <i class="fas fa-camera"></i>
+                <span>أضف صورة (اختياري)</span>
             </div>
         </div>
-    </section>
+        <div class="image-preview" id="imagePreview"></div>
 
+        <!-- زر الإرسال -->
+        <button class="btn-submit" id="submitReviewBtn" disabled>
+            <i class="fas fa-paper-plane"></i> إرسال التقييم
+        </button>
+    </div>
 
-<!-- Firebase Scripts -->
+    <!-- شاشة النجاح -->
+    <div class="success-screen" id="successScreen">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h2>شكراً لك! 🎉</h2>
+        <p>تم إرسال تقييمك بنجاح، رأيك يهمنا جداً!</p>
+        <button class="btn-submit" onclick="goBack()" style="margin-top: 0;">
+            <i class="fas fa-arrow-right"></i> العودة لتتبع الطلب
+        </button>
+    </div>
+
+    <!-- رابط الرجوع (احتياطي) -->
+    <a href="#" class="back-link" id="fallbackBackLink">
+        <i class="fas fa-arrow-right"></i> العودة للصفحة السابقة
+    </a>
+</div>
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<!-- تحميل نظام التخزين المؤقت -->
-<script src="../cache-manager.js"></script>
-
-<!-- كود التقييم -->
-<script src="review.js"></script>
-
-<!-- PWA Service Worker -->
+<!-- كود التقييم المتكامل -->
 <script>
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('../sw.js')
-            .then((registration) => {
-                console.log('[Review PWA] Service Worker registered:', registration.scope);
-            })
-            .catch((error) => {
-                console.log('[Review PWA] Registration failed:', error);
-            });
+    // ============================================
+    // ⚙️ إعدادات Firebase
+    // ============================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyD5mfdKg5MaKfnzOQNMumt0ZwL8QGeKMfU",
+        authDomain: "talola-food.firebaseapp.com",
+        databaseURL: "https://talola-food-default-rtdb.firebaseio.com",
+        projectId: "talola-food",
+        messagingSenderId: "440585170470",
+        appId: "1:440585170470:web:d9a2ba4500d9738dcf00e7"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    // ============================================
+    // 📦 المتغيرات
+    // ============================================
+    let currentRating = 0;
+    let selectedImage = null;
+    const MAX_MESSAGE_LENGTH = 300;
+    const ratingTexts = {
+        1: "سيء جداً 😞",
+        2: "سيء 😐",
+        3: "مقبول 🙂",
+        4: "جيد 😊",
+        5: "ممتاز 🎉"
+    };
+    let orderNumber = null;
+
+    // ============================================
+    // 🚀 التهيئة
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // قراءة رقم الطلب من الرابط
+        const urlParams = new URLSearchParams(window.location.search);
+        orderNumber = urlParams.get('order');
+        
+        if (orderNumber) {
+            document.getElementById('orderNumberDisplay').textContent = orderNumber;
+            document.getElementById('orderRef').style.display = 'inline-block';
+        }
+
+        // إعداد العناصر
+        setupStarRating();
+        setupCharCounter();
+        setupImageUpload();
+        setupSubmitButton();
+        setupBackButton();
+
+        // تحديث حالة الزر
+        updateSubmitState();
     });
-}
+
+    // ============================================
+    // ⭐ نظام النجوم
+    // ============================================
+    function setupStarRating() {
+        const starBtns = document.querySelectorAll('.star-btn');
+        const feedback = document.getElementById('ratingFeedback');
+
+        starBtns.forEach((btn, index) => {
+            btn.addEventListener('click', function() {
+                const value = parseInt(this.dataset.value);
+                setRating(value);
+            });
+
+            btn.addEventListener('mouseenter', function() {
+                const value = parseInt(this.dataset.value);
+                highlightStars(value);
+                feedback.textContent = ratingTexts[value] || 'اختر تقييمك';
+            });
+
+            btn.addEventListener('mouseleave', function() {
+                highlightStars(currentRating);
+                if (currentRating > 0) {
+                    feedback.textContent = ratingTexts[currentRating];
+                    feedback.style.color = currentRating >= 4 ? '#28a745' : currentRating >= 3 ? '#fedb17' : '#dc3545';
+                } else {
+                    feedback.textContent = 'اختر تقييمك';
+                    feedback.style.color = 'rgba(255,255,255,0.8)';
+                }
+            });
+        });
+    }
+
+    function setRating(value) {
+        currentRating = value;
+        highlightStars(value);
+        const feedback = document.getElementById('ratingFeedback');
+        feedback.textContent = ratingTexts[value] || 'اختر تقييمك';
+        feedback.style.color = value >= 4 ? '#28a745' : value >= 3 ? '#fedb17' : '#dc3545';
+        updateSubmitState();
+    }
+
+    function highlightStars(value) {
+        const btns = document.querySelectorAll('.star-btn');
+        btns.forEach((btn, index) => {
+            const starValue = index + 1;
+            btn.classList.toggle('active', starValue <= value);
+        });
+    }
+
+    // ============================================
+    // 🔢 عداد الأحرف
+    // ============================================
+    function setupCharCounter() {
+        const textarea = document.getElementById('reviewMessage');
+        const counter = document.getElementById('charCount');
+
+        textarea.addEventListener('input', function() {
+            const len = this.value.length;
+            counter.textContent = len;
+            counter.classList.remove('warning', 'danger');
+            if (len > MAX_MESSAGE_LENGTH * 0.9) {
+                counter.classList.add('warning');
+            }
+            if (len >= MAX_MESSAGE_LENGTH) {
+                counter.classList.add('danger');
+            }
+            updateSubmitState();
+        });
+    }
+
+    // ============================================
+    // 📎 رفع الصورة
+    // ============================================
+    function setupImageUpload() {
+        const input = document.getElementById('reviewImage');
+        const preview = document.getElementById('imagePreview');
+
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // تحقق من النوع
+            if (!file.type.startsWith('image/')) {
+                showNotification('⚠ الرجاء اختيار ملف صورة صالح', 'warning');
+                this.value = '';
+                return;
+            }
+
+            // تحقق من الحجم (أقصى 5 ميجابايت)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('⚠ حجم الصورة كبير جداً (أقصى 5MB)', 'warning');
+                this.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة">`;
+                preview.classList.add('active');
+                selectedImage = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // ============================================
+    // ✅ تحديث حالة زر الإرسال
+    // ============================================
+    function updateSubmitState() {
+        const submitBtn = document.getElementById('submitReviewBtn');
+        submitBtn.disabled = currentRating === 0;
+    }
+
+    function setupSubmitButton() {
+        const submitBtn = document.getElementById('submitReviewBtn');
+        submitBtn.addEventListener('click', handleSubmit);
+    }
+
+    // ============================================
+    // 📤 إرسال التقييم
+    // ============================================
+    async function handleSubmit() {
+        if (currentRating === 0) {
+            showNotification('⚠ الرجاء اختيار تقييم بالنجوم', 'warning');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitReviewBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+
+        try {
+            const reviewType = document.querySelector('input[name="reviewType"]:checked')?.value || 'restaurant';
+            const message = document.getElementById('reviewMessage').value.trim();
+
+            const reviewData = {
+                rating: currentRating,
+                type: reviewType,
+                message: message,
+                image: selectedImage || null,
+                orderNumber: orderNumber || null,
+                timestamp: Date.now(),
+                date: new Date().toLocaleDateString('ar-EG'),
+                time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                approved: false
+            };
+
+            await db.ref('reviews').push(reviewData);
+
+            // عرض شاشة النجاح
+            document.getElementById('reviewForm').style.display = 'none';
+            document.getElementById('successScreen').classList.add('active');
+
+            // اهتزاز للموبايل
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+
+        } catch (error) {
+            console.error('❌ خطأ في إرسال التقييم:', error);
+            showNotification('❌ حدث خطأ، يرجى المحاولة لاحقاً', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال التقييم';
+        }
+    }
+
+    // ============================================
+    // 🔙 زر الرجوع
+    // ============================================
+    function setupBackButton() {
+        const backBtn = document.getElementById('backBtn');
+        const fallbackLink = document.getElementById('fallbackBackLink');
+
+        // زر الرجوع في البطاقة
+        backBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            goBack();
+        });
+
+        // الرابط الاحتياطي
+        fallbackLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            goBack();
+        });
+    }
+
+    function goBack() {
+        // محاولة العودة إلى صفحة تتبع الطلب مع رقم الطلب
+        const order = orderNumber || sessionStorage.getItem('lastOrderNumber');
+        if (order) {
+            window.location.href = `../tracking/order-tracking.html?order=${order}`;
+        } else {
+            // محاولة العودة للصفحة السابقة في التاريخ
+            if (document.referrer && document.referrer.includes('tracking')) {
+                window.history.back();
+            } else {
+                window.location.href = '../index.html';
+            }
+        }
+    }
+
+    // ============================================
+    // 🔔 نظام الإشعارات
+    // ============================================
+    function showNotification(message, type = 'info') {
+        // إزالة الإشعارات السابقة
+        document.querySelectorAll('.review-toast').forEach(el => el.remove());
+
+        const toast = document.createElement('div');
+        toast.className = 'review-toast';
+        const colors = {
+            success: '#28a745',
+            error: '#dc3545',
+            warning: '#ffc107',
+            info: '#17a2b8'
+        };
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+
+        toast.style.cssText = `
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${colors[type] || colors.info};
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            animation: slideInDown 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+        `;
+        toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span>`;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOutUp 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    // إضافة تعريفات الـ keyframes إذا لم تكن موجودة
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = `
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes slideOutUp {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+        }
+    `;
+    document.head.appendChild(styleSheet);
 </script>
 
 </body>
