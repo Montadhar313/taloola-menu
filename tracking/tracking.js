@@ -1,5 +1,5 @@
 // ============================================
-// 🚚 نظام تتبع الطلب - النسخة المحسّنة (User-Centric + DineIn Support)
+// 🚚 نظام تتبع الطلب - النسخة المحسّنة (User-Centric)
 // ============================================
 
 // 🔑 الثوابت
@@ -10,28 +10,31 @@ const AUTO_REDIRECT_DELAY = 4000;
 
 // 📦 المتغيرات العامة
 let trackingInterval = null;
-let currentOrderId = null;
+let currentOrderId = null; // canonical key: loading/items/{key} / loading/archive/{key}
 let currentOrderPhone = null;
-let currentIsDineIn = false; // ✅ متغير جديد لتتبع نوع الطلب (صالة أم دلفري)
 let firebaseDB = null;
 let countdownTimer = null;
 let hasRedirectedToReview = false;
+let reviewRedirectScheduled = false;
 let lastKnownStatus = null;
-let orderStatusListener = null;
+let orderStatusListeners = [];
+let lastAppliedStatusVersion = -1;
+let lastAppliedSourcePriority = -1;
 
 // ⏱️ متغيرات مدة التوصيل الديناميكية
-let deliveryAreasData = []; 
-const DEFAULT_DELIVERY_MINUTES = 45; 
+let deliveryAreasData = []; // لتخزين بيانات المناطق من Firebase
+const DEFAULT_DELIVERY_MINUTES = 45; // قيمة افتراضية في حال لم يتم العثور على المنطقة
 
 // 🎯 خريطة حالات الطلب
 const ORDER_STATUS_MAP = {
-    'pending': { step: 1, label: 'قيد المعالجة', icon: 'fa-clock', class: 'pending', progress: 0, color: '#ffc107' },
-    'preparing': { step: 2, label: 'قيد التحضير', icon: 'fa-utensils', class: 'preparing', progress: 33, color: '#17a2b8' },
-    'ready': { step: 3, label: 'جاهز للتوصيل', icon: 'fa-motorcycle', class: 'ready', progress: 66, color: '#28a745' },
-    'delivered': { step: 4, label: 'تم التوصيل ✅', icon: 'fa-home', class: 'delivered', progress: 100, color: '#28a745' },
-    'completed': { step: 4, label: 'تم التوصيل ✅', icon: 'fa-home', class: 'completed', progress: 100, color: '#28a745' },
-    'served': { step: 4, label: 'تم التقديم ✅', icon: 'fa-concierge-bell', class: 'completed', progress: 100, color: '#28a745' }, // ✅ حالة الصالة
-    'cancelled': { step: 0, label: 'تم الإلغاء ❌', icon: 'fa-times-circle', class: 'cancelled', progress: 0, color: '#dc3545' }
+    'pending':    { step: 1, label: 'تم الاستلام', icon: 'fa-receipt', class: 'pending', progress: 0, color: '#ffc107' },
+    'preparing':  { step: 2, label: 'قيد التحضير', icon: 'fa-utensils', class: 'preparing', progress: 33, color: '#17a2b8' },
+    'in_transit': { step: 3, label: 'في الطريق', icon: 'fa-motorcycle', class: 'ready', progress: 66, color: '#28a745' },
+    'ready':      { step: 3, label: 'في الطريق', icon: 'fa-motorcycle', class: 'ready', progress: 66, color: '#28a745' }, // legacy alias
+    'delivered':  { step: 4, label: 'تم التوصيل ✅', icon: 'fa-home', class: 'delivered', progress: 100, color: '#28a745' },
+    'completed':  { step: 4, label: 'تم التوصيل ✅', icon: 'fa-home', class: 'delivered', progress: 100, color: '#28a745' }, // legacy alias
+    'returned':   { step: 0, label: 'تم إرجاع الطلب', icon: 'fa-undo', class: 'returned', progress: 0, color: '#ea580c' },
+    'cancelled':  { step: 0, label: 'تم إلغاء الطلب ❌', icon: 'fa-times-circle', class: 'cancelled', progress: 0, color: '#dc3545' }
 };
 
 // ============================================
@@ -40,7 +43,7 @@ const ORDER_STATUS_MAP = {
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         await initFirebase();
-        await fetchDeliveryAreasData(); 
+        await fetchDeliveryAreasData(); // ✅ جلب بيانات المناطق أولاً
         setupEventListeners();
         await startAutoTracking();
     } catch (error) {
@@ -49,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         showNotification('❌ حدث خطأ، يرجى إعادة تحميل الصفحة', 'error');
     }
 });
+
 
 // ============================================
 // 🔥 تهيئة Firebase
@@ -84,13 +88,13 @@ function setupEventListeners() {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', refreshTracking);
     }
-
+    
     const reviewBtn = document.getElementById('reviewBtn');
     if (reviewBtn) {
         reviewBtn.addEventListener('click', function(e) {
             if (this.classList.contains('disabled')) {
                 e.preventDefault();
-                showNotification('⏳ سيكون التقييم متاحاً بعد اكتمال الطلب', 'warning');
+                showNotification('⏳ سيكون التقييم متاحاً بعد اكتمال التوصيل', 'warning');
                 return;
             }
             if (currentOrderId) {
@@ -108,13 +112,8 @@ function setupEventListeners() {
     updateWhatsappLink();
 }
 
-// ✅ دالة مساعدة لتحديد إذا كان الطلب من الصالة
-function isDineInOrder(order) {
-    return order.orderType === 2 || order.orderType === 'DineIn' || order.orderSource === 'Table' || !!order.tableId;
-}
-
 // ============================================
-// 🔍 بدء التتبع التلقائي
+// 🔍 بدء التتبع: loading أولاً مع توافق رجعي آمن
 // ============================================
 async function startAutoTracking() {
     showSection('trackLoadingSection');
@@ -122,73 +121,75 @@ async function startAutoTracking() {
     try {
         let order = null;
         let source = '';
-
-        // ✅ الأولوية 1: من URL Parameters
         const urlParams = new URLSearchParams(window.location.search);
         const orderParam = urlParams.get('order');
-        if (orderParam) {
-            order = await findOrderByNumberInUserPath(orderParam);
-            if (order) source = 'URL parameter (user path)';
-        }
+        const savedPhone = normalizePhone(localStorage.getItem(TRACKING_STORAGE_KEY) || '');
 
-        // ✅ الأولوية 2: من رقم الهاتف
-        if (!order) {
-            const savedPhone = localStorage.getItem(TRACKING_STORAGE_KEY);
-            if (savedPhone) {
-                order = await findLatestOrderByPhoneInUserPath(savedPhone);
-                if (order) {
-                    source = 'phone (user path - primary)';
-                    currentOrderPhone = normalizePhone(savedPhone);
-                }
+        if (orderParam) {
+            order = await findOrderInLoading(orderParam, savedPhone);
+            if (order) source = order.source;
+            // Support a canonical Firebase key supplied directly in the URL.
+            if (!order) {
+                order = await findOrderByCanonicalId(orderParam, savedPhone);
+                if (order) source = order.source;
             }
         }
 
-        // ✅ الأولوية 3: من sessionStorage
+        if (!order && savedPhone) {
+            if (isLoadingFeatureEnabledForTracking()) {
+                order = await findLatestOrderInLoading(savedPhone);
+                if (order) source = order.source;
+            } else {
+                // Kill-switch rollback only: when loading is explicitly disabled, use the legacy main list.
+                order = await findLatestOrderInMainListForKillSwitch(savedPhone);
+                if (order) source = 'main';
+            }
+        }
+
         if (!order) {
             const savedOrder = sessionStorage.getItem('current_tracking_order');
             if (savedOrder) {
                 try {
                     const parsed = JSON.parse(savedOrder);
-                    if (parsed.phone) {
-                        order = await findLatestOrderByPhoneInUserPath(parsed.phone);
-                        if (order) source = 'sessionStorage → user path';
+                    const phone = normalizePhone(parsed.phone || savedPhone);
+                    if (parsed.orderNumber) {
+                        order = await findOrderInLoading(parsed.orderNumber, phone);
                     }
-                } catch (e) {}
-            }
-        }
-
-        // ✅ الأولوية 4: البحث في المسار الرئيسي
-        if (!order) {
-            const savedPhone = localStorage.getItem(TRACKING_STORAGE_KEY);
-            if (savedPhone) {
-                order = await findOrderByPhoneInMainList(savedPhone);
-                if (order) source = 'phone (main list - fallback)';
+                    if (!order && parsed.id) {
+                        order = await findOrderByCanonicalId(parsed.id, phone);
+                    }
+                    if (order) source = order.source || 'session';
+                } catch (error) {
+                    console.warn('⚠️ تعذر قراءة بيانات جلسة التتبع السابقة:', error);
+                }
             }
         }
 
         if (order) {
-            console.log(`✅ تم العثور على الطلب عبر: ${source}`);
-            currentOrderId = order.id;
-            currentIsDineIn = isDineInOrder(order); // ✅ تحديد نوع الطلب
-            if (!currentOrderPhone) currentOrderPhone = normalizePhone(order.phone);
+            currentOrderId = order.orderId || order.id;
+            currentOrderPhone = normalizePhone(order.phone || savedPhone || '');
+            order = { ...order, id: currentOrderId, orderId: currentOrderId, phone: currentOrderPhone };
+            console.log(`✅ تم العثور على الطلب عبر المسار الموحد: ${source || order.source || 'unknown'}`);
+
+            lastAppliedStatusVersion = -1;
+            lastAppliedSourcePriority = -1;
+            applyTrackedSnapshot(order, source || order.source || 'loading');
 
             sessionStorage.setItem('current_tracking_order', JSON.stringify({
-                id: order.id,
+                id: currentOrderId,
                 phone: currentOrderPhone,
                 orderNumber: order.orderNumber,
-                status: order.status
+                status: normalizeCustomerStatus(order.status, order.stage)
             }));
 
-            displayOrderDetails(order);
             showSection('trackResultSection');
-            startRealtimeTrackingForUser(order.id, currentOrderPhone);
+            startRealtimeTracking(currentOrderId, currentOrderPhone);
             updateWhatsappLink(order.orderNumber);
-            handleOrderStatusChange(order.status, order.timestamp);
             showNotification('✅ تم تحميل حالة طلبك بنجاح', 'success');
         } else {
-            console.warn('⚠️ لم يتم العثور على الطلب في مسار المستخدمين');
+            console.warn('⚠️ لم يتم العثور على الطلب في loading/items أو loading/archive');
             showSection('trackNotFoundSection');
-            showNotification('⚠ لم يتم العثور على طلب نشط لهذا الرقم', 'warning');
+            showNotification('⚠ لم يتم العثور على طلب لهذا الرقم', 'warning');
         }
     } catch (error) {
         console.error('❌ خطأ في التتبع:', error);
@@ -197,40 +198,165 @@ async function startAutoTracking() {
     }
 }
 
-// ============================================
-// 🔎 دوال البحث في Firebase
-// ============================================
-async function findOrderByNumberInUserPath(orderNumber) {
-    if (!firebaseDB) return null;
-    const cleanNumber = orderNumber.replace('#', '').replace(/\s/g, '');
-    const numValue = parseInt(cleanNumber);
-    if (isNaN(numValue)) return null;
-
+function isLoadingFeatureEnabledForTracking() {
     try {
-        const usersSnapshot = await firebaseDB.ref('users').once('value');
-        const usersData = usersSnapshot.val();
-        if (!usersData) return null;
+        const value = localStorage.getItem('taloola_enable_loading');
+        return value === null ? true : value === 'true';
+    } catch (_) {
+        return true;
+    }
+}
 
-        for (const phone of Object.keys(usersData)) {
-            const ordersSnapshot = await firebaseDB
-                .ref(`users/${phone}/orders`)
-                .orderByChild('orderNumber')
-                .equalTo(numValue)
-                .limitToLast(1)
-                .once('value');
-            const ordersData = ordersSnapshot.val();
-            if (ordersData) {
-                const orderId = Object.keys(ordersData)[0];
-                return { id: orderId, ...ordersData[orderId], phone: phone };
-            }
+function parseOrderNumber(orderNumber) {
+    const parsed = parseInt(String(orderNumber || '').replace('#', '').replace(/\s/g, ''), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeCustomerStatus(status, stage) {
+    const value = String(status || '').trim().toLowerCase();
+    const stageValue = String(stage || '').trim().toLowerCase();
+
+    // Final states always win; then translate old aliases and canonical stages.
+    if (value === 'cancelled' || stageValue === 'cancelled') return 'cancelled';
+    if (value === 'returned' || stageValue === 'returned') return 'returned';
+    if (['delivered', 'completed'].includes(value) || stageValue === 'completed') return 'delivered';
+    if (['in_transit', 'ready'].includes(value) || stageValue === 'in_transit') return 'in_transit';
+    if (value === 'preparing' || value === 'dispatched' || stageValue === 'dispatched') return 'preparing';
+    if (value === 'pending') return 'pending';
+    return 'pending';
+}
+
+function createTrackingOrder(record, firebaseKey, source, phone) {
+    if (!record || typeof record !== 'object') return null;
+    const canonicalId = String(record.orderId || firebaseKey || '');
+    if (!canonicalId) return null;
+    return {
+        ...record,
+        id: canonicalId,
+        orderId: canonicalId,
+        phone: normalizePhone(record.phone || phone || ''),
+        source
+    };
+}
+
+async function readOrderNumberFromPath(path, orderNumber) {
+    if (!firebaseDB) return null;
+    const numericOrderNumber = parseOrderNumber(orderNumber);
+    if (numericOrderNumber === null) return null;
+    const snapshot = await firebaseDB.ref(path)
+        .orderByChild('orderNumber')
+        .equalTo(numericOrderNumber)
+        .once('value');
+    return snapshot.val() || null;
+}
+
+async function findOrderInLoading(orderNumber, phone) {
+    if (!isLoadingFeatureEnabledForTracking() || !firebaseDB || parseOrderNumber(orderNumber) === null) return null;
+    const normalizedPhone = normalizePhone(phone || '');
+    for (const path of ['loading/items', 'loading/archive']) {
+        try {
+            const records = await readOrderNumberFromPath(path, orderNumber);
+            if (!records) continue;
+            const matches = Object.entries(records).filter(([, value]) => {
+                const recordPhone = normalizePhone(value?.phone || '');
+                return !normalizedPhone || !recordPhone || recordPhone === normalizedPhone;
+            });
+            if (!matches.length) continue;
+            matches.sort((a, b) => Number(b[1]?.statusUpdatedAt || b[1]?.createdAt || b[1]?.timestamp || 0) -
+                Number(a[1]?.statusUpdatedAt || a[1]?.createdAt || a[1]?.timestamp || 0));
+            const [key, value] = matches[0];
+            return createTrackingOrder(value, key, path.endsWith('/archive') ? 'archive' : 'loading', normalizedPhone);
+        } catch (error) {
+            console.warn(`⚠️ [LOADING] تعذر البحث في ${path}; سيُستخدم المسار الاحتياطي:`, error);
         }
-        return null;
+    }
+    return null;
+}
+
+async function findLatestOrderInLoading(phone) {
+    if (!isLoadingFeatureEnabledForTracking() || !firebaseDB || !phone) return null;
+    const normalizedPhone = normalizePhone(phone);
+    const candidates = [];
+    for (const path of ['loading/items', 'loading/archive']) {
+        try {
+            const snapshot = await firebaseDB.ref(path)
+                .orderByChild('phone').equalTo(normalizedPhone).once('value');
+            const records = snapshot.val();
+            if (!records) continue;
+            for (const [key, value] of Object.entries(records)) {
+                if (normalizePhone(value?.phone || '') !== normalizedPhone) continue;
+                const result = createTrackingOrder(value, key, path.endsWith('/archive') ? 'archive' : 'loading', normalizedPhone);
+                if (result) candidates.push(result);
+            }
+        } catch (error) {
+            console.warn(`⚠️ [LOADING] تعذر جلب أحدث طلب من ${path}:`, error);
+        }
+    }
+    return chooseNewestOrderCandidate(candidates);
+}
+
+function chooseNewestOrderCandidate(candidates) {
+    if (!Array.isArray(candidates) || !candidates.length) return null;
+    const tiePriority = { legacy: 4, main: 3, loading: 2, archive: 1 };
+    return [...candidates].sort((a, b) => {
+        const aTime = Number(a.createdAt || a.timestamp || 0);
+        const bTime = Number(b.createdAt || b.timestamp || 0);
+        if (aTime !== bTime) return bTime - aTime;
+        return (tiePriority[b.source] || 0) - (tiePriority[a.source] || 0);
+    })[0];
+}
+
+async function findOrderByCanonicalId(orderId, phone) {
+    if (!firebaseDB || !orderId) return null;
+    const normalizedPhone = normalizePhone(phone || '');
+    const paths = isLoadingFeatureEnabledForTracking()
+        ? ['loading/items', 'loading/archive']
+        : ['orders/list'];
+    for (const path of paths) {
+        try {
+            const snapshot = await firebaseDB.ref(`${path}/${orderId}`).once('value');
+            const value = snapshot.val();
+            if (value && (!normalizedPhone || !value.phone || normalizePhone(value.phone) === normalizedPhone)) {
+                return createTrackingOrder(value, orderId, path === 'orders/list' ? 'main' : (path.endsWith('/archive') ? 'archive' : 'loading'), normalizedPhone);
+            }
+        } catch (error) {
+            console.warn(`⚠️ تعذر قراءة ${path}/${orderId}:`, error);
+        }
+    }
+    return null;
+}
+
+// Kill-switch-only lookup: keep rollback usable without reintroducing users/{phone}/orders reads.
+async function findLatestOrderInMainListForKillSwitch(phone) {
+    if (!firebaseDB || !phone) return null;
+    const normalizedPhone = normalizePhone(phone);
+    try {
+        const snapshot = await firebaseDB.ref('orders/list')
+            .orderByChild('phone').equalTo(normalizedPhone).once('value');
+        const records = snapshot.val();
+        if (!records) return null;
+        const candidates = Object.entries(records)
+            .sort((a, b) => Number(b[1]?.timestamp || 0) - Number(a[1]?.timestamp || 0));
+        if (!candidates.length) return null;
+        const [key, record] = candidates[0];
+        return createTrackingOrder(record, key, 'main', normalizedPhone);
     } catch (error) {
-        console.warn('⚠️ خطأ في البحث برقم الطلب (user path):', error);
+        console.warn('⚠️ تعذر مسار التراجع إلى orders/list:', error);
         return null;
     }
 }
 
+function normalizePhone(phone) {
+    if (!phone) return '';
+    let p = String(phone).replace(/[^0-9]/g, '');
+    if (p.startsWith('964')) p = '0' + p.substring(3);
+    if (p.length === 9 && p.startsWith('7')) p = '0' + p;
+    return p;
+}
+
+// ============================================
+// ⏱️ جلب بيانات مناطق التوصيل من Firebase
+// ============================================
 async function fetchDeliveryAreasData() {
     try {
         const snapshot = await firebaseDB.ref('delivery_areas').once('value');
@@ -244,123 +370,74 @@ async function fetchDeliveryAreasData() {
     }
 }
 
+// ============================================
+// 🔍 دالة مساعدة للبحث عن مدة المنطقة المحددة
+// ============================================
 function getEstimatedTimeForArea(areaName) {
-    if (!areaName || !deliveryAreasData.length) return DEFAULT_DELIVERY_MINUTES;
+    if (!areaName || !deliveryAreasData.length) {
+        return DEFAULT_DELIVERY_MINUTES;
+    }
+    
+    // البحث عن المنطقة التي يطابق اسمها اسم المنطقة في الطلب
     const targetArea = deliveryAreasData.find(area => area.name.trim() === areaName.trim());
-    if (targetArea && targetArea.estimatedTime) return parseInt(targetArea.estimatedTime);
+    
+    if (targetArea && targetArea.estimatedTime) {
+        console.log(`⏱️ مدة التوصيل المحددة لمنطقة "${areaName}" هي ${targetArea.estimatedTime} دقيقة`);
+        return parseInt(targetArea.estimatedTime);
+    }
+    
+    // إذا لم يتم العثور على تطابق تام، نعود للقيمة الافتراضية
+    console.warn(`⚠️ لم يتم العثور على مدة مخصصة لمنطقة "${areaName}"، سيتم استخدام الافتراضي (${DEFAULT_DELIVERY_MINUTES} دقيقة)`);
     return DEFAULT_DELIVERY_MINUTES;
 }
-
-async function findLatestOrderByPhoneInUserPath(phone) {
-    if (!firebaseDB) return null;
-    const normalizedPhone = normalizePhone(phone);
-    try {
-        const snapshot = await firebaseDB.ref(`users/${normalizedPhone}/orders`).orderByChild('timestamp').limitToLast(1).once('value');
-        const data = snapshot.val();
-        if (!data) return null;
-        const orderId = Object.keys(data)[0];
-        const orderData = data[orderId];
-        return { id: orderId, ...orderData, phone: normalizedPhone, orderNumber: orderData.orderNumber || orderId.substring(0, 6).toUpperCase() };
-    } catch (error) { return null; }
-}
-
-async function findOrderByPhoneInMainList(phone) {
-    if (!firebaseDB) return null;
-    const normalizedPhone = normalizePhone(phone);
-    try {
-        const snapshot = await firebaseDB.ref('orders/list').orderByChild('phone').equalTo(normalizedPhone).limitToLast(1).once('value');
-        const data = snapshot.val();
-        if (!data) return null;
-        const orderId = Object.keys(data)[0];
-        return { id: orderId, ...data[orderId] };
-    } catch (error) { return null; }
-}
-
-function normalizePhone(phone) {
-    if (!phone) return '';
-    let p = phone.replace(/[^0-9]/g, '');
-    if (p.startsWith('964')) p = '0' + p.substring(3);
-    if (p.startsWith('+964')) p = '0' + p.substring(4);
-    if (p.length === 9 && p.startsWith('7')) p = '0' + p;
-    return p;
-}
-
 // ============================================
-// 📊 عرض تفاصيل الطلب (مع دعم الصالة)
+// 📊 عرض تفاصيل الطلب
 // ============================================
 function displayOrderDetails(order) {
     if (!order) return;
-
-    const isDineIn = isDineInOrder(order);
-    currentIsDineIn = isDineIn; 
-
+    
     const orderNum = order.orderNumber || order.id?.substring(0, 6).toUpperCase() || '000';
     setText('displayOrderNumber', `#${orderNum}`);
     setText('customerName', order.customerName || 'زبون');
-
-    const phoneRow = document.getElementById('customerPhone')?.closest('.detail-row');
-    const addressRow = document.getElementById('deliveryAddress')?.closest('.detail-row');
-    const progressTracker = document.querySelector('.progress-tracker');
-    const dineinSection = document.getElementById('dineinStatusSection');
-
-    if (isDineIn) {
-        // ✅ إخفاء عناصر الدلفري
-        if (phoneRow) phoneRow.style.display = 'none';
-        if (addressRow) addressRow.style.display = 'none';
-        if (progressTracker) progressTracker.style.display = 'none';
-        hideCountdown();
-        
-        // ✅ إظهار وتعبئة قسم الصالة
-        if (dineinSection) dineinSection.style.display = 'block';
-        setText('dineinTableNumber', order.tableNumber || order.tableId || '-');
-        setText('dineinPersonsCount', order.numberOfPersons || order.personCount || '-');
-        
-        updateDineinProgress(order.status);
-        updateDineinStatusBadge(order.status);
-        
-    } else {
-        // 🛵 مسار الدلفري الطبيعي
-        if (phoneRow) phoneRow.style.display = 'flex';
-        if (addressRow) addressRow.style.display = 'flex';
-        if (progressTracker) progressTracker.style.display = 'flex';
-        if (dineinSection) dineinSection.style.display = 'none';
-
-        const phone = order.phone || '';
-        const phoneEl = document.getElementById('customerPhone');
-        if (phoneEl) {
-            phoneEl.textContent = formatPhone(phone) || 'غير متوفر';
-            phoneEl.href = phone ? `tel:${phone}` : '#';
-        }
-        setText('deliveryAddress', [order.area, order.detailedAddress].filter(Boolean).join(' - ') || 'غير محدد');
-        
-        const status = order.status || 'pending';
-        updateStatusBadge(status);
-        updateProgressTracker(status);
-        
-        if (['pending', 'preparing', 'ready'].includes(status)) {
-            startCountdown(order.timestamp, order.area);
-        } else {
-            hideCountdown();
-        }
+    
+    const phone = order.phone || '';
+    const phoneEl = document.getElementById('customerPhone');
+    if (phoneEl) {
+        phoneEl.textContent = formatPhone(phone) || 'غير متوفر';
+        phoneEl.href = phone ? `tel:${phone}` : '#';
     }
-
+    
+    setText('deliveryAddress', [order.area, order.detailedAddress].filter(Boolean).join(' - ') || 'غير محدد');
+    
     if (order.timestamp) {
         const date = new Date(order.timestamp);
-        setText('orderTime', date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: false }));
+        setText('orderTime', date.toLocaleTimeString('ar-EG', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+        }));
     }
-
+    
+    const status = normalizeCustomerStatus(order.status, order.stage);
+    const badge = document.getElementById('orderStatusBadge');
+    if (badge) badge.dataset.status = status;
+    
+    updateStatusBadge(status);
+    updateProgressTracker(status);
     renderOrderItems(order.items);
     setText('orderTotalAmount', `${(order.total || 0).toLocaleString('ar-EG')} د.ع`);
-
-    updateWhatsappLink(order.orderNumber);
-    updateReviewButton(order.status);
-    handleCancelledStatus(order.status);
     
-    const statusLabel = isDineIn ? 
-        (['completed', 'served'].includes(order.status) ? 'تم التقديم' : 'جاري التحضير') : 
-        (ORDER_STATUS_MAP[order.status]?.label || 'تتبع الطلب');
-        
-    document.title = `${statusLabel} - تعلولة`;
+    updateWhatsappLink(order.orderNumber);
+    updateReviewButton(status);
+    
+    if (['pending', 'preparing', 'in_transit'].includes(status)) {
+        startCountdown(order.timestamp, order.area); // ✅ تمرير اسم المنطقة هنا
+    } else {
+        hideCountdown();
+    }
+    
+    handleTerminalStatus(status, order);
+    document.title = `${ORDER_STATUS_MAP[status]?.label || 'تتبع الطلب'} - تعلولة`;
 }
 
 function setText(id, text) {
@@ -371,33 +448,28 @@ function setText(id, text) {
 function formatPhone(phone) {
     if (!phone) return '';
     const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 10 && cleaned.startsWith('0')) return cleaned.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
+    if (cleaned.length === 10 && cleaned.startsWith('0')) {
+        return cleaned.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
+    }
     return phone;
 }
 
 function renderOrderItems(items) {
     const list = document.getElementById('orderItemsList');
     if (!list) return;
+    
     if (!items || !Array.isArray(items) || items.length === 0) {
         list.innerHTML = '<li class="item-row"><span>لا توجد أصناف</span></li>';
         return;
     }
-    list.innerHTML = items.map(item => {
-        const notes = item.note || item.notes || '';
-        const notesHtml = notes ? `<div class="item-notes" style="font-size: 0.85rem; color: #b45309; margin-top: 4px;"><i class="fas fa-sticky-note"></i> ${escapeHtml(notes)}</div>` : '';
-        return `
-            <li class="item-row" style="display: flex; flex-direction: column; margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <span class="item-name">${escapeHtml(item.name || 'صنف')}</span>
-                    <div>
-                        <span class="item-qty">×${item.quantity || 1}</span>
-                        <span class="item-price" style="margin-right: 10px;">${((item.price || 0) * (item.quantity || 1)).toLocaleString('ar-EG')} د.ع</span>
-                    </div>
-                </div>
-                ${notesHtml}
-            </li>
-        `;
-    }).join('');
+    
+    list.innerHTML = items.map(item => `
+        <li class="item-row">
+            <span class="item-name">${escapeHtml(item.name || 'صنف')}</span>
+            <span class="item-qty">×${item.quantity || 1}</span>
+            <span class="item-price">${((item.price || 0) * (item.quantity || 1)).toLocaleString('ar-EG')} د.ع</span>
+        </li>
+    `).join('');
 }
 
 function escapeHtml(text) {
@@ -407,74 +479,20 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// 🍽️ دوال تحديث واجهة الصالة (Dine-In)
-// ============================================
-function updateDineinProgress(status) {
-    const stepReceived = document.getElementById('dineinStepReceived');
-    const stepPreparing = document.getElementById('dineinStepPreparing');
-    const stepServed = document.getElementById('dineinStepServed');
-    const line1 = document.getElementById('dineinLine1');
-    const line2 = document.getElementById('dineinLine2');
-    
-    if(!stepReceived) return;
-
-    [stepReceived, stepPreparing, stepServed].forEach(s => s.classList.remove('active', 'completed'));
-    line1.style.background = '#e0e0e0';
-    line2.style.background = '#e0e0e0';
-    
-    if (['completed', 'served'].includes(status)) {
-        stepReceived.classList.add('completed');
-        stepPreparing.classList.add('completed');
-        stepServed.classList.add('active', 'completed');
-        line1.style.background = '#28a745';
-        line2.style.background = '#28a745';
-    } else if (['preparing', 'ready'].includes(status)) {
-        stepReceived.classList.add('completed');
-        stepPreparing.classList.add('active');
-        line1.style.background = '#28a745';
-    } else {
-        stepReceived.classList.add('active');
-    }
-}
-
-function updateDineinStatusBadge(status) {
-    const badge = document.getElementById('orderStatusBadge');
-    if (!badge) return;
-    
-    let label = 'تم الاستلام ✅';
-    let icon = 'fa-check-circle';
-    let cls = 'pending';
-    
-    if (['preparing', 'ready'].includes(status)) {
-        label = 'جاري التحضير 👨‍🍳';
-        icon = 'fa-utensils';
-        cls = 'preparing';
-    } else if (['completed', 'served'].includes(status)) {
-        label = 'تم التقديم 🍽️';
-        icon = 'fa-concierge-bell';
-        cls = 'delivered';
-    } else if (status === 'cancelled') {
-        label = 'تم الإلغاء ❌';
-        icon = 'fa-times-circle';
-        cls = 'cancelled';
-    }
-    
-    badge.className = `status-badge ${cls}`;
-    badge.innerHTML = `<i class="fas ${icon}"></i> <span>${label}</span>`;
-}
-
-// ============================================
-// 🎨 تحديث شارة الحالة وشريط التقدم (للدلفري)
+// 🎨 تحديث شارة الحالة وشريط التقدم
 // ============================================
 function updateStatusBadge(status) {
     const badge = document.getElementById('orderStatusBadge');
     if (!badge) return;
+    
     const info = ORDER_STATUS_MAP[status] || ORDER_STATUS_MAP['pending'];
+    
     if (lastKnownStatus !== status) {
         badge.classList.add('status-change-animation');
         setTimeout(() => badge.classList.remove('status-change-animation'), 500);
         lastKnownStatus = status;
     }
+    
     badge.className = `status-badge ${info.class}`;
     badge.innerHTML = `<i class="fas ${info.icon}"></i> <span>${info.label}</span>`;
 }
@@ -484,71 +502,93 @@ function updateProgressTracker(status) {
     const info = ORDER_STATUS_MAP[status] || ORDER_STATUS_MAP['pending'];
     const currentStep = info.step;
     const progressPercent = info.progress;
-
+    
     const tracker = document.querySelector('.progress-tracker');
     if (tracker) {
         tracker.style.setProperty('--progress-width', `${progressPercent}%`);
         tracker.setAttribute('aria-valuenow', progressPercent);
+        
         if (progressPercent === 100 && !tracker.classList.contains('completed')) {
             tracker.classList.add('completed');
+            tracker.animate([
+                { boxShadow: '0 0 0 0 rgba(40, 167, 69, 0.4)' },
+                { boxShadow: '0 0 20px 5px rgba(40, 167, 69, 0.6)' },
+                { boxShadow: '0 0 0 0 rgba(40, 167, 69, 0)' }
+            ], { duration: 1000, iterations: 1 });
         }
     }
-
+    
     steps.forEach((step, index) => {
         const stepNum = index + 1;
         step.classList.remove('active', 'completed', 'cancelled');
+        
         if (status === 'cancelled') {
             if (stepNum === 1) step.classList.add('completed');
             else step.classList.add('cancelled');
-        } else if (stepNum < currentStep) step.classList.add('completed');
-        else if (stepNum === currentStep && currentStep > 0) step.classList.add('active');
+        } else if (stepNum < currentStep) {
+            step.classList.add('completed');
+        } else if (stepNum === currentStep && currentStep > 0) {
+            step.classList.add('active');
+        }
     });
 }
 
-function handleCancelledStatus(status) {
+function handleTerminalStatus(status, order = {}) {
     const cancelledSection = document.getElementById('cancelledInfo');
+    const returnedSection = document.getElementById('returnedInfo');
     const countdownContainer = document.getElementById('countdownContainer');
     const actionButtons = document.querySelector('.action-buttons');
+    const cancelledText = document.getElementById('cancelledReasonText');
+    const returnedText = document.getElementById('returnedReasonText');
 
-    if (status === 'cancelled') {
-        if (cancelledSection) cancelledSection.style.display = 'block';
-        if (countdownContainer) countdownContainer.style.display = 'none';
-        if (actionButtons) actionButtons.style.display = 'none';
-        if (!currentIsDineIn) updateProgressTracker('cancelled');
-    } else {
-        if (cancelledSection) cancelledSection.style.display = 'none';
-        if (actionButtons) actionButtons.style.display = 'flex';
-    }
+    const isCancelled = status === 'cancelled';
+    const isReturned = status === 'returned';
+    if (cancelledSection) cancelledSection.style.display = isCancelled ? 'block' : 'none';
+    if (returnedSection) returnedSection.style.display = isReturned ? 'block' : 'none';
+    if (countdownContainer && (isCancelled || isReturned || status === 'delivered')) countdownContainer.style.display = 'none';
+    if (actionButtons) actionButtons.style.display = (isCancelled || isReturned) ? 'none' : 'flex';
+    if (cancelledText) cancelledText.textContent = order.cancelReason || 'عذراً، تم إلغاء طلبك. يرجى التواصل مع الدعم للمزيد من التفاصيل.';
+    if (returnedText) returnedText.textContent = order.returnReason || 'تم إرجاع الطلب إلى المطعم. يرجى التواصل مع الدعم لمعرفة التفاصيل.';
+    if (isCancelled || isReturned) updateProgressTracker(status);
 }
 
 // ============================================
-// ⏱️ العداد التنازلي (للدلفري فقط)
+// ⏱️ العداد التنازلي (مُحدّث ليعتمد على مدة المنطقة المحددة)
 // ============================================
 function startCountdown(orderTimestamp, orderArea) {
-    if (currentIsDineIn) return; // ✅ لا عداد تنازلي للصالة
     const container = document.getElementById('countdownContainer');
     if (!container) return;
+    
     container.style.display = 'block';
+    
+    // ✅ جلب المدة الخاصة بالمنطقة المختارة
     const deliveryMinutes = getEstimatedTimeForArea(orderArea);
     const durationInMs = deliveryMinutes * 60 * 1000;
     const deliveryTime = (orderTimestamp || Date.now()) + durationInMs;
+    
     if (countdownTimer) clearInterval(countdownTimer);
     updateCountdownDisplay(deliveryTime);
+    
     countdownTimer = setInterval(() => updateCountdownDisplay(deliveryTime), 1000);
 }
 
 function updateCountdownDisplay(deliveryTime) {
     const now = Date.now();
     const remaining = deliveryTime - now;
+    
     if (remaining <= 0) {
         if (countdownTimer) clearInterval(countdownTimer);
         const timerEl = document.querySelector('.countdown-timer');
-        if (timerEl) timerEl.innerHTML = '<span style="color: var(--success-green); font-size: 1.3rem;">🎉 وصل قريباً!</span>';
+        if (timerEl) {
+            timerEl.innerHTML = '<span style="color: var(--success-green); font-size: 1.3rem;">🎉 وصل قريباً!</span>';
+        }
         return;
     }
+    
     const hours = Math.floor(remaining / (1000 * 60 * 60));
     const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    
     setText('countdownHours', String(hours).padStart(2, '0'));
     setText('countdownMinutes', String(minutes).padStart(2, '0'));
     setText('countdownSeconds', String(seconds).padStart(2, '0'));
@@ -557,137 +597,200 @@ function updateCountdownDisplay(deliveryTime) {
 function hideCountdown() {
     const container = document.getElementById('countdownContainer');
     if (container) container.style.display = 'none';
-    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-}
-
-// ============================================
-// ✅ التعامل مع تغيير حالة الطلب
-// ============================================
-function handleOrderStatusChange(status, timestamp) {
-    const isCompleted = ['delivered', 'completed', 'served'].includes(status);
-    const isCancelled = status === 'cancelled';
-
-    if (isCancelled) {
-        stopAllTimers();
-        showNotification('⚠️ تم إلغاء هذا الطلب', 'error');
-        return;
-    }
-
-    if (isCompleted && !hasRedirectedToReview) {
-        stopAllTimers();
-
-        if (currentIsDineIn) {
-            // ✅ منطق الصالة: إشعار بتقديم الطلب دون إجبار الزبون على مغادرة الصفحة
-            showNotification('🍽️ تم تقديم طلبك! أتمنى لك وجبة شهية', 'success');
-            document.title = '✅ تم التقديم - تعلولة';
-            updateReviewButton(status);
-        } else {
-            // 🛵 منطق الدلفري: إشعار وتحويل تلقائي لصفحة التقييم
-            const timerEl = document.querySelector('.countdown-timer');
-            if (timerEl) timerEl.innerHTML = '<span style="color: var(--success-green); font-size: 1.3rem;">✅ تم التوصيل!</span>';
-
-            updateReviewButton(status);
-            showNotification('🎉 تم تسليم طلبك! يمكنك الآن تقييم تجربتك', 'success');
-
-            setTimeout(() => {
-                if (!hasRedirectedToReview) {
-                    hasRedirectedToReview = true;
-                    sessionStorage.setItem('review_order_data', JSON.stringify({
-                        orderNumber: document.getElementById('displayOrderNumber')?.textContent,
-                        total: document.getElementById('orderTotalAmount')?.textContent,
-                        status: status,
-                        orderId: currentOrderId,
-                        phone: currentOrderPhone,
-                        completedAt: new Date().toISOString()
-                    }));
-                    window.location.href = REVIEW_PAGE_PATH;
-                }
-            }, AUTO_REDIRECT_DELAY);
-            document.title = '✅ تم التوصيل - تعلولة';
-        }
+    if (countdownTimer) { 
+        clearInterval(countdownTimer); 
+        countdownTimer = null; 
     }
 }
 
-function stopAllTimers() {
-    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
-    if (orderStatusListener) { try { orderStatusListener.off(); } catch(e) {} orderStatusListener = null; }
+// ============================================
+// ✅ تطبيق الحالة الأحدث بغض النظر عن مصدر القراءة
+// ============================================
+function sourcePriority(source) {
+    // loading/items is authoritative while enabled; archive is the terminal fallback.
+    return ({ main: 3, loading: 2, archive: 1, session: 0, bootstrap: 0 })[source] ?? 0;
 }
 
-// ============================================
-// 🔄 الاستماع الفوري للتغييرات
-// ============================================
-function startRealtimeTrackingForUser(orderId, phone) {
-    if (orderStatusListener) { try { orderStatusListener.off(); } catch(e) {} orderStatusListener = null; }
-    if (!firebaseDB || !orderId || !phone) return;
-    const normalizedPhone = normalizePhone(phone);
+function applyTrackedSnapshot(record, source, firebaseKey = null) {
+    if (!record) return false;
+    const normalizedRecord = {
+        ...record,
+        id: currentOrderId || record.orderId || record.id || firebaseKey,
+        orderId: currentOrderId || record.orderId || record.id || firebaseKey,
+        phone: currentOrderPhone || normalizePhone(record.phone || ''),
+        status: normalizeCustomerStatus(record.status, record.stage),
+        source
+    };
+    const version = Number(record.statusUpdatedAt || record.updatedAt || record.timestamp || record.createdAt || 0);
+    const priority = sourcePriority(source);
+    if (version < lastAppliedStatusVersion || (version === lastAppliedStatusVersion && priority < lastAppliedSourcePriority)) {
+        return false;
+    }
 
-    orderStatusListener = firebaseDB.ref(`users/${normalizedPhone}/orders/${orderId}`).on('value', (snapshot) => {
-        const order = snapshot.val();
-        if (order) {
-            displayOrderDetails({ id: orderId, ...order, phone: normalizedPhone });
-            updateReviewButton(order.status);
-            handleOrderStatusChange(order.status, order.timestamp);
-            if (['delivered', 'completed', 'served', 'cancelled'].includes(order.status)) {
-                try { orderStatusListener.off(); } catch(e) {}
-                orderStatusListener = null;
-            }
+    lastAppliedStatusVersion = version;
+    lastAppliedSourcePriority = priority;
+    displayOrderDetails(normalizedRecord);
+    updateReviewButton(normalizedRecord.status);
+    handleOrderStatusChange(normalizedRecord.status, normalizedRecord.statusUpdatedAt || normalizedRecord.timestamp);
+    return true;
+}
+
+function addTrackingListener(ref, source, canonicalId) {
+    if (!ref) return;
+    const callback = snapshot => {
+        const record = snapshot.val();
+        if (record) {
+            applyTrackedSnapshot(record, source, canonicalId);
+            return;
         }
-    }, (error) => {
-        console.warn('⚠️ Realtime listener error:', error);
-        startAutoRefreshForUser(orderId, normalizedPhone);
-    });
+        // Stage 3 archives the final record and then removes loading/items/{id}.
+        if (source === 'loading' && firebaseDB && canonicalId) {
+            firebaseDB.ref(`loading/archive/${canonicalId}`).once('value')
+                .then(archived => {
+                    if (archived.exists()) applyTrackedSnapshot(archived.val(), 'archive', canonicalId);
+                })
+                .catch(error => console.warn('⚠️ تعذر فحص أرشيف الطلب:', error));
+        }
+    };
+    const errorCallback = error => {
+        console.warn(`⚠️ Realtime listener (${source}) failed:`, error);
+        if (!trackingInterval) startAutoRefreshForCurrentOrder();
+    };
+    ref.on('value', callback, errorCallback);
+    orderStatusListeners.push({ ref, callback });
 }
 
-function startAutoRefreshForUser(orderId, phone) {
+function stopTrackingListeners() {
+    for (const listener of orderStatusListeners) {
+        try { listener.ref.off('value', listener.callback); } catch (_) {}
+    }
+    orderStatusListeners = [];
+}
+
+function startRealtimeTracking(orderId, phone) {
+    stopTrackingListeners();
+    if (!firebaseDB || !orderId) return;
+
+    if (isLoadingFeatureEnabledForTracking()) {
+        addTrackingListener(firebaseDB.ref(`loading/items/${orderId}`), 'loading', orderId);
+        addTrackingListener(firebaseDB.ref(`loading/archive/${orderId}`), 'archive', orderId);
+    } else {
+        // Feature-flag rollback: keep canonical-key updates flowing from the previous main list.
+        addTrackingListener(firebaseDB.ref(`orders/list/${orderId}`), 'main', orderId);
+    }
+    console.log(`🔄 تتبع الطلب ${orderId} عبر ${isLoadingFeatureEnabledForTracking() ? 'loading/items و loading/archive' : 'orders/list (kill switch)'}`);
+}
+
+function startAutoRefreshForCurrentOrder() {
     if (trackingInterval) clearInterval(trackingInterval);
     trackingInterval = setInterval(async () => {
-        if (!orderId || !firebaseDB || !phone) return;
-        try {
-            const snapshot = await firebaseDB.ref(`users/${normalizePhone(phone)}/orders/${orderId}`).once('value');
-            const order = snapshot.val();
-            if (order) {
-                displayOrderDetails({ id: orderId, ...order, phone: phone });
-                updateReviewButton(order.status);
-                handleOrderStatusChange(order.status, order.timestamp);
-                if (['delivered', 'completed', 'served', 'cancelled'].includes(order.status)) {
-                    clearInterval(trackingInterval); trackingInterval = null;
-                }
+        if (!currentOrderId || !firebaseDB) return;
+        const reads = isLoadingFeatureEnabledForTracking()
+            ? [['loading', `loading/items/${currentOrderId}`], ['archive', `loading/archive/${currentOrderId}`]]
+            : [['main', `orders/list/${currentOrderId}`]];
+        await Promise.all(reads.map(async ([source, path]) => {
+            try {
+                const snapshot = await firebaseDB.ref(path).once('value');
+                if (snapshot.exists()) applyTrackedSnapshot(snapshot.val(), source, currentOrderId);
+            } catch (error) {
+                console.warn(`⚠️ فشل التحديث الدوري من ${path}:`, error);
             }
-        } catch (error) {}
+        }));
     }, AUTO_REFRESH_INTERVAL);
 }
 
 function refreshTracking() {
-    if (!currentOrderId || !currentOrderPhone) {
+    if (!currentOrderId) {
         showNotification('⚠ لا يوجد طلب حالي للتحديث', 'warning');
         return;
     }
+
     const refreshBtn = document.getElementById('refreshTrackingBtn');
     if (refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
     }
     showNotification('🔄 جاري تحديث الحالة...', 'info');
-    firebaseDB?.ref(`users/${currentOrderPhone}/orders/${currentOrderId}`).once('value')
-        .then(snapshot => {
-            const order = snapshot.val();
-            if (order) {
-                displayOrderDetails({ id: currentOrderId, ...order, phone: currentOrderPhone });
-                updateReviewButton(order.status);
-                handleOrderStatusChange(order.status, order.timestamp);
-                showNotification('✅ تم تحديث الحالة', 'success');
-            } else {
-                showNotification('⚠ لم يتم العثور على الطلب', 'warning');
+
+    const reads = isLoadingFeatureEnabledForTracking()
+        ? [['loading', `loading/items/${currentOrderId}`], ['archive', `loading/archive/${currentOrderId}`]]
+        : [['main', `orders/list/${currentOrderId}`]];
+
+    Promise.all(reads.map(async ([source, path]) => {
+        try {
+            const snapshot = await firebaseDB.ref(path).once('value');
+            if (snapshot.exists()) return applyTrackedSnapshot(snapshot.val(), source, currentOrderId);
+        } catch (error) {
+            console.warn(`⚠️ فشل التحديث اليدوي من ${path}:`, error);
+        }
+        return false;
+    })).then(results => {
+        if (results.some(Boolean)) showNotification('✅ تم تحديث الحالة', 'success');
+        else showNotification('⚠ لم يتم العثور على سجل قابل للتحديث', 'warning');
+    }).finally(() => {
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> تحديث الحالة';
+        }
+    });
+}
+
+// ============================================
+// ✅ التعامل مع تغيير حالة الطلب
+// ============================================
+function handleOrderStatusChange(status, timestamp) {
+    const normalizedStatus = normalizeCustomerStatus(status);
+    const isCompleted = normalizedStatus === 'delivered';
+    const isCancelled = normalizedStatus === 'cancelled';
+    const isReturned = normalizedStatus === 'returned';
+
+    if (isCancelled || isReturned) {
+        stopAllTimers();
+        showNotification(isCancelled ? '⚠️ تم إلغاء هذا الطلب' : '↩️ تم إرجاع هذا الطلب', isCancelled ? 'error' : 'warning');
+        const timerEl = document.querySelector('.countdown-timer');
+        if (timerEl) {
+            timerEl.innerHTML = isCancelled
+                ? '<span style="color: var(--danger-red);">❌ ملغي</span>'
+                : '<span style="color: #ea580c;">↩️ مرتجع</span>';
+        }
+        return;
+    }
+
+    if (isCompleted && !hasRedirectedToReview && !reviewRedirectScheduled) {
+        reviewRedirectScheduled = true;
+        stopAllTimers();
+        const timerEl = document.querySelector('.countdown-timer');
+        if (timerEl) timerEl.innerHTML = '<span style="color: var(--success-green); font-size: 1.3rem;">✅ تم التوصيل!</span>';
+        updateReviewButton(normalizedStatus);
+        showNotification('🎉 تم تسليم طلبك! يمكنك الآن تقييم تجربتك', 'success');
+        setTimeout(() => {
+            if (!hasRedirectedToReview) {
+                hasRedirectedToReview = true;
+                sessionStorage.setItem('review_order_data', JSON.stringify({
+                    orderNumber: document.getElementById('displayOrderNumber')?.textContent,
+                    total: document.getElementById('orderTotalAmount')?.textContent,
+                    status: normalizedStatus,
+                    orderId: currentOrderId,
+                    phone: currentOrderPhone,
+                    completedAt: new Date().toISOString()
+                }));
+                window.location.href = REVIEW_PAGE_PATH;
             }
-        })
-        .catch(() => showNotification('❌ فشل التحديث', 'error'))
-        .finally(() => {
-            if (refreshBtn) {
-                refreshBtn.disabled = false;
-                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> تحديث الحالة';
-            }
-        });
+        }, AUTO_REDIRECT_DELAY);
+        document.title = '✅ تم التوصيل - تعلولة';
+    }
+}
+
+function stopAllTimers() {
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+    }
+    if (trackingInterval) {
+        clearInterval(trackingInterval);
+        trackingInterval = null;
+    }
+    stopTrackingListeners();
 }
 
 // ============================================
@@ -696,48 +799,71 @@ function refreshTracking() {
 function updateReviewButton(status) {
     const reviewBtn = document.getElementById('reviewBtn');
     if (!reviewBtn) return;
-
-    const isCompleted = ['completed', 'delivered', 'served'].includes(status);
+    
+    const isCompleted = ['completed', 'delivered'].includes(status);
+    
     reviewBtn.style.display = 'flex';
-
+    
     if (isCompleted) {
         reviewBtn.classList.remove('disabled');
         reviewBtn.style.pointerEvents = 'auto';
         reviewBtn.style.opacity = '1';
-        reviewBtn.title = currentIsDineIn ? '🌟 قيّم تجربتك في المطعم' : '🌟 قيّم تجربتك الآن وساعدنا في التحسين';
+        reviewBtn.title = '🌟 قيّم تجربتك الآن وساعدنا في التحسين';
         reviewBtn.innerHTML = '<i class="fas fa-star"></i> <span>قيّم تجربتك 🌟</span>';
+        
+        reviewBtn.animate([
+            { transform: 'scale(1)' },
+            { transform: 'scale(1.05)' },
+            { transform: 'scale(1)' }
+        ], { duration: 500, iterations: 2 });
     } else {
         reviewBtn.classList.add('disabled');
         reviewBtn.style.pointerEvents = 'none';
         reviewBtn.style.opacity = '0.6';
-        reviewBtn.title = currentIsDineIn ? 'سيتم تفعيل التقييم بعد تقديم الطلب ✅' : 'سيتم تفعيل زر التقييم بعد وصول الطلب وإكماله ✅';
+        reviewBtn.title = 'سيتم تفعيل زر التقييم بعد وصول الطلب وإكماله ✅';
         reviewBtn.innerHTML = '<i class="fas fa-star"></i> <span>التقييم متاح قريباً ⏳</span>';
     }
 }
 
 // ============================================
-// 🔗 تحديث رابط واتساب وإشعارات
+// 🔗 تحديث رابط واتساب
 // ============================================
 function updateWhatsappLink(orderNumber) {
     const btn = document.getElementById('whatsappContactBtn');
     if (!btn) return;
+    
     const orderNum = orderNumber || sessionStorage.getItem('lastOrderNumber') || '000';
     btn.href = `https://wa.me/9647755666073?text=${encodeURIComponent(`استفسار عن طلب #${orderNum}`)}`;
 }
 
+// ============================================
+// 🎛️ التحكم في الأقسام
+// ============================================
 function showSection(sectionId) {
-    document.querySelectorAll('.tracking-section').forEach(sec => { sec.classList.remove('active'); sec.style.display = 'none'; });
+    document.querySelectorAll('.tracking-section').forEach(sec => {
+        sec.classList.remove('active');
+        sec.style.display = 'none';
+    });
     const section = document.getElementById(sectionId);
-    if (section) { section.classList.add('active'); section.style.display = 'block'; }
+    if (section) {
+        section.classList.add('active');
+        section.style.display = 'block';
+    }
 }
 
+// ============================================
+// 🔔 الإشعارات
+// ============================================
 function showNotification(message, type = 'info') {
     document.querySelectorAll('.tracking-notification').forEach(n => n.remove());
+    
     const notification = document.createElement('div');
     notification.className = `tracking-notification ${type}`;
     notification.setAttribute('role', 'alert');
     notification.innerHTML = `<i class="fas ${getIcon(type)}"></i><span>${escapeHtml(message)}</span>`;
+    
     document.body.appendChild(notification);
+    
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease forwards';
         setTimeout(() => notification.remove(), 300);
@@ -745,7 +871,12 @@ function showNotification(message, type = 'info') {
 }
 
 function getIcon(type) {
-    const icons = { 'success': 'fa-check-circle', 'error': 'fa-exclamation-circle', 'warning': 'fa-exclamation-triangle', 'info': 'fa-info-circle' };
+    const icons = { 
+        'success': 'fa-check-circle', 
+        'error': 'fa-exclamation-circle', 
+        'warning': 'fa-exclamation-triangle', 
+        'info': 'fa-info-circle' 
+    };
     return icons[type] || icons['info'];
 }
 
