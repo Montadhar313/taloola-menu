@@ -21,6 +21,18 @@ const BAN_KEY = 'taloola_ban_until';
 const BAN_DATA_KEY = 'taloola_ban_data';
 const ACTIVE_ORDER_KEY = 'taloola_active_order';
 
+// V150 Phase 1: write delivery orders to the unified loading path in parallel.
+// Set localStorage.setItem('taloola_enable_loading', 'false') and reload to disable.
+const TALOOLA_LOADING_ENABLED = true;
+const ENABLE_LOADING = (() => {
+    try {
+        const value = localStorage.getItem('taloola_enable_loading');
+        return value === null ? TALOOLA_LOADING_ENABLED : value === 'true';
+    } catch (_) {
+        return TALOOLA_LOADING_ENABLED;
+    }
+})();
+
 
 let userLocation = null;
 let locationPermissionGranted = false;
@@ -1612,6 +1624,67 @@ async function refreshTableStatusNow() {
     }
 }
 // ═══════════════════════════════════════════════════════════
+// V150 Phase 1: write a delivery order to loading without affecting checkout.
+// orders/list remains the compatibility writer while loading is the active delivery projection.
+// Dine-in orders (orderType=2) are intentionally excluded from loading.
+async function writeLoadingOrderFailSoft(orderId, orderNumber, orderData) {
+    if (!ENABLE_LOADING || !orderId || !orderData || Number(orderData.orderType) !== 3) return false;
+
+    const createdAt = Number(orderData.timestamp) || Date.now();
+    const loadingData = {
+        orderId: String(orderId),
+        orderNumber: Number(orderNumber) || Number(orderData.orderNumber) || 0,
+        sessionId: null,
+        phone: orderData.phone || '',
+        customerName: orderData.customerName || 'زبون',
+        area: orderData.area || '',
+        detailedAddress: orderData.detailedAddress || '',
+        location: orderData.location || null,
+        items: Array.isArray(orderData.items) ? orderData.items : [],
+        total: Number(orderData.total) || 0,
+        notes: orderData.notes || '',
+        orderSource: orderData.orderSource || 'OnlineMenu',
+        orderType: 3,
+        timestamp: createdAt,
+        tableId: null,
+        numberOfPersons: null,
+        status: 'pending',
+        stage: 'unassigned',
+        driverId: null,
+        driverName: null,
+        createdAt,
+        statusUpdatedAt: createdAt,
+        approvedAt: null,
+        printedAt: null,
+        assignedAt: null,
+        startedAt: null,
+        completedAt: null,
+        returnedAt: null,
+        cancelledAt: null,
+        returnReason: null,
+        cancelReason: null,
+        cancelledBy: null,
+        localSaveState: 'not_saved',
+        localSavedAt: null,
+        localSaveError: null,
+        isArchived: false,
+        archivedAt: null,
+        archiveReason: null
+    };
+
+    try {
+        await firebase.database().ref(`loading/items/${orderId}`).set(loadingData);
+        console.info('✅ [V150 LOADING] تم إنشاء الطلب بالتوازي', orderNumber);
+        return true;
+    } catch (error) {
+        // Deliberately fail-soft: the legacy order remains valid if loading rules
+        // are not deployed yet, the network is unavailable, or Firebase rejects it.
+        console.warn('⚠️ [V150 LOADING] فشلت الكتابة الموازية؛ يستمر الطلب بالمسار القديم:', error);
+        return false;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
 // ✅✅✅ تأكيد وإرسال الطلب - النسخة المُصححة والمُحسَّنة
 // ═══════════════════════════════════════════════════════════
 async function confirmAndSendOrder() {
@@ -1787,6 +1860,11 @@ async function confirmAndSendOrder() {
         };
 
         const newOrderRef = await ordersRef.push(orderData);
+
+        // V150 Phase 1: mirror delivery orders only; never block the legacy flow.
+        if (!isTableOrder && Number(orderData.orderType) === 3) {
+            await writeLoadingOrderFailSoft(newOrderRef.key, orderNumber, orderData);
+        }
         
         saveActiveOrder({
             orderId: newOrderRef.key,
@@ -1800,10 +1878,8 @@ async function confirmAndSendOrder() {
         updateTrackingButtonVisibility();
         startListeningToActiveOrder();
 
-        if (!isTableOrder && phone) {
-            const userOrdersRef = firebase.database().ref(`users/${phone}/orders`);
-            await userOrdersRef.push({ ...orderData, orderId: newOrderRef.key });
-        }
+        // V150 Phase 3: new orders are no longer duplicated to users/{phone}/orders.
+        // Existing historical records are intentionally left untouched for archive compatibility.
 
         sessionStorage.setItem('lastOrderNumber', String(orderNumber));
         if (!isTableOrder) {
