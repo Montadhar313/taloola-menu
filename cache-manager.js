@@ -1,3 +1,4 @@
+
 /**
  * IndexedDB Cache Layer لتعلولة
  * يحسن الأداء من خلال تخزين البيانات محلياً
@@ -29,7 +30,7 @@ class TaloolaCache {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                
+
                 // إنشاء مخازن البيانات
                 if (!db.objectStoreNames.contains('menu')) {
                     db.createObjectStore('menu', { keyPath: 'id' });
@@ -55,13 +56,13 @@ class TaloolaCache {
     // حفظ البيانات
     async save(storeName, data) {
         if (!this.db) await this.init();
-        
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([storeName], 'readwrite');
             const store = transaction.objectStore(storeName);
-            
+
             const request = store.put(data);
-            
+
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
@@ -70,13 +71,13 @@ class TaloolaCache {
     // جلب البيانات
     async get(storeName, key) {
         if (!this.db) await this.init();
-        
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([storeName], 'readonly');
             const store = transaction.objectStore(storeName);
-            
+
             const request = store.get(key);
-            
+
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
@@ -85,13 +86,13 @@ class TaloolaCache {
     // جلب جميع البيانات من متجر
     async getAll(storeName) {
         if (!this.db) await this.init();
-        
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([storeName], 'readonly');
             const store = transaction.objectStore(storeName);
-            
+
             const request = store.getAll();
-            
+
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
@@ -100,13 +101,13 @@ class TaloolaCache {
     // حذف بيانات
     async delete(storeName, key) {
         if (!this.db) await this.init();
-        
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([storeName], 'readwrite');
             const store = transaction.objectStore(storeName);
-            
+
             const request = store.delete(key);
-            
+
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
@@ -115,13 +116,13 @@ class TaloolaCache {
     // مسح جميع البيانات
     async clear(storeName) {
         if (!this.db) await this.init();
-        
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([storeName], 'readwrite');
             const store = transaction.objectStore(storeName);
-            
+
             const request = store.clear();
-            
+
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
@@ -138,11 +139,11 @@ class TaloolaCache {
     async getMenu() {
         const menuData = await this.get('menu', 'current');
         if (!menuData) return null;
-        
+
         // التحقق من أن البيانات حديثة (أقل من ساعة)
         const oneHour = 60 * 60 * 1000;
         const isExpired = Date.now() - menuData.timestamp > oneHour;
-        
+
         return {
             items: menuData.items,
             isExpired,
@@ -160,10 +161,10 @@ class TaloolaCache {
     async getCategories() {
         const data = await this.get('settings', 'categories');
         if (!data) return null;
-        
+
         const oneHour = 60 * 60 * 1000;
         const isExpired = Date.now() - data.timestamp > oneHour;
-        
+
         return {
             data: data.data,
             isExpired,
@@ -200,7 +201,7 @@ class TaloolaCache {
     async cleanupOldOrders(daysToKeep = 7) {
         const allOrders = await this.getAll('orders');
         const cutoffDate = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
-        
+
         for (const order of allOrders) {
             if (order.synced && order.savedAt < cutoffDate) {
                 await this.delete('orders', order.orderId);
@@ -220,3 +221,4 @@ window.cacheCategories = (cats) => window.taloolaCache.saveCategories(cats);
 window.getCachedCategories = () => window.taloolaCache.getCategories();
 window.saveOrderOffline = (order) => window.taloolaCache.saveOrderLocally(order);
 window.getPendingOrders = () => window.taloolaCache.getPendingOrders();
+
