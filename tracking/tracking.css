@@ -486,6 +486,43 @@ body {
     line-height: 1.6;
 }
 
+/* حالة الإرجاع - V150 Unified Order Lifecycle */
+.returned-info-section {
+    background: linear-gradient(135deg, #fff7ed, #fed7aa);
+    border: 2px solid #ea580c;
+    border-radius: 20px;
+    padding: 25px 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #7c2d12;
+}
+
+.returned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #ea580c;
+    color: #fff;
+    border-radius: 50px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.returned-reason {
+    background: rgba(255, 255, 255, .6);
+    padding: 12px;
+    border-radius: 12px;
+    font-size: .95rem;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.returned-info-section .action-btn {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
 /* أزرار الإجراءات */
 .action-buttons {
     display: flex;
