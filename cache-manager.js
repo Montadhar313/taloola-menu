@@ -1,392 +1,224 @@
-// ============================================
-// 🚀 نظام تحميل الصور الذكي - متقدم v2.0
-// ============================================
 
 /**
- * معرف المصادر المختلفة وبناء روابط بديلة
- * ترجمة الروابط من مصادر مختلفة إلى صيغ قابلة للتحميل المباشر
+ * IndexedDB Cache Layer لتعلولة
+ * يحسن الأداء من خلال تخزين البيانات محلياً
+ * مع الحفاظ على الاتصال بـ Firebase
  */
 
-class AdvancedImageSourceHandler {
+class TaloolaCache {
     constructor() {
-        this.sourceCache = new Map();      // تخزين المصادر الناجحة
-        this.failedAttempts = new Map();   // تتبع المحاولات الفاشلة
-        this.sourceTypeCache = new Map();  // تخزين نوع المصدر
-        this.maxAttemptsPerSource = 3;
-        console.log('✨ Advanced Image Source Handler متهيأ');
+        this.dbName = 'TaloolaDB';
+        this.dbVersion = 1;
+        this.db = null;
+        this.init();
     }
 
-    /**
-     * 🔍 اكتشاف نوع مصدر الصورة
-     * @param {string} url - رابط الصورة
-     * @returns {string} - نوع المصدر: 'github' | 'googledrive' | 'imgur' | 'top4top' | 'direct' | 'unknown'
-     */
-    detectSourceType(url) {
-        if (!url || typeof url !== 'string') return 'unknown';
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
 
-        const lowerUrl = url.toLowerCase();
-        
-        // التحقق من النوع
-        if (lowerUrl.includes('github.com') || lowerUrl.includes('raw.githubusercontent.com')) {
-            return 'github';
-        }
-        if (lowerUrl.includes('drive.google.com') || lowerUrl.includes('uc?id=')) {
-            return 'googledrive';
-        }
-        if (lowerUrl.includes('imgur.com')) {
-            return 'imgur';
-        }
-        if (lowerUrl.includes('top4top.io') || lowerUrl.includes('top4top.net')) {
-            return 'top4top';
-        }
-        if (lowerUrl.startsWith('http://') || lowerUrl.startsWith('https://')) {
-            return 'direct';
-        }
-        if (lowerUrl.startsWith('data:image/')) {
-            return 'datauri';
-        }
+            request.onerror = () => {
+                console.log('[Cache] IndexedDB error:', request.error);
+                reject(request.error);
+            };
 
-        return 'unknown';
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                console.log('[Cache] IndexedDB initialized successfully');
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+
+                // إنشاء مخازن البيانات
+                if (!db.objectStoreNames.contains('menu')) {
+                    db.createObjectStore('menu', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('categories')) {
+                    db.createObjectStore('categories', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('ads')) {
+                    db.createObjectStore('ads', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings', { keyPath: 'key' });
+                }
+                if (!db.objectStoreNames.contains('orders')) {
+                    db.createObjectStore('orders', { keyPath: 'orderId', autoIncrement: true });
+                }
+
+                console.log('[Cache] IndexedDB stores created');
+            };
+        });
     }
 
-    /**
-     * 🔗 بناء روابط بديلة من GitHub
-     * تحويل روابط GitHub إلى صيغة Raw القابلة للتحميل المباشر
-     */
-    buildGithubAlternatives(url) {
-        const alternatives = [];
+    // حفظ البيانات
+    async save(storeName, data) {
+        if (!this.db) await this.init();
 
-        // إذا كان الرابط بالفعل raw.githubusercontent.com
-        if (url.includes('raw.githubusercontent.com')) {
-            alternatives.push(url);
-            // محاولة بصيغ مختلفة
-            alternatives.push(url.replace(/\.jpg$/, '.png'));
-            alternatives.push(url.replace(/\.png$/, '.jpg'));
-            alternatives.push(url.replace(/\.webp$/, '.jpg'));
-            return alternatives;
-        }
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
 
-        // تحويل من github.com/user/repo/blob/branch/file إلى raw.githubusercontent.com
-        const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.*)/i);
-        if (match) {
-            const [, user, repo, branch, filepath] = match;
-            const baseUrl = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${filepath}`;
-            
-            alternatives.push(baseUrl);
-            alternatives.push(baseUrl.replace(/\.jpg$/, '.png'));
-            alternatives.push(baseUrl.replace(/\.png$/, '.jpg'));
-            alternatives.push(baseUrl.replace(/\.webp$/, '.jpg'));
+            const request = store.put(data);
 
-            // محاولة مع فرع main أيضاً إذا كان master
-            if (branch.toLowerCase() === 'master') {
-                alternatives.push(baseUrl.replace('/master/', '/main/'));
-            }
-
-            return alternatives;
-        }
-
-        // إذا كان رابط عام من GitHub
-        if (url.includes('github.com')) {
-            alternatives.push(url);
-        }
-
-        return alternatives;
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
     }
 
-    /**
-     * 🔗 بناء روابط بديلة من Google Drive
-     * تحويل روابط Google Drive إلى روابط تنزيل مباشر
-     */
-    buildGoogleDriveAlternatives(url) {
-        const alternatives = [];
-        
-        // استخراج معرف الملف
-        let fileId = null;
-        
-        // صيغة 1: drive.google.com/file/d/FILE_ID/view
-        const match1 = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
-        if (match1) {
-            fileId = match1[1];
-        }
-        
-        // صيغة 2: drive.google.com/open?id=FILE_ID
-        const match2 = url.match(/id=([^&]+)/i);
-        if (match2 && !fileId) {
-            fileId = match2[1];
-        }
+    // جلب البيانات
+    async get(storeName, key) {
+        if (!this.db) await this.init();
 
-        if (fileId) {
-            // الرابط الأساسي للتنزيل المباشر
-            alternatives.push(`https://drive.google.com/uc?id=${fileId}&export=download`);
-            alternatives.push(`https://drive.google.com/uc?id=${fileId}&export=view`);
-            alternatives.push(`https://drive.google.com/thumbnail?id=${fileId}&sz=w400`);
-            
-            // محاولة مع parameters مختلفة
-            alternatives.push(`https://drive.google.com/file/d/${fileId}/preview`);
-        } else {
-            alternatives.push(url);
-        }
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
 
-        return alternatives;
+            const request = store.get(key);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
     }
 
-    /**
-     * 🔗 بناء روابط بديلة من Imgur
-     * محاولة أنواع مختلفة من روابط Imgur
-     */
-    buildImgurAlternatives(url) {
-        const alternatives = [];
-        
-        // استخراج معرف الصورة
-        const match = url.match(/imgur\.com\/(\w+)/i);
-        if (match) {
-            const imageId = match[1];
-            
-            // أنواع مختلفة من صيغ Imgur
-            alternatives.push(url);
-            alternatives.push(`https://i.imgur.com/${imageId}.jpg`);
-            alternatives.push(`https://i.imgur.com/${imageId}.png`);
-            alternatives.push(`https://i.imgur.com/${imageId}.gif`);
-            alternatives.push(`https://imgur.com/${imageId}.jpg`);
-            alternatives.push(`https://imgur.com/${imageId}.png`);
-            
-            // محاولة مع أحجام مختلفة
-            alternatives.push(`https://i.imgur.com/${imageId}l.jpg`); // large
-            alternatives.push(`https://i.imgur.com/${imageId}m.jpg`); // medium
-            alternatives.push(`https://i.imgur.com/${imageId}t.jpg`); // thumb
-            
-            return alternatives;
-        }
+    // جلب جميع البيانات من متجر
+    async getAll(storeName) {
+        if (!this.db) await this.init();
 
-        alternatives.push(url);
-        return alternatives;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
     }
 
-    /**
-     * 🔗 بناء روابط بديلة من top4top
-     * محاولة أشكال مختلفة من روابط top4top
-     */
-    buildTop4TopAlternatives(url) {
-        const alternatives = [];
-        
-        // top4top لديه عدة صيغ للروابط
-        alternatives.push(url);
-        
-        // محاولة تحويل من .io إلى .net
-        if (url.includes('top4top.io')) {
-            alternatives.push(url.replace('top4top.io', 'top4top.net'));
-        }
-        
-        // محاولة صيغ مختلفة من نفس المعرف
-        const match = url.match(/top4top\.\w+\/([^/]+)/i);
-        if (match) {
-            const fileId = match[1];
-            alternatives.push(`https://top4top.io/${fileId}`);
-            alternatives.push(`https://top4top.net/${fileId}`);
-        }
+    // حذف بيانات
+    async delete(storeName, key) {
+        if (!this.db) await this.init();
 
-        return alternatives;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+
+            const request = store.delete(key);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
     }
 
-    /**
-     * 🔗 إنشاء قائمة روابط بديلة حسب نوع المصدر
-     * @param {string} url - الرابط الأصلي
-     * @returns {array} - مصفوفة من الروابط البديلة
-     */
-    buildAlternativeUrls(url) {
-        if (!url || typeof url !== 'string') return [];
+    // مسح جميع البيانات
+    async clear(storeName) {
+        if (!this.db) await this.init();
 
-        // التحقق من الكاش أولاً
-        if (this.sourceCache.has(url)) {
-            return [this.sourceCache.get(url)];
-        }
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
 
-        const sourceType = this.detectSourceType(url);
-        let alternatives = [];
+            const request = store.clear();
 
-        console.log(`🔍 كشف نوع المصدر: ${sourceType} للرابط: ${url.substring(0, 60)}...`);
-
-        switch (sourceType) {
-            case 'github':
-                alternatives = this.buildGithubAlternatives(url);
-                break;
-            case 'googledrive':
-                alternatives = this.buildGoogleDriveAlternatives(url);
-                break;
-            case 'imgur':
-                alternatives = this.buildImgurAlternatives(url);
-                break;
-            case 'top4top':
-                alternatives = this.buildTop4TopAlternatives(url);
-                break;
-            case 'direct':
-            case 'datauri':
-                alternatives = [url];
-                break;
-            default:
-                alternatives = [url];
-        }
-
-        // إضافة الرابط الأصلي في البداية إذا لم يكن موجود
-        if (!alternatives.includes(url)) {
-            alternatives.unshift(url);
-        }
-
-        // تصفية الروابط الفارغة
-        return alternatives.filter(alt => alt && alt.trim() !== '');
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
     }
 
-    /**
-     * 🏁 تسجيل محاولة ناجحة
-     */
-    recordSuccessfulSource(originalUrl, workingUrl) {
-        this.sourceCache.set(originalUrl, workingUrl);
-        this.failedAttempts.delete(originalUrl);
-        console.log(`✅ تم تسجيل رابط ناجح: ${workingUrl.substring(0, 50)}...`);
+    // حفظ القائمة مع الطوابع الزمنية
+    async saveMenu(items, timestamp = Date.now()) {
+        const menuData = { items, timestamp, version: 'v1' };
+        await this.save('menu', { id: 'current', ...menuData });
+        console.log('[Cache] Menu saved with', items.length, 'items');
     }
 
-    /**
-     * ❌ تسجيل محاولة فاشلة
-     */
-    recordFailedAttempt(originalUrl, failedUrl) {
-        if (!this.failedAttempts.has(originalUrl)) {
-            this.failedAttempts.set(originalUrl, []);
-        }
-        this.failedAttempts.get(originalUrl).push(failedUrl);
-    }
+    // جلب القائمة المحفوظة
+    async getMenu() {
+        const menuData = await this.get('menu', 'current');
+        if (!menuData) return null;
 
-    /**
-     * 📊 الحصول على إحصائيات
-     */
-    getStats() {
+        // التحقق من أن البيانات حديثة (أقل من ساعة)
+        const oneHour = 60 * 60 * 1000;
+        const isExpired = Date.now() - menuData.timestamp > oneHour;
+
         return {
-            cachedSources: this.sourceCache.size,
-            failedTracking: this.failedAttempts.size,
-            cachedTypes: this.sourceTypeCache.size
+            items: menuData.items,
+            isExpired,
+            timestamp: menuData.timestamp
         };
     }
 
-    /**
-     * 🧹 تنظيف الكاش
-     */
-    clearCache() {
-        this.sourceCache.clear();
-        this.failedAttempts.clear();
-        this.sourceTypeCache.clear();
-        console.log('🧹 تم تنظيف كاش المصادر');
+    // حفظ التصنيفات
+    async saveCategories(categories, timestamp = Date.now()) {
+        await this.save('settings', { key: 'categories', data: categories, timestamp });
+        console.log('[Cache] Categories saved');
+    }
+
+    // جلب التصنيفات
+    async getCategories() {
+        const data = await this.get('settings', 'categories');
+        if (!data) return null;
+
+        const oneHour = 60 * 60 * 1000;
+        const isExpired = Date.now() - data.timestamp > oneHour;
+
+        return {
+            data: data.data,
+            isExpired,
+            timestamp: data.timestamp
+        };
+    }
+
+    // حفظ الطلب محلياً للمزامنة اللاحقة
+    async saveOrderLocally(order) {
+        order.synced = false;
+        order.savedAt = Date.now();
+        await this.save('orders', order);
+        console.log('[Cache] Order saved locally for sync');
+        return order;
+    }
+
+    // جلب الطلبات غير المتزامنة
+    async getPendingOrders() {
+        const allOrders = await this.getAll('orders');
+        return allOrders.filter(order => !order.synced);
+    }
+
+    // تحديث حالة المزامنة
+    async markOrderSynced(orderId) {
+        const order = await this.get('orders', orderId);
+        if (order) {
+            order.synced = true;
+            order.syncedAt = Date.now();
+            await this.save('orders', order);
+        }
+    }
+
+    // تنظيف الطلبات القديمة المتزامنة
+    async cleanupOldOrders(daysToKeep = 7) {
+        const allOrders = await this.getAll('orders');
+        const cutoffDate = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
+
+        for (const order of allOrders) {
+            if (order.synced && order.savedAt < cutoffDate) {
+                await this.delete('orders', order.orderId);
+            }
+        }
+        console.log('[Cache] Old orders cleaned up');
     }
 }
 
-// ============================================
-// 🎯 تحديث SmartSequentialImageLoader
-// ============================================
+// إنشاء نسخة عامة
+window.taloolaCache = new TaloolaCache();
 
-/**
- * دالة تحميل الصورة مع محاولات متعددة من مصادر مختلفة
- * هذه الدالة تحل محل loadImage() الحالية
- */
-function createEnhancedImageLoader() {
-    const sourceHandler = new AdvancedImageSourceHandler();
+// دوال مساعدة للاستخدام السريع
+window.cacheMenu = (items) => window.taloolaCache.saveMenu(items);
+window.getCachedMenu = () => window.taloolaCache.getMenu();
+window.cacheCategories = (cats) => window.taloolaCache.saveCategories(cats);
+window.getCachedCategories = () => window.taloolaCache.getCategories();
+window.saveOrderOffline = (order) => window.taloolaCache.saveOrderLocally(order);
+window.getPendingOrders = () => window.taloolaCache.getPendingOrders();
 
-    return {
-        /**
-         * تحميل الصورة مع جميع البدائل المتاحة
-         */
-        async loadImageWithFallbacks(src, imgElement) {
-            if (!src || !imgElement) return false;
-
-            // الحصول على قائمة الروابط البديلة
-            const alternatives = sourceHandler.buildAlternativeUrls(src);
-            
-            console.log(`📸 محاولة تحميل صورة من ${alternatives.length} مصدر`);
-
-            for (let i = 0; i < alternatives.length; i++) {
-                const url = alternatives[i];
-                const attemptNum = i + 1;
-
-                try {
-                    const success = await this.tryLoadImage(url, 3000); // timeout: 3 ثواني
-                    
-                    if (success) {
-                        imgElement.src = url;
-                        sourceHandler.recordSuccessfulSource(src, url);
-                        console.log(`✅ تم التحميل من المحاولة ${attemptNum}: ${url.substring(0, 60)}...`);
-                        return true;
-                    }
-                } catch (error) {
-                    sourceHandler.recordFailedAttempt(src, url);
-                    console.warn(`❌ محاولة ${attemptNum} فشلت: ${error.message}`);
-                }
-
-                // انتظار قصير قبل المحاولة التالية
-                if (i < alternatives.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-            }
-
-            // إذا فشلت جميع المحاولات
-            console.error(`❌ فشل تحميل الصورة من جميع المصادر: ${src}`);
-            return false;
-        },
-
-        /**
-         * محاولة تحميل صورة واحدة مع timeout
-         */
-        tryLoadImage(url, timeout = 3000) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                const timer = setTimeout(() => {
-                    img.onerror = img.onload = null;
-                    reject(new Error(`Timeout بعد ${timeout}ms`));
-                }, timeout);
-
-                img.onload = () => {
-                    clearTimeout(timer);
-                    resolve(true);
-                };
-
-                img.onerror = () => {
-                    clearTimeout(timer);
-                    reject(new Error(`فشل تحميل الصورة: ${url.substring(0, 50)}`));
-                };
-
-                img.src = url;
-            });
-        },
-
-        /**
-         * الحصول على المصدر الناجح المخزن مؤقتاً
-         */
-        getCachedSource(originalUrl) {
-            return sourceHandler.sourceCache.get(originalUrl) || null;
-        },
-
-        /**
-         * الحصول على إحصائيات
-         */
-        getStats() {
-            return sourceHandler.getStats();
-        },
-
-        /**
-         * تنظيف الكاش
-         */
-        clearCache() {
-            sourceHandler.clearCache();
-        }
-    };
-}
-
-// ============================================
-// 📊 تصدير للاستخدام
-// ============================================
-
-// إنشاء مثيل العامل المحسّن
-const enhancedImageLoader = createEnhancedImageLoader();
-
-console.log(`
-╔════════════════════════════════════════╗
-║  نظام تحميل الصور المتقدم - v2.0      ║
-║  مع دعم مصادر متعددة ومحاولات ذكية    ║
-╚════════════════════════════════════════╝
-`);
