@@ -3,9 +3,9 @@
  * يدعم PWA مع caching استراتيجي وتحسين الأداء
  */
 
-const CACHE_NAME = 'taloola-v1';
-const STATIC_CACHE = 'taloola-static-v1';
-const DYNAMIC_CACHE = 'taloola-dynamic-v1';
+const CACHE_NAME = 'taloola-v150-phase3';
+const STATIC_CACHE = 'taloola-static-v150-phase3';
+const DYNAMIC_CACHE = 'taloola-dynamic-v150-phase3';
 const IMAGE_CACHE = 'taloola-images-v1';
 
 // الموارد الأساسية للتخزين المؤقت
@@ -25,7 +25,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
       console.log('[SW] Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
+      return Promise.all(STATIC_ASSETS.map((asset) =>
+        cache.add(asset).catch((err) => {
+          console.warn('[SW] Skipped unavailable asset:', asset, err);
+          return null;
+        })
+      ));
     }).catch((err) => {
       console.log('[SW] Cache install error:', err);
     })
@@ -40,8 +45,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && 
-              cacheName !== DYNAMIC_CACHE && 
+          if (cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE &&
               cacheName !== IMAGE_CACHE) {
             console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
@@ -168,7 +173,7 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
+
   // تنظيف المخزن المؤقت عند الطلب
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     event.waitUntil(
